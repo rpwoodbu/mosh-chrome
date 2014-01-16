@@ -146,7 +146,7 @@ mosh.CommandInstance.prototype.onMessage_ = function(e) {
   } else if (type == 'error') {
     // TODO: Find a way to output errors that doesn't interfere with the
     // terminal window.
-    this.io.print('ERROR: ' + String(data) + '\r');
+    this.io.print('ERROR: ' + String(data) + '\r\n');
     console.log('ERROR: ' + String(data));
   } else {
     console.log('Unknown message type: ' + JSON.stringify(e.data));

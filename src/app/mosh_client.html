@@ -78,21 +78,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     Mosh for Chrome now supports ssh-based connection setup! Just fill
     in the fields, and just like the "mosh" command, an ssh connection will be
     made to the server to establish trust, start the mosh-server, and get the
-    encryption key. Right now, only password auth is supported.
+    encryption key. Right now, only password and keyboard-interactive auth is
+    supported; key auth coming soon.
     <p>
-    Should you need to setup the connection manually (e.g., cannot use password
-    auth), choose "manual" mode. Then manually ssh to the remote machine and
-    run 'mosh-server'. It will print the key and the port number; enter those
-    into this form, as well as the IP address (not the hostname) of the remote
-    machine, and click 'Connect'. 'mosh-server' gives you about a minute to do
-    this before giving up and exiting. You can close your ssh session once
-    'mosh-server' is running.
+    Should you need to setup the connection manually (e.g., you need key auth),
+    choose "manual" mode. Then manually ssh to the remote machine and run
+    'mosh-server'. It will print the key and the port number; enter those into
+    this form, as well as the IP address or hostname of the remote machine, and
+    click 'Connect'. 'mosh-server' gives you about a minute to do this before
+    giving up and exiting. You can close your ssh session once 'mosh-server' is
+    running.
 
 
     <h3>Known issues</h3>
     <p>
     <ul>
-      <li>No support for ssh public key auth.
+      <li>No support for ssh key auth.
       <li>Too easy to close the window by mistake.
       <li>x86_32 port is built with --disable-hardening, which reduces
         security somewhat.

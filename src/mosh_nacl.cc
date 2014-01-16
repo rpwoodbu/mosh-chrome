@@ -419,6 +419,10 @@ class MoshClientInstance : public pp::Instance {
         continue;
       }
 
+      thiz->Output(TYPE_DISPLAY,
+        "Trying authentication type " + ssh::GetAuthenticationTypeName(*i) +
+        "\r\n");
+
       ssh::KeyboardInteractive *kbd = NULL;
       ssh::KeyboardInteractive::Status status =
           ssh::KeyboardInteractive::kPending;
