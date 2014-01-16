@@ -101,8 +101,8 @@ mosh.CommandInstance.prototype.run = function() {
   window.mosh_client_ = this;
 
   this.io = this.argv_.io.push();
-  this.io.onVTKeystroke = this.sendString_.bind(this);
-  this.io.sendString = this.sendString_.bind(this);
+  this.io.onVTKeystroke = this.sendKeyboard_.bind(this);
+  this.io.sendString = this.sendKeyboard_.bind(this);
   this.io.onTerminalResize = this.onTerminalResize_.bind(this);
 
   this.moshNaCl_ = window.document.createElement('embed');
@@ -118,6 +118,12 @@ mosh.CommandInstance.prototype.run = function() {
   this.moshNaCl_.setAttribute('port', this.argv_.argString['port']);
   this.moshNaCl_.setAttribute('user', this.argv_.argString['user']);
   this.moshNaCl_.setAttribute('mode', this.argv_.argString['mode']);
+  if (window.ssh_key) {
+    this.moshNaCl_.setAttribute('ssh_key', window.ssh_key);
+    // Delete the key for good measure, although it is still available in local
+    // storage.
+    delete window.ssh_key;
+  }
 
   // Delete argv_, as it contains sensitive info.
   delete this.argv_;
@@ -148,16 +154,21 @@ mosh.CommandInstance.prototype.onMessage_ = function(e) {
     // terminal window.
     this.io.print('ERROR: ' + String(data) + '\r\n');
     console.log('ERROR: ' + String(data));
+  } else if (type == 'get_ssh_key') {
+    var thiz = this;
+    chrome.storage.local.get('ssh_key', function(o) {
+      thiz.moshNaCl_.postMessage({'ssh_key': o['ssh_key']});
+    });
   } else {
     console.log('Unknown message type: ' + JSON.stringify(e.data));
   }
 };
 
-mosh.CommandInstance.prototype.sendString_ = function(string) {
-  this.moshNaCl_.postMessage(string);
+mosh.CommandInstance.prototype.sendKeyboard_ = function(string) {
+  this.moshNaCl_.postMessage({'keyboard': string});
 };
 
 mosh.CommandInstance.prototype.onTerminalResize_ = function(w, h) {
   // Send new size as an int, with the width as the high 16 bits.
-  this.moshNaCl_.postMessage((w << 16) + h);
+  this.moshNaCl_.postMessage({'window_change': (w << 16) + h});
 };

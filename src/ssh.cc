@@ -107,9 +107,8 @@ void Session::Disconnect() {
 
 Key *Session::GetPublicKey() {
   if (connected_ && key_ == NULL) {
-    ssh_key key = NULL;
-    ssh_get_publickey(s_, &key);
-    key_ = new Key(key);
+    key_ = new Key();
+    ssh_get_publickey(s_, &key_->key_);
   }
   return key_;
 }
@@ -163,16 +162,50 @@ KeyboardInteractive *Session::AuthUsingKeyboardInteractive() {
   return keyboard_interactive_;
 }
 
+bool Session::AuthUsingKey(const Key &key) {
+  int result = ssh_userauth_publickey(s_, NULL, key.key_);
+  return ParseCode(result, SSH_AUTH_SUCCESS);
+}
+
 Channel *Session::NewChannel() {
   Channel *c = new Channel(ssh_channel_new(s_));
   channels_.push_back(c);
   return c;
 }
 
-Key::Key(ssh_key key) : key_(key) { }
+Key::Key() : key_(NULL) { }
 
 Key::~Key() {
-  ssh_key_free(key_);
+  if (key_ != NULL) {
+    ssh_key_free(key_);
+  }
+}
+
+bool Key::ImportPrivateKey(const string &key, const char *passphrase) {
+  if (key_ != NULL) {
+    ssh_key_free(key_);
+    key_ = NULL;
+  }
+  int result = ssh_pki_import_privkey_base64(
+      key.c_str(), passphrase, NULL, NULL, &key_);
+  if (result != SSH_OK) {
+    return false;
+  }
+  return true;
+}
+
+Key *Key::GetPublicKey() {
+  if (key_ == NULL) {
+    return NULL;
+  }
+  ssh_key pubkey;
+  int result = ssh_pki_export_privkey_to_pubkey(key_, &pubkey);
+  if (result != SSH_OK) {
+    return NULL;
+  }
+  Key *key = new Key();
+  key->key_ = pubkey;
+  return key;
 }
 
 string Key::MD5() {

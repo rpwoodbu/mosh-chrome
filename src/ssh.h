@@ -164,6 +164,9 @@ class Session : public ResultCode {
   // unusable after this method is called.
   KeyboardInteractive *AuthUsingKeyboardInteractive();
 
+  // Auth using a private key. See class Key for how to prepare this object.
+  bool AuthUsingKey(const Key &key);
+
   // Gets a new channel. Ownership is retained, thus is valid only for the
   // lifetime of Session. Analog to ssh_channel_new().
   Channel *NewChannel();
@@ -197,10 +200,22 @@ class Session : public ResultCode {
 
 // Represents a key. Do not instantiate directly; call Session::GetPublicKey().
 class Key {
+ friend class Session;
+
  public:
-  // Do not call this constructor; use Session::GetPublicKey().
-  explicit Key(ssh_key key);
+  Key();
   ~Key();
+
+  // Import a base64 formatted private key. If no passphrase is required, pass
+  // NULL; if the key was encrypted, the method will return false, and you can
+  // prompt the user for a passphrase and try again. Using char * to better
+  // manage lifecycle of sensitive data.
+  bool ImportPrivateKey(const string &key, const char *passphrase);
+
+  // Get the public version of the private key. Only works if a private key is
+  // loaded into the current object. Ownership is transferred to the caller.
+  // Returns NULL on error.
+  Key *GetPublicKey();
 
   // Get key as MD5 hash. Will return an empty string on error.
   string MD5();

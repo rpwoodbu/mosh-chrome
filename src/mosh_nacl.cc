@@ -199,14 +199,27 @@ class MoshClientInstance : public pp::Instance {
   }
 
   virtual void HandleMessage(const pp::Var &var) {
-    if (var.is_string()) {
-      string s = var.AsString();
+    if (var.is_dictionary() == false) {
+      Log("HandleMessage(): Not a dictionary.");
+      return;
+    }
+
+    pp::VarDictionary dict(var);
+
+    if (dict.HasKey("keyboard")) {
+      string s = dict.Get("keyboard").AsString();
       keyboard_->HandleInput(s);
-    } else if (var.is_number()) {
-      int32_t num = var.AsInt();
+    } else if (dict.HasKey("window_change")) {
+      int32_t num = dict.Get("window_change").AsInt();
       window_change_->Update(num >> 16, num & 0xffff);
+    } else if (dict.HasKey("ssh_key")) {
+      pp::Var key = dict.Get("ssh_key");
+      if (key.is_undefined() == false) {
+        ssh_key_ = key.AsString();
+      }
+      LaunchSSHLogin();
     } else {
-      Log("Got a message of an unexpected type.");
+      Log("HandleMessage(): Got a message of an unexpected type.");
     }
   }
 
@@ -215,6 +228,7 @@ class MoshClientInstance : public pp::Instance {
     TYPE_DISPLAY = 0,
     TYPE_LOG,
     TYPE_ERROR,
+    TYPE_GET_SSH_KEY,
   };
 
   // Low-level function to output data to Javascript.
@@ -229,6 +243,9 @@ class MoshClientInstance : public pp::Instance {
       break;
      case TYPE_ERROR:
       type = "error";
+      break;
+     case TYPE_GET_SSH_KEY:
+      type = "get_ssh_key";
       break;
      default:
       // Bad type.
@@ -334,12 +351,17 @@ class MoshClientInstance : public pp::Instance {
     strncpy(addr_, addr_str.c_str(), addr_len);
 
     if (ssh_mode_) {
-      int thread_err = pthread_create(&thread_, NULL, SSHLogin, this);
-      if (thread_err != 0) {
-        Error("Failed to create SSH login thread: %s", strerror(thread_err));
-      }
+      // HandleMessage() will call LaunchSSHLogin().
+      Output(TYPE_GET_SSH_KEY, "");
     } else {
       LaunchMosh(0);
+    }
+  }
+
+  void LaunchSSHLogin() {
+    int thread_err = pthread_create(&thread_, NULL, SSHLogin, this);
+    if (thread_err != 0) {
+      Error("Failed to create SSH login thread: %s", strerror(thread_err));
     }
   }
 
@@ -392,8 +414,9 @@ class MoshClientInstance : public pp::Instance {
     // Place the list of supported authentications types here, in the order
     // they should be tried.
     vector<ssh::AuthenticationType> client_auths;
-    client_auths.push_back(ssh::kPassword);
+    client_auths.push_back(ssh::kPublicKey);
     client_auths.push_back(ssh::kInteractive);
+    client_auths.push_back(ssh::kPassword);
 
     thiz->Output(TYPE_DISPLAY, "Authentication types supported by server:\r\n");
     vector<ssh::AuthenticationType> server_auths = s.GetAuthenticationTypes();
@@ -470,6 +493,30 @@ class MoshClientInstance : public pp::Instance {
           authenticated = true;
           break;
 
+        case ssh::kPublicKey:
+          if (thiz->ssh_key_.size() == 0) {
+            thiz->Output(TYPE_DISPLAY, "No ssh key found.\r\n");
+          } else {
+            thiz->Output(TYPE_DISPLAY, "Passphrase: ");
+            GetKeyboardLine(input, sizeof(input));
+            thiz->Output(TYPE_DISPLAY, "\r\n");
+            ssh::Key key;
+            bool result = key.ImportPrivateKey(thiz->ssh_key_, input);
+            // For safety, zero the sensitive input ASAP.
+            memset(input, 0, sizeof(input));
+            thiz->ssh_key_.clear();
+            if (result = false) {
+              thiz->Error("Error reading key: %s", s.GetLastError().c_str());
+              break;
+            }
+            if (s.AuthUsingKey(key) == false) {
+              thiz->Error("Key auth failed: %s", s.GetLastError().c_str());
+              break;
+            }
+            authenticated = true;
+          }
+          break;
+
         default:
           // Should not get here.
           assert(false);
@@ -478,6 +525,7 @@ class MoshClientInstance : public pp::Instance {
       // For safety, and paranoia, zero the sensitive input here to be sure it
       // is always done.
       memset(input, 0, sizeof(input));
+      thiz->ssh_key_.clear();
     }
 
     if (authenticated == false) {
@@ -528,6 +576,7 @@ class MoshClientInstance : public pp::Instance {
 
   bool ssh_mode_;
   string ssh_user_;
+  string ssh_key_;
 
   pp::InstanceHandle instance_handle_;
   Keyboard *keyboard_;
