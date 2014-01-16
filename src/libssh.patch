@@ -1,0 +1,76 @@
+diff -ur ./cmake/Modules/DefineCompilerFlags.cmake ../libssh-0.6.0.fixed-up/cmake/Modules/DefineCompilerFlags.cmake
+--- ./cmake/Modules/DefineCompilerFlags.cmake	2013-12-21 12:37:12.000000000 -0500
++++ ../libssh-0.6.0.fixed-up/cmake/Modules/DefineCompilerFlags.cmake	2014-01-12 00:16:15.741775257 -0500
+@@ -10,7 +10,7 @@
+     if (${CMAKE_C_COMPILER_ID} MATCHES "(GNU|Clang)")
+ 
+         # add -Wconversion ?
+-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99 -pedantic -pedantic-errors")
++        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99 -fno-builtin")
+         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wshadow -Wmissing-prototypes -Wdeclaration-after-statement")
+         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wunused -Wfloat-equal -Wpointer-arith -Wwrite-strings -Wformat-security")
+         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wmissing-format-attribute")
+diff -ur ./src/CMakeLists.txt ../libssh-0.6.0.fixed-up/src/CMakeLists.txt
+--- ./src/CMakeLists.txt	2013-12-21 12:37:12.000000000 -0500
++++ ../libssh-0.6.0.fixed-up/src/CMakeLists.txt	2014-01-12 00:20:14.306463716 -0500
+@@ -93,10 +93,12 @@
+   CACHE INTERNAL "libssh link libraries"
+ )
+ 
++if (WITH_SHARED_LIB)
+ set(LIBSSH_SHARED_LIBRARY
+   ssh_shared
+   CACHE INTERNAL "libssh shared library"
+ )
++endif (WITH_SHARED_LIB)
+ 
+ if (WITH_STATIC_LIB)
+   set(LIBSSH_STATIC_LIBRARY
+@@ -217,6 +219,7 @@
+   ${LIBSSH_PRIVATE_INCLUDE_DIRS}
+ )
+ 
++if (WITH_SHARED_LIB)
+ add_library(${LIBSSH_SHARED_LIBRARY} SHARED ${libssh_SRCS})
+ 
+ target_link_libraries(${LIBSSH_SHARED_LIBRARY} ${LIBSSH_LINK_LIBRARIES})
+@@ -247,6 +250,7 @@
+   ARCHIVE DESTINATION ${LIB_INSTALL_DIR}
+   COMPONENT libraries
+ )
++endif (WITH_SHARED_LIB)
+ 
+ if (WITH_STATIC_LIB)
+   add_library(${LIBSSH_STATIC_LIBRARY} STATIC ${libssh_SRCS})
+diff -ur ./src/threads/CMakeLists.txt ../libssh-0.6.0.fixed-up/src/threads/CMakeLists.txt
+--- ./src/threads/CMakeLists.txt	2013-02-07 13:23:14.000000000 -0500
++++ ../libssh-0.6.0.fixed-up/src/threads/CMakeLists.txt	2014-01-12 00:15:36.461657082 -0500
+@@ -11,10 +11,12 @@
+     ${CMAKE_BINARY_DIR}
+ )
+ 
++if (WITH_SHARED_LIB)
+ set(LIBSSH_THREADS_SHARED_LIBRARY
+   ssh_threads_shared
+   CACHE INTERNAL "libssh threads shared library"
+ )
++endif (WITH_SHARED_LIB)
+ 
+ if (WITH_STATIC_LIB)
+   set(LIBSSH_THREADS_STATIC_LIBRARY
+@@ -53,6 +55,7 @@
+   ${LIBSSH_THREADS_PRIVATE_INCLUDE_DIRS}
+ )
+ 
++if (WITH_SHARED_LIB)
+ add_library(${LIBSSH_THREADS_SHARED_LIBRARY} SHARED ${libssh_threads_SRCS})
+ 
+ target_link_libraries(${LIBSSH_THREADS_SHARED_LIBRARY} ${LIBSSH_THREADS_LINK_LIBRARIES})
+@@ -82,6 +85,7 @@
+   ARCHIVE DESTINATION ${LIB_INSTALL_DIR}
+   COMPONENT libraries
+ )
++endif (WITH_SHARED_LIB)
+ 
+ if (WITH_STATIC_LIB)
+   add_library(${LIBSSH_THREADS_STATIC_LIBRARY} STATIC ${libssh_threads_SRCS})

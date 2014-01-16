@@ -1,0 +1,27 @@
+{
+  "manifest_version": 2,
+  "minimum_chrome_version": "32",
+  "name": "Mosh",
+  "description": "Mosh (mobile shell) for Chrome.",
+  "offline_enabled": true,
+  "version": "0.0.0.13",
+  "app": {
+    "background": {
+      "scripts": ["background.js"]
+    }
+  },
+  "permissions": [
+    {"socket": [
+      "resolve-host",
+      "tcp-connect",
+      "udp-bind",
+      "udp-send-to"
+    ]},
+    "clipboardRead",
+    "clipboardWrite",
+    "storage"
+  ],
+  "icons": {
+    "128": "laptop_terminal.png"
+  }
+}

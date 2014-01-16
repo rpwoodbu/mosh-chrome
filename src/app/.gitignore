@@ -1,0 +1,5 @@
+lib*
+*.nmf
+*.nexe
+*.zip
+hterm
