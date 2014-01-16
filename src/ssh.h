@@ -51,6 +51,74 @@ class ResultCode {
   int last_code_;
 };
 
+// Types of authentications. This maps to libssh's bitfield macros as noted.
+enum AuthenticationType {
+  kPassword = 0, // SSH_AUTH_METHOD_PASSWORD
+  kPublicKey, // SSH_AUTH_METHOD_PUBLICKEY
+  kHostBased, // SSH_AUTH_METHOD_HOSTBASED
+  kInteractive, // SSH_AUTH_METHOD_INTERACTIVE
+};
+
+// Get a human-readable text representation of an authentication type.
+string GetAuthenticationTypeName(AuthenticationType type);
+
+// Represents a keyboard-interactive authorization "subsession". Should only be
+// gotten from Session::AuthUsingKeyboardInteractive().
+//
+// Usage: In a loop, call GetStatus() while it returns kPending. In there, form
+// a loop calling GetNextPrompt() and Answer(). Answer will return false until
+// all answers are given, at which point the loop should go back to
+// GetStatus(). If GetStatus() returns kAuthenticated, you are done. If it
+// returns kPartialAuthentication, you must continue with another
+// authentication method. If it returns kFailed, this authentication failed
+// completely (but others may succeed).
+class KeyboardInteractive {
+ public:
+  enum Status {
+    kAuthenticated = 0, // Authentication fully successful.
+    kPartialAuthentication, // OK, but more auth methods required.
+    kPending, // Pending more prompts and answers.
+    kFailed, // Authentication failed.
+  };
+
+  explicit KeyboardInteractive(ssh_session s);
+
+  // Returns the current status of keyboard-interactive auth.
+  Status GetStatus();
+
+  // Returns the "name" string from the server. Must have called
+  // GetStatus() first.
+  string GetName() {
+    return string(ssh_userauth_kbdint_getname(s_));
+  }
+
+  // Returns the "instruction" string from the server. Must have called
+  // GetStatus() first.
+  string GetInstruction() {
+    return string(ssh_userauth_kbdint_getinstruction(s_));
+  }
+
+  // Returns the next prompt from the server.
+  string GetNextPrompt();
+
+  // Answer the most recently gotten prompt. Returns true if authentication is
+  // complete; otherwise, call GetNextPrompt() to keep going.
+  //
+  // Using a plain char * to allow you to manage the lifecycle of sensitive
+  // data. This class does not make a copy of the string, but just passes it to
+  // libssh.
+  bool Answer(const char *answer);
+
+ private:
+  ssh_session s_;
+  int num_prompts_;
+  int current_prompt_;
+
+  // Disable copy and assign.
+  KeyboardInteractive(KeyboardInteractive &);
+  KeyboardInteractive &operator=(KeyboardInteractive &);
+};
+
 // Represents an ssh session.
 class Session : public ResultCode {
  public:
@@ -79,11 +147,22 @@ class Session : public ResultCode {
   // for the lifetime of Session. Analog to ssh_get_publickey().
   Key *GetPublicKey();
 
+  // Get a list of authentication types available. On error, or if the server
+  // is stubborn, the list will be empty. Check GetLastError().
+  ::std::vector<AuthenticationType> GetAuthenticationTypes();
+
   // Authenticate using password auth. Analog to ssh_userauth_password().
   bool AuthUsingPassword(const string &password) {
     return ParseCode(
       ssh_userauth_password(s_, NULL, password.c_str()), SSH_AUTH_SUCCESS);
   }
+
+  // Authenticate using keyboard-interactive auth. Returns a
+  // KeyboardInteractive object (see documentation for that class). Session
+  // retains ownership of this object, and it is only valid for the lifetime of
+  // Session. If you've already gotten a KeyboardInteractive, the old one is
+  // unusable after this method is called.
+  KeyboardInteractive *AuthUsingKeyboardInteractive();
 
   // Gets a new channel. Ownership is retained, thus is valid only for the
   // lifetime of Session. Analog to ssh_channel_new().
@@ -109,6 +188,7 @@ class Session : public ResultCode {
   bool connected_;
   Key *key_;
   ::std::vector<Channel *> channels_;
+  KeyboardInteractive *keyboard_interactive_;
 
   // Disable copy and assign.
   Session(Session &);

@@ -90,8 +90,9 @@ class Selector {
 // UpdateRead() or UpdateWrite() whenever data availability changes.
 class Target {
  public:
+  // We default has_write_data_ to true, as many targets never block on writes.
   Target(class Selector *s, int id) :
-      selector_(s), id_(id), has_read_data_(false), has_write_data_(false) {}
+      selector_(s), id_(id), has_read_data_(false), has_write_data_(true) {}
   ~Target();
 
   // UpdateRead updates Target whether there is pending data available in the

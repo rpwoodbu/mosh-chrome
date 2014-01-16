@@ -44,7 +44,7 @@ namespace PepperPOSIX {
 // Abstract class representing a POSIX file.
 class File {
  public:
-  File() : target_(NULL) {}
+  File() : target_(NULL), blocking_(true) {}
   virtual ~File() { delete target_; };
 
   virtual int Close() { return 0; }
@@ -55,9 +55,14 @@ class File {
     return target_->id();
   }
 
+  virtual const bool IsBlocking() { return blocking_; }
+  virtual void SetBlocking(bool mode) { blocking_ = mode; }
+
   Target *target_;
 
  private:
+  bool blocking_;
+
   // Disable copy and assignment.
   File(const File &);
   File &operator=(const File &);
@@ -133,6 +138,8 @@ class POSIX {
   int FCntl(int fd, int cmd, va_list args);
 
   int Connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+
+  // TODO: Provide a method to change blocking mode.
 
   // Register a filename and File factory to be used when that file is
   // opened.

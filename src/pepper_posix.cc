@@ -100,6 +100,12 @@ ssize_t POSIX::Read(int fd, void *buf, size_t count) {
     return -1;
   }
 
+  if (reader->IsBlocking()) {
+    vector<Target *> read_targets, write_targets;
+    read_targets.push_back(reader->target_);
+    selector_.Select(read_targets, write_targets, NULL);
+  }
+
   return reader->Read(buf, count);
 }
 
@@ -112,6 +118,12 @@ ssize_t POSIX::Write(int fd, const void *buf, size_t count) {
   if (writer == NULL) {
     errno = EBADF;
     return -1;
+  }
+
+  if (writer->IsBlocking()) {
+    vector<Target *> read_targets, write_targets;
+    write_targets.push_back(writer->target_);
+    selector_.Select(read_targets, write_targets, NULL);
   }
 
   return writer->Write(buf, count);
@@ -243,6 +255,12 @@ ssize_t POSIX::Recv(int sockfd, void *buf, size_t len, int flags) {
     return -1;
   }
 
+  if (tcp->IsBlocking()) {
+    vector<Target *> read_targets, write_targets;
+    read_targets.push_back(tcp->target_);
+    selector_.Select(read_targets, write_targets, NULL);
+  }
+
   return tcp->Receive(buf, len, flags);
 }
 
@@ -255,6 +273,12 @@ ssize_t POSIX::RecvMsg(int sockfd, struct msghdr *msg, int flags) {
   if (udp == NULL) {
     errno = EBADF;
     return -1;
+  }
+
+  if (udp->IsBlocking()) {
+    vector<Target *> read_targets, write_targets;
+    read_targets.push_back(udp->target_);
+    selector_.Select(read_targets, write_targets, NULL);
   }
 
   return udp->Receive(msg, flags);
@@ -286,6 +310,12 @@ ssize_t POSIX::Send(int sockfd, const void *buf, size_t len, int flags) {
     return -1;
   }
 
+  if (tcp->IsBlocking()) {
+    vector<Target *> read_targets, write_targets;
+    write_targets.push_back(tcp->target_);
+    selector_.Select(read_targets, write_targets, NULL);
+  }
+
   return tcp->Send(buf, len, flags);
 }
 
@@ -298,6 +328,12 @@ ssize_t POSIX::SendTo(int sockfd, const void *buf, size_t len, int flags,
   if (udp == NULL) {
     errno = EBADF;
     return -1;
+  }
+
+  if (udp->IsBlocking()) {
+    vector<Target *> read_targets, write_targets;
+    write_targets.push_back(udp->target_);
+    selector_.Select(read_targets, write_targets, NULL);
   }
 
   vector<char> buffer((const char*)buf, (const char*)buf+len);

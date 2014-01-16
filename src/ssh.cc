@@ -19,8 +19,54 @@
 
 namespace ssh {
 
+KeyboardInteractive::KeyboardInteractive(ssh_session s) :
+    s_(s), current_prompt_(0), num_prompts_(0) {}
+
+KeyboardInteractive::Status KeyboardInteractive::GetStatus() {
+  while (true) {
+    int result = ssh_userauth_kbdint(s_, NULL, NULL);
+    if (result == SSH_AUTH_SUCCESS) {
+      return kAuthenticated;
+    }
+    if (result == SSH_AUTH_PARTIAL) {
+      return kPartialAuthentication;
+    }
+    if (result == SSH_AUTH_INFO) {
+      current_prompt_ = 0;
+      num_prompts_ = ssh_userauth_kbdint_getnprompts(s_);
+      if (num_prompts_ == 0) {
+        // According to the libssh docs, empty question sets can happen
+        // sometimes. Keep calling ssh_userauth_kbdint().
+        continue;
+      }
+      return kPending;
+    }
+    // We only want to loop back under special situations, so if we got to the
+    // bottom, we've done all we can do.
+    break;
+  }
+
+  return kFailed;
+}
+
+string KeyboardInteractive::GetNextPrompt() {
+  return string(ssh_userauth_kbdint_getprompt(s_, current_prompt_, NULL));
+}
+
+bool KeyboardInteractive::Answer(const char *answer) {
+  int result = ssh_userauth_kbdint_setanswer(s_, current_prompt_, answer);
+  if (result < 0) {
+    return false;
+  }
+  ++current_prompt_;
+  if (current_prompt_ < num_prompts_) {
+    return false;
+  }
+  return true;
+}
+
 Session::Session(const string &host, int port, const string &user) :
-    s_(ssh_new()), connected_(false), key_(NULL) {
+    s_(ssh_new()), connected_(false), key_(NULL), keyboard_interactive_(NULL) {
   SetOption(SSH_OPTIONS_HOST, host);
   SetOption(SSH_OPTIONS_PORT, port);
   SetOption(SSH_OPTIONS_USER, user);
@@ -32,6 +78,9 @@ Session::~Session() {
 }
 
 bool Session::Connect() {
+  if (connected_) {
+    Disconnect();
+  }
   int result = ssh_connect(s_);
   if (result == SSH_OK) {
     connected_ = true;
@@ -42,10 +91,10 @@ bool Session::Connect() {
 void Session::Disconnect() {
   if (connected_) {
     connected_ = false;
-    if (key_ != NULL) {
-      delete key_;
-      key_ = NULL;
-    }
+    delete key_;
+    key_ = NULL;
+    delete keyboard_interactive_;
+    keyboard_interactive_ = NULL;
     for (::std::vector<Channel *>::iterator it = channels_.begin();
         it != channels_.end();
         ++it) {
@@ -63,6 +112,55 @@ Key *Session::GetPublicKey() {
     key_ = new Key(key);
   }
   return key_;
+}
+
+::std::vector<AuthenticationType> Session::GetAuthenticationTypes() {
+  ::std::vector<AuthenticationType> auth_types;
+
+  // First we have to try the "none" method to get the types. This could lead
+  // to confusion if it is actually sufficient to authenticate.
+  int result = ssh_userauth_none(s_, NULL);
+  if (result == SSH_AUTH_ERROR || result == SSH_AUTH_SUCCESS) {
+    ParseCode(result);
+    // Returning an empty list.
+    return auth_types;
+  }
+
+  int auth_list = ssh_userauth_list(s_, NULL);
+  if (auth_list & SSH_AUTH_METHOD_PASSWORD) {
+    auth_types.push_back(kPassword);
+  }
+  if (auth_list & SSH_AUTH_METHOD_PUBLICKEY) {
+    auth_types.push_back(kPublicKey);
+  }
+  if (auth_list & SSH_AUTH_METHOD_HOSTBASED) {
+    auth_types.push_back(kHostBased);
+  }
+  if (auth_list & SSH_AUTH_METHOD_INTERACTIVE) {
+    auth_types.push_back(kInteractive);
+  }
+
+  return auth_types;
+}
+
+string GetAuthenticationTypeName(AuthenticationType type) {
+  switch (type) {
+    case ssh::kPassword:
+      return "Password";
+    case ssh::kPublicKey:
+      return "Public Key";
+    case ssh::kHostBased:
+      return "Host Based";
+    case ssh::kInteractive:
+      return "Keyboard Interactive";
+  }
+  return "Unknown";
+}
+
+KeyboardInteractive *Session::AuthUsingKeyboardInteractive() {
+  delete keyboard_interactive_;
+  keyboard_interactive_ = new KeyboardInteractive(s_);
+  return keyboard_interactive_;
 }
 
 Channel *Session::NewChannel() {

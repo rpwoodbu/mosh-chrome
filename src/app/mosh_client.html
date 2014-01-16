@@ -52,7 +52,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             </label>
           </td>
         </tr>
-        <tr id="username-row" hidden="true">
+        <tr id="username-row">
           <td>Username:</td>
           <td><input id="user" type="text" autofocus></td>
         </tr>
@@ -60,7 +60,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
           <td>Hostname or IP address:</td>
           <td><input id="addr" type="text"></td>
         </tr>
-          <td id="credential-label"></td>
+        <tr id="key-row" hidden="true">
+          <td>MOSH_KEY</td>
           <td><input id="key" type="password"></td>
         </tr>
         <tr>
@@ -91,8 +92,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <h3>Known issues</h3>
     <p>
     <ul>
-      <li>ssh fingerprint goes by too fast, with no option to confirm.
-      <li>Only ssh password auth is currently supported.
+      <li>No support for ssh public key auth.
       <li>Too easy to close the window by mistake.
       <li>x86_32 port is built with --disable-hardening, which reduces
         security somewhat.

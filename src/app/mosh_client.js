@@ -66,16 +66,16 @@ function updateMode(e) {
   var sshModeButton = document.querySelector('#ssh-mode');
   var portField = document.querySelector('#port');
   var usernameRow = document.querySelector('#username-row');
-  var credentialLabel = document.querySelector('#credential-label');
+  var keyRow = document.querySelector('#key-row');
 
   if (sshModeButton.checked) {
     portField.value = 22;
     usernameRow.hidden = false;
-    credentialLabel.innerText = "Password:";
+    keyRow.hidden = true;
   } else {
     portField.value = 60001;
     usernameRow.hidden = true;
-    credentialLabel.innerText = "MOSH_KEY:";
+    keyRow.hidden = false;
   }
 }
 

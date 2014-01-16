@@ -21,6 +21,7 @@
 #include "pepper_wrapper.h"
 #include "ssh.h"
 
+#include <algorithm>
 #include <deque>
 #include <string>
 #include <vector>
@@ -73,7 +74,8 @@ class Keyboard : public PepperPOSIX::Reader {
       result = 1;
     } else {
       // Cannot use Log() here; circular dependency.
-      fprintf(stderr, "read(): From STDIN, no data, treat as nonblocking.\n");
+      fprintf(stderr,
+          "Keyboard::Read(): From STDIN, no data, treat as nonblocking.\n");
     }
     pthread_mutex_unlock(&keypresses_lock_);
     return result;
@@ -295,9 +297,6 @@ class MoshClientInstance : public pp::Instance {
         Log("Must provide a username for ssh mode.");
         return false;
       }
-      strncpy(ssh_password_, secret, sizeof(ssh_password_));
-      // Ensure it is null-terminated.
-      ssh_password_[sizeof(ssh_password_)-1] = 0;
     } else {
       setenv("MOSH_KEY", secret, 1);
     }
@@ -359,6 +358,18 @@ class MoshClientInstance : public pp::Instance {
     return 0;
   }
 
+  // Used by SSHLogin() to get a line of input from the keyboard.
+  static void GetKeyboardLine(char *buf, size_t len) {
+    int i = 0;
+    for (; i < len; ++i) {
+      buf[i] = getchar();
+      if (buf[i] == '\r') {
+        break;
+      }
+    }
+    buf[i] = 0;
+  }
+
   // Get MOSH_KEY via SSH.
   static void *SSHLogin(void *data) {
     MoshClientInstance *thiz = reinterpret_cast<MoshClientInstance *>(data);
@@ -373,15 +384,98 @@ class MoshClientInstance : public pp::Instance {
     thiz->Output(TYPE_DISPLAY,
         "Fingerprint of remote ssh host (MD5): " +
         s.GetPublicKey()->MD5() + "\r\n");
-    // TODO: Should probably prompt the user for a password interactively.
-    if (s.AuthUsingPassword(thiz->ssh_password_) == false) {
-      thiz->Error("ssh authentication failed: %s", s.GetLastError().c_str());
-      // For safety, zero the password.
-      memset(thiz->ssh_password_, 0, sizeof(thiz->ssh_password_));
+
+    // Place the list of supported authentications types here, in the order
+    // they should be tried.
+    vector<ssh::AuthenticationType> client_auths;
+    client_auths.push_back(ssh::kPassword);
+    client_auths.push_back(ssh::kInteractive);
+
+    thiz->Output(TYPE_DISPLAY, "Authentication types supported by server:\r\n");
+    vector<ssh::AuthenticationType> server_auths = s.GetAuthenticationTypes();
+    if (server_auths.size() == 0) {
+      thiz->Error("Failed to get authentication types: %s",
+          s.GetLastError().c_str());
       return NULL;
     }
-    // For safety, zero the password.
-    memset(thiz->ssh_password_, 0, sizeof(thiz->ssh_password_));
+    for (vector<ssh::AuthenticationType>::iterator i = server_auths.begin();
+      i != server_auths.end();
+      ++i) {
+      thiz->Output(TYPE_DISPLAY, " - " + ssh::GetAuthenticationTypeName(*i));
+      if (std::find(client_auths.begin(), client_auths.end(), *i) ==
+          client_auths.end()) {
+        thiz->Output(TYPE_DISPLAY, " (not supported by client)");
+      }
+      thiz->Output(TYPE_DISPLAY, "\r\n");
+    }
+
+    bool authenticated = false;
+    for (vector<ssh::AuthenticationType>::iterator i = client_auths.begin();
+        authenticated == false && i != client_auths.end();
+        ++i) {
+      if (std::find(server_auths.begin(), server_auths.end(), *i) ==
+          server_auths.end()) {
+        // Not supported by server, moving on.
+        continue;
+      }
+
+      ssh::KeyboardInteractive *kbd = NULL;
+      ssh::KeyboardInteractive::Status status =
+          ssh::KeyboardInteractive::kPending;
+      char input[256];
+
+      switch(*i) {
+        case ssh::kPassword:
+          thiz->Output(TYPE_DISPLAY, "Password: ");
+          GetKeyboardLine(input, sizeof(input));
+          thiz->Output(TYPE_DISPLAY, "\r\n");
+          authenticated = s.AuthUsingPassword(input);
+          // For safety, zero the sensitive input ASAP.
+          memset(input, 0, sizeof(input));
+          if (authenticated == false) {
+            thiz->Error("Password authentication failed: %s",
+                s.GetLastError().c_str());
+          }
+          break;
+
+        case ssh::kInteractive:
+          kbd = s.AuthUsingKeyboardInteractive();
+          status = kbd->GetStatus();
+          while (status == ssh::KeyboardInteractive::kPending) {
+            thiz->Output(TYPE_DISPLAY, kbd->GetName());
+            thiz->Output(TYPE_DISPLAY, kbd->GetInstruction());
+            bool done = false;
+            while (!done) {
+              thiz->Output(TYPE_DISPLAY, kbd->GetNextPrompt());
+              GetKeyboardLine(input, sizeof(input));
+              thiz->Output(TYPE_DISPLAY, "\r\n");
+              done = kbd->Answer(input);
+              // For safety, zero the sensitive input ASAP.
+              memset(input, 0, sizeof(input));
+            }
+            status = kbd->GetStatus();
+          }
+          if (status != ssh::KeyboardInteractive::kAuthenticated) {
+            thiz->Error("Keyboard interactive auth failed or insufficient.");
+            break;
+          }
+          authenticated = true;
+          break;
+
+        default:
+          // Should not get here.
+          assert(false);
+      }
+
+      // For safety, and paranoia, zero the sensitive input here to be sure it
+      // is always done.
+      memset(input, 0, sizeof(input));
+    }
+
+    if (authenticated == false) {
+      thiz->Error("ssh authentication failed: %s", s.GetLastError().c_str());
+      return NULL;
+    }
 
     ssh::Channel *c = s.NewChannel();
     if (c->Execute("mosh-server") == false) {
@@ -425,8 +519,6 @@ class MoshClientInstance : public pp::Instance {
   char *port_;
 
   bool ssh_mode_;
-  // Using an old-school char[] to ensure a safe lifecycle.
-  char ssh_password_[128];
   string ssh_user_;
 
   pp::InstanceHandle instance_handle_;
