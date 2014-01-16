@@ -3,7 +3,10 @@ Mosh for Chrome
 
 Main author: Richard Woodbury (rpwoodbu@mybox.org)
 
-This is a [Mosh](http://mosh.mit.edu) client port for Chrome using Native Client.
+This is a [Mosh](http://mosh.mit.edu) client port for the
+[Chrome](http://www.google.com/chrome/) web browser using
+[Native Client](https://developers.google.com/native-client). It is
+particularly useful with [Chrome OS](http://www.google.com/chromeos).
 
 Building
 --------
