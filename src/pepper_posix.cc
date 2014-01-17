@@ -255,7 +255,7 @@ ssize_t POSIX::Recv(int sockfd, void *buf, size_t len, int flags) {
     return -1;
   }
 
-  if (tcp->IsBlocking()) {
+  if (tcp->IsBlocking() && !(flags & MSG_DONTWAIT)) {
     vector<Target *> read_targets, write_targets;
     read_targets.push_back(tcp->target_);
     selector_.Select(read_targets, write_targets, NULL);
@@ -275,7 +275,7 @@ ssize_t POSIX::RecvMsg(int sockfd, struct msghdr *msg, int flags) {
     return -1;
   }
 
-  if (udp->IsBlocking()) {
+  if (udp->IsBlocking() && !(flags & MSG_DONTWAIT)) {
     vector<Target *> read_targets, write_targets;
     read_targets.push_back(udp->target_);
     selector_.Select(read_targets, write_targets, NULL);
@@ -310,7 +310,7 @@ ssize_t POSIX::Send(int sockfd, const void *buf, size_t len, int flags) {
     return -1;
   }
 
-  if (tcp->IsBlocking()) {
+  if (tcp->IsBlocking() && !(flags & MSG_DONTWAIT)) {
     vector<Target *> read_targets, write_targets;
     write_targets.push_back(tcp->target_);
     selector_.Select(read_targets, write_targets, NULL);
@@ -330,7 +330,7 @@ ssize_t POSIX::SendTo(int sockfd, const void *buf, size_t len, int flags,
     return -1;
   }
 
-  if (udp->IsBlocking()) {
+  if (udp->IsBlocking() && !(flags & MSG_DONTWAIT)) {
     vector<Target *> read_targets, write_targets;
     write_targets.push_back(udp->target_);
     selector_.Select(read_targets, write_targets, NULL);
@@ -344,14 +344,20 @@ ssize_t POSIX::SendTo(int sockfd, const void *buf, size_t len, int flags,
 }
 
 int POSIX::FCntl(int fd, int cmd, va_list arg) {
+  if (files_.count(fd) == 0) {
+    return EBADF;
+  }
+  File *file = files_[fd];
+
   if (cmd == F_SETFL) {
+    bool blocking = true;
     long long_arg = va_arg(arg, long);
     if (long_arg & O_NONBLOCK) {
-      // For now, everything is nonblocking, so this is a no-op.
-      return 0;
+      blocking = false;
     }
     Log("POSIX::FCntl(): Got F_SETFL, but unsupported arg: 0%lo", long_arg);
     // TODO: Consider this an error?
+    file->SetBlocking(blocking);
     return 0;
   }
 
