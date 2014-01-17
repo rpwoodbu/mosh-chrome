@@ -17,6 +17,7 @@
 
 #include "pepper_posix_native_udp.h"
 
+#include <errno.h>
 #include <netinet/in.h>
 #include <stdio.h>
 #include <string.h>
@@ -73,8 +74,21 @@ ssize_t NativeUDP::Send(
   }
 
   pp::NetAddress net_address(instance_handle_, address);
-  return socket_->SendTo(
+  int32_t result = socket_->SendTo(
       buf.data(), buf.size(), net_address, pp::CompletionCallback());
+  if (result < 0) {
+    switch (result) {
+      case PP_ERROR_ADDRESS_UNREACHABLE:
+        errno = EHOSTUNREACH;
+        break;
+      default:
+        // Set errno to something, even if it isn't precise.
+        Log("NativeUDP::Send(): socket_->SendTo() failed with %d", result);
+        errno = EIO;
+        break;
+    }
+  }
+  return result;
 }
 
 // StartReceive prepares to receive another packet, and returns without
