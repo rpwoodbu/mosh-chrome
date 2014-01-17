@@ -129,9 +129,11 @@ class WindowChange : public PepperPOSIX::Signal {
 
   // Update geometry and send SIGWINCH.
   void Update(int width, int height) {
-    width_ = width;
-    height_ = height;
-    target_->UpdateRead(true);
+    if (sigwinch_handler_ != NULL) {
+      width_ = width;
+      height_ = height;
+      target_->UpdateRead(true);
+    }
   }
 
   void SetHandler(void (*sigwinch_handler)(int)) {
@@ -139,8 +141,10 @@ class WindowChange : public PepperPOSIX::Signal {
   }
 
   virtual void Handle() {
-    sigwinch_handler_(SIGWINCH);
-    target_->UpdateRead(false);
+    if (sigwinch_handler_ != NULL) {
+      sigwinch_handler_(SIGWINCH);
+      target_->UpdateRead(false);
+    }
   }
 
   int height() { return height_; }
