@@ -45,9 +45,7 @@ using ::std::string;
 using ::std::vector;
 
 // Forward declaration of mosh_main(), as it has no header file.
-extern "C" {
 int mosh_main(int argc, char *argv[]);
-}
 
 // Used by pepper_wrapper.h functions.
 static class MoshClientInstance *instance = NULL;

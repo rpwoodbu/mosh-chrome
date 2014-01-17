@@ -74,3 +74,15 @@ diff -ur ./src/threads/CMakeLists.txt ../libssh-0.6.0.fixed-up/src/threads/CMake
  
  if (WITH_STATIC_LIB)
    add_library(${LIBSSH_THREADS_STATIC_LIBRARY} STATIC ${libssh_threads_SRCS})
+diff -u ./ConfigureChecks.cmake ../libssh-0.6.0.fixed-up/ConfigureChecks.cmake
+--- ./ConfigureChecks.cmake  2013-12-21 12:37:12.000000000 -0500
++++ ../libssh-0.6.0.fixed-up/ConfigureChecks.cmake  2014-01-19 17:49:39.303764044 -0500
+@@ -215,6 +215,6 @@
+ endif (WITH_GSSAPI AND NOT GSSAPI_FOUND)
+ 
+ # ENDIAN
+-if (NOT WIN32)
++if (NOT WIN32 AND NOT PNACL)
+     test_big_endian(WORDS_BIGENDIAN)
+-endif (NOT WIN32)
++endif (NOT WIN32 AND NOT PNACL)

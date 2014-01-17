@@ -143,6 +143,24 @@ FILE *fopen(const char *path, const char *mode) {
   return stream;
 }
 
+size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
+#ifdef USE_NEWLIB
+  int fd = stream->_file;
+#else
+  int fd = stream->_fileno;
+#endif
+  return read(fd, ptr, size*nmemb);
+}
+
+size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream) {
+#ifdef USE_NEWLIB
+  int fd = stream->_file;
+#else
+  int fd = stream->_fileno;
+#endif
+  return write(fd, ptr, size*nmemb);
+}
+
 int fprintf(FILE *stream, const char *format, ...) {
   char buf[1024];
   va_list argp;
@@ -281,7 +299,8 @@ int getsockopt(int sockfd, int level, int optname,
 // For some reason, after linking in ssh.cc, dup() gets brought in from libnacl
 // (which I don't even want to link, but seems to anyway). Using linker flag
 // "--wrap=dup" allows me to work around this by redirecting all references to
-// "dup" to "__wrap_dup" instead.
+// "dup" to "__wrap_dup" instead. Unfortunately, Clang doesn't have that flag,
+// so instead this is awkwardly redirected in the magic assert.h.
 int __wrap_dup(int oldfd) {
   return GetPOSIX()->Dup(oldfd);
 }

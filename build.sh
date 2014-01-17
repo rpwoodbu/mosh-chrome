@@ -22,7 +22,7 @@
 NACL_SDK_ZIP="nacl_sdk.zip"
 NACL_SDK_URL="http://storage.googleapis.com/nativeclient-mirror/nacl/nacl_sdk/${NACL_SDK_ZIP}"
 NACL_SDK_DIR="nacl_sdk"
-NACL_SDK_VERSION="pepper_32"
+NACL_SDK_VERSION="pepper_33"
 
 DEPOT_TOOLS_URL="https://chromium.googlesource.com/chromium/tools/depot_tools.git"
 DEPOT_TOOLS_DIR="depot_tools"
@@ -115,6 +115,10 @@ fi
 PROTO_PATH="$(pwd)/build/${PROTOBUF_DIR}/src"
 export PATH="${PROTO_PATH}:${PATH}"
 export LD_LIBRARY_PATH="${PROTO_PATH}/.libs"
+# Ensure that Mosh's configure script doesn't try to do anything stupid with
+# these.
+export protobuf_CFLAGS=" "
+export protobuf_LIBS=" "
 
 # Get and patch (but not build) libssh.
 if [[ ! -d "build/${LIBSSH_DIR}" ]]; then
@@ -134,52 +138,58 @@ pushd src > /dev/null
 make clean
 popd > /dev/null
 
-for arch in x86_64 i686; do ( # Do all this in a separate subshell.
-  export NACL_ARCH="${arch}"
+export NACL_ARCH="pnacl"
 
-  echo "Building packages in NaCl Ports..."
-  pushd "${NACL_PORTS}/src" > /dev/null
-  make ncurses zlib openssl protobuf
-  popd > /dev/null
+echo "Building packages in NaCl Ports..."
+pushd "${NACL_PORTS}/src" > /dev/null
+make ncurses zlib openssl protobuf
+popd > /dev/null
 
-  echo "Updating submodules..."
-  git submodule init
-  git submodule update
+echo "Updating submodules..."
+git submodule init
+git submodule update
 
-  echo "Making hterm dist..."
-  pushd deps/chromium_assets/chromeapps/hterm > /dev/null
-  if [[ ! -d dist ]]; then
-    bin/mkdist.sh
+echo "Making hterm dist..."
+pushd deps/chromium_assets/chromeapps/hterm > /dev/null
+if [[ ! -d dist ]]; then
+  bin/mkdist.sh
+fi
+popd > /dev/null
+
+echo "Loading naclports environment..."
+. ${NACL_PORTS}/src/build_tools/nacl_env.sh
+
+# Make PNaCl tools available.
+export CC=${NACLCC}
+export CXX=${NACLCXX}
+export AR=${NACLAR}
+export RANLIB=${NACLRANLIB}
+export PKG_CONFIG_LIBDIR=${NACL_TOOLCHAIN_ROOT}/usr/lib/pkgconfig
+
+glibc_compat="${NACL_TOOLCHAIN_ROOT}/usr/include/glibc-compat"
+include_flags="-I${glibc_compat} -I${NACL_SDK_ROOT}/include/pnacl -I${NACL_SDK_ROOT}/include"
+export CFLAGS="${CFLAGS} ${include_flags}"
+export CXXFLAGS="${CXXFLAGS} ${include_flags}"
+
+if [[ ${FAST} != "fast" ]]; then
+  libssh="build/${LIBSSH_DIR}/build/src/libssh.a"
+  if [[ ! -f "${libssh}" ]]; then
+    echo "Building libssh..."
+    pushd "build/${LIBSSH_DIR}" > /dev/null
+    rm -Rf "build"
+    mkdir "build"
+    cd "build"
+    cmake -DPNACL=ON -DWITH_ZLIB=OFF -DWITH_STATIC_LIB=ON -DWITH_SHARED_LIB=OFF -DWITH_EXAMPLES=OFF -DHAVE_GETADDRINFO=ON ..
+    make
+    popd > /dev/null
+    ${RANLIB} "${libssh}"
   fi
-  popd > /dev/null
 
-  echo "Loading naclports environment..."
-  # For some reason I have to build NACLPORTS_LIBDIR myself, and I need vars to
-  # do this that nacl_env.sh generates, so I end up calling that guy twice.
-  . ${NACL_PORTS}/src/build_tools/nacl_env.sh
-  export NACLPORTS_LIBDIR=${NACL_TOOLCHAIN_ROOT}/${NACL_CROSS_PREFIX}/usr/lib
-  eval $(${NACL_PORTS}/src/build_tools/nacl_env.sh --print)
+  #
+  # Mosh client build. Do in a subshell to avoid side effects.
+  #
 
-  glibc_compat="${NACL_TOOLCHAIN_ROOT}/${arch}-nacl/usr/include/glibc-compat"
-  export CFLAGS="${CFLAGS} -I${glibc_compat}"
-  export CXXFLAGS="${CXXFLAGS} -I${glibc_compat}"
-
-  if [[ ${FAST} != "fast" ]]; then
-    if [[ ! -d "build/${LIBSSH_DIR}/build-${arch}" ]]; then
-      echo "Building libssh..."
-      pushd "build/${LIBSSH_DIR}" > /dev/null
-      rm -Rf "build-${arch}"
-      mkdir "build-${arch}"
-      cd "build-${arch}"
-      cmake -DWITH_ZLIB=OFF -DWITH_STATIC_LIB=ON -DWITH_SHARED_LIB=OFF -DWITH_EXAMPLES=OFF -DHAVE_GETADDRINFO=ON ..
-      make
-      popd > /dev/null
-    fi
-
-    #
-    # Mosh client build.
-    #
-
+  (
     pushd deps/mosh > /dev/null
     if [[ ! -f configure ]]; then
       echo "Running autogen."
@@ -188,50 +198,39 @@ for arch in x86_64 i686; do ( # Do all this in a separate subshell.
     popd > /dev/null # ..
 
     # Make a symlink into the usual include location so that the "override"
-    # assert.h can find it. It changes for each port, and in unexpected ways,
-    # which complicates things.
-    include_arch="${arch}"
-    if [[ "${include_arch}" == "i686" ]]; then
-      include_arch="x86_64" # Yes, really.
-    fi
+    # assert.h can find it. It changes for each port, and in unexpected
+    # ways, which complicates things.
     rm -f build/include
-    ln -s "${NACL_TOOLCHAIN_ROOT}/${include_arch}-nacl/include" build/include
+    ln -s "${NACL_TOOLCHAIN_ROOT}/usr/include" build/include
 
-    build_dir="build/${NACL_ARCH}"
+    build_dir="build/mosh"
     mkdir -p "${build_dir}"
     pushd "${build_dir}" > /dev/null
     # Built-in functions cannot be overridden.
     export CXXFLAGS="${CXXFLAGS} -fno-builtin"
+    # Tell Mosh we're building for NaCl (changes main to mosh_main).
+    export CXXFLAGS="${CXXFLAGS} -DNACL"
+    # Tell Clang to handle C++ exceptions, if badly.
+    # TODO: Once PNaCl supports exceptions properly, remove this flag.
+    export CXXFLAGS="${CXXFLAGS} --pnacl-exceptions=sjlj"
+
     if [[ "${NACL_GLIBC}" != "1" ]]; then
       # Do things specific to newlib.
       export CXXFLAGS="${CXXFLAGS} -I${INCLUDE_OVERRIDE} -DHAVE_FORKPTY -DHAVE_SYS_UIO_H"
     fi
-    export LDFLAGS="${LDFLAGS} -Xlinker --unresolved-symbols=ignore-all"
-    configure_options="--host=${arch} --enable-client=yes --enable-server=no --disable-silent-rules"
-    if [[ "${arch}" == "i686" ]]; then
-      # The i686 build doesn't seem to have stack protection, even though
-      # "configure" finds it, so disabling hardening. :(
-      configure_options="${configure_options} --disable-hardening"
-    fi
-    echo "Configuring..."
-    ../../deps/mosh/configure ${configure_options}
+    # Do configure step in a subshell as we need to fake it out a little.
+    (
+      export CFLAGS="${CFLAGS} -include ${INCLUDE_OVERRIDE}/ncurses_stub.h"
+      configure_options="--host=pnacl --enable-client=yes --enable-server=no --disable-silent-rules"
+      echo "Configuring..."
+      ../../deps/mosh/configure ${configure_options}
+    )
     echo "Building Mosh with NaCl compiler..."
     make clean
-    if [[ "${NACL_GLIBC}" == "1" ]]; then
-      make || echo "*** Ignore error IFF it was the linking step. ***"
-    else
-      make
-    fi
+    make || echo "*** Ignore error IFF it was the linking step. ***"
     popd > /dev/null # ${build_dir}
-  fi
-
-  pushd src > /dev/null
-  target="app/mosh_client_${NACL_ARCH}.nexe"
-  echo "Building ${target}..."
-  make "${target}"
-  popd > /dev/null # src
-
-) done
+  )
+fi
 
 pushd src > /dev/null
 # Copy hterm dist files into app directory.

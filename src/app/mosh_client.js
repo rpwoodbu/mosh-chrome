@@ -112,7 +112,7 @@ mosh.CommandInstance.prototype.run = function() {
       'width: 0;' +
       'height: 0;');
   this.moshNaCl_.setAttribute('src', 'mosh_client.nmf');
-  this.moshNaCl_.setAttribute('type', 'application/x-nacl');
+  this.moshNaCl_.setAttribute('type', 'application/x-pnacl');
   this.moshNaCl_.setAttribute('key', this.argv_.argString['key']);
   this.moshNaCl_.setAttribute('addr', this.argv_.argString['addr']);
   this.moshNaCl_.setAttribute('port', this.argv_.argString['port']);
@@ -129,16 +129,18 @@ mosh.CommandInstance.prototype.run = function() {
   delete this.argv_;
 
   this.moshNaCl_.addEventListener('load', function(e) {
-    console.log('Mosh NaCl loaded.');
+    window.mosh_client_.io.print('loaded.\r\n');
     // Remove sensitive argument attributes.
     window.mosh_client_.moshNaCl_.removeAttribute('key');
   });
   this.moshNaCl_.addEventListener('message', this.onMessage_.bind(this));
   this.moshNaCl_.addEventListener('crash', function(e) {
+    window.mosh_client_.io.print('\r\nMosh NaCl crashed.\r\n');
     console.log('Mosh NaCl crashed.');
-    // TODO: Handle the crash better, so the user knows what happened.
   });
 
+  this.io.print("Loading NaCl module (takes a while the first time" +
+      " after an update)... ");
   document.body.insertBefore(this.moshNaCl_, document.body.firstChild);
 };
 

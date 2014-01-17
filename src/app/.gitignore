@@ -1,5 +1,6 @@
 lib*
 *.nmf
 *.nexe
+*.pexe
 *.zip
 hterm

@@ -37,19 +37,21 @@ CXX_HEADERS:=\
 	ssh.h
 
 OBJECTS:=\
-	../build/ARCH/src/frontend/mosh-client-nacl.o \
-	../build/ARCH/src/frontend/stmclient.o \
-	../build/ARCH/src/frontend/terminaloverlay.o
+	../build/mosh/src/frontend/mosh-client.o \
+	../build/mosh/src/frontend/stmclient.o \
+	../build/mosh/src/frontend/terminaloverlay.o
 
 LIBDIRS:=\
-	-L../build/ARCH/src/frontend \
-	-L../build/ARCH/src/crypto \
-	-L../build/ARCH/src/network \
-	-L../build/ARCH/src/statesync \
-	-L../build/ARCH/src/terminal \
-	-L../build/ARCH/src/util \
-	-L../build/ARCH/src/protobufs \
-	-L../build/libssh-0.6.0/build-ARCH/src
+	-L$(NACL_SDK_ROOT)/lib/pnacl/Release \
+	-L$(NACLPORTS_TOOLCHAIN/ROOT)/usr/lib \
+	-L../build/mosh/src/frontend \
+	-L../build/mosh/src/crypto \
+	-L../build/mosh/src/network \
+	-L../build/mosh/src/statesync \
+	-L../build/mosh/src/terminal \
+	-L../build/mosh/src/util \
+	-L../build/mosh/src/protobufs \
+	-L../build/libssh-0.6.0/build/src
 
 LIBS:=\
 	-lmoshcrypto \
@@ -61,25 +63,18 @@ LIBS:=\
 	-lssh
 
 OSNAME:=$(shell python $(NACL_SDK_ROOT)/tools/getos.py)
-TC_PATH:=$(abspath $(NACL_SDK_ROOT)/toolchain/$(OSNAME)_x86_newlib)
-CXX:=$(TC_PATH)/bin/i686-nacl-g++
-OBJCOPY:=$(TC_PATH)/bin/i686-nacl-objcopy
+TC_PATH:=$(abspath $(NACL_SDK_ROOT)/toolchain/$(OSNAME)_pnacl)
+CXX:=$(TC_PATH)/bin/pnacl-clang++
+OBJCOPY:=$(TC_PATH)/../$(OSNAME)_x86_newlib/bin/i686-nacl-objcopy
 
 # Project Build flags
-override LDFLAGS+=-Xlinker --wrap=dup -Xlinker --wrap=_ssh_log -lppapi_cpp -lppapi -lz -lssl -lncurses -lprotobuf -lcrypto -lglibc-compat
-# Add this linker flag to build statically:
-	#-static -T $(TC_PATH)/x86_64-nacl/lib/ldscripts/elf64_nacl.x.static
-#override WARNINGS+=-Wno-long-long -Wall -Wswitch-enum -Werror
-#override CXXFLAGS+=-pthread -std=gnu++0x $(WARNINGS) -Iinclude \
-        -I$(NACL_SDK_ROOT)/include
+override LDFLAGS+=-lppapi_cpp -lppapi -lz -lssl -lncurses -lprotobuf -lcrypto -lglibc-compat
+# TODO: Remove --pnacl-exceptions once exceptions are fully supported by PNaCl.
 override CXXFLAGS+=-pthread $(WARNINGS) -I$(NACL_SDK_ROOT)/include -fno-builtin \
-	-I../build/libssh-0.6.0/include
-#override CFLAGS+=-pthread $(WARNINGS) -Iinclude -I$(NACL_SDK_ROOT)/include
+	-I../build/libssh-0.6.0/include --pnacl-exceptions=sjlj
 
-#COMPAT_INC:=-I$(PNACL_TC_ROOT)/usr/include/glibc-compat
 COMPAT_INC:=-I${TC_PATH}/ARCH-nacl/usr/include/glibc-compat
 NEWLIB_CXXFLAGS:=$(CXXFLAGS) -DUSE_NEWLIB $(COMPAT_INC)
-THIS_MAKEFILE:=$(abspath $(lastword $(MAKEFILE_LIST)))
 
 # Declare the ALL target first, to make the 'all' target the default build
 all: $(PROJECT).zip
@@ -90,38 +85,20 @@ nmf: $(PROJECT).nmf
 $(PROJECT).zip : $(PROJECT).nmf
 	cd $(OUTDIR) && zip -r ../$(PROJECT).zip .
 
-# Define 32 bit compile and link rules for C++ sources
-i686_OBJS:=$(patsubst %.cc,%_32.o,$(CXX_SOURCES))
-$(i686_OBJS) : %_32.o : %.cc $(THIS_MAKE) $(CXX_HEADERS)
-	$(CXX) -o $@ -c $< -m32 $(i686_NEWLIB_CXXFLAGS)
+# Define PNaCl compile and link rules for C++ sources
+OBJS:=$(patsubst %.cc,%.o,$(CXX_SOURCES))
+$(OBJS) : %.o : %.cc $(CXX_HEADERS)
+	$(CXX) -o $@ -c $< $(NEWLIB_CXXFLAGS)
 
-../build/i686/src/frontend/mosh-client-nacl.o : ../build/i686/src/frontend/mosh-client.o
+../build/mosh/src/frontend/mosh-client-nacl.o : ../build/mosh/src/frontend/mosh-client.o
 	$(OBJCOPY) --redefine-sym main=mosh_main $< $@
 
-i686_MOSHOBJS:=$(subst ARCH,i686,$(OBJECTS))
-i686_MOSHLIBDIRS:=$(subst ARCH,i686,$(LIBDIRS))
-i686_NEWLIB_CXXFLAGS:=$(subst ARCH,i686,$(NEWLIB_CXXFLAGS))
-$(PROJECT)_i686.nexe : $(i686_OBJS) $(i686_MOSHOBJS)
-	$(CXX) -o $@ $^ -m32 $(LIBS) $(i686_NEWLIB_CXXFLAGS) \
-	$(LDFLAGS) $(i686_MOSHLIBDIRS)
-
-# Define 64 bit compile and link rules for C++ sources
-x86_64_OBJS:=$(patsubst %.cc,%_64.o,$(CXX_SOURCES))
-$(x86_64_OBJS) : %_64.o : %.cc $(THIS_MAKE) $(CXX_HEADERS)
-	$(CXX) -o $@ -c $< -m64 $(x86_64_NEWLIB_CXXFLAGS)
-
-../build/x86_64/src/frontend/mosh-client-nacl.o : ../build/x86_64/src/frontend/mosh-client.o
-	$(OBJCOPY) --redefine-sym main=mosh_main $< $@
-
-x86_64_MOSHOBJS:=$(subst ARCH,x86_64,$(OBJECTS))
-x86_64_MOSHLIBDIRS:=$(subst ARCH,x86_64,$(LIBDIRS))
-x86_64_NEWLIB_CXXFLAGS:=$(subst ARCH,x86_64,$(NEWLIB_CXXFLAGS))
-$(PROJECT)_x86_64.nexe : $(x86_64_OBJS) $(x86_64_MOSHOBJS)
-	$(CXX) -o $@ $^ -m64 $(LIBS) $(x86_64_NEWLIB_CXXFLAGS) \
-	$(LDFLAGS) $(x86_64_MOSHLIBDIRS)
+$(PROJECT).pexe : $(OBJS) $(OBJECTS)
+	$(CXX) -o $@ $^ $(LIBS) $(NEWLIB_CXXFLAGS) $(LDFLAGS) $(LIBDIRS)
+	$(TC_PATH)/bin/pnacl-finalize $@
 
 # Create NaCl Manifest
-$(PROJECT).nmf : $(PROJECT)_x86_64.nexe $(PROJECT)_i686.nexe
+$(PROJECT).nmf : $(PROJECT).pexe
 	$(NACL_SDK_ROOT)/tools/create_nmf.py $^ -o $@ -s $(OUTDIR)
 
 clean:

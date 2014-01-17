@@ -9,10 +9,18 @@
 // build script.
 #include "../../build/include/assert.h"
 
+// Include anything we want later to override.
+#include <unistd.h>
+
 // Include anything that wasn't included properly.
 #include <sys/time.h>
 
 extern "C" {
+
+// Override dup() from unistd.h.
+#undef dup
+#define dup(x) __wrap_dup(x)
+int __wrap_dup(int);
 
 // Newlib headers are missing posix_memalign().
 int posix_memalign(void **memptr, size_t alignment, size_t size);
@@ -29,7 +37,7 @@ int setrlimit(int resource, const struct rlimit *rlim);
 
 // Define some things needed for Internet functions.
 typedef uint32_t u_int32_t;
-// TODO: Make this do something better and just ignore alignment.
+// TODO: Make this do something better than just ignore alignment.
 #define _ALIGN(n) n
 
 // Nullify cfmakeraw, as we don't need it to function.

@@ -25,6 +25,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <netinet/in.h>
+#include <unistd.h>
 
 namespace PepperPOSIX {
 

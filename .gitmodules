@@ -3,4 +3,4 @@
 	url = http://git.chromium.org/chromiumos/platform/assets.git
 [submodule "deps/mosh"]
 	path = deps/mosh
-	url = https://github.com/keithw/mosh.git
+	url = https://github.com/rpwoodbu/mosh.git
