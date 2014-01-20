@@ -94,14 +94,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <p>
     <ul>
       <li>Too easy to close the window by mistake.
-      <li>x86_32 port is built with --disable-hardening, which reduces
-        security somewhat.
       <li>Unicode input doesn't work (rendering does).
       <li>Key-based ssh auth is hard to setup and only works with one key.
+      <li>You only get one chance to enter your ssh key passphrase or ssh password.
+      <li>Only one session at a time.
     </ul>
 
     <h3>Changelog</h3>
     <ul>
+      <li>0.1.0.16 (2014-01-20) - First official release. Now works with all
+        architectures, thanks to PNaCl.
       <li>0.0.0.15 (2014-01-17) - Fix regression with reconnecting after
         network hiccup.
       <li>0.0.0.14 (2014-01-17) - Add keyboard-interactive and key ssh auth.
