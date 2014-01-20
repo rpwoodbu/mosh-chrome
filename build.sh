@@ -146,6 +146,7 @@ make ncurses zlib openssl protobuf
 popd > /dev/null
 
 echo "Updating submodules..."
+git submodule sync
 git submodule init
 git submodule update
 
