@@ -154,8 +154,12 @@ mosh.CommandInstance.prototype.onMessage_ = function(e) {
   } else if (type == 'error') {
     // TODO: Find a way to output errors that doesn't interfere with the
     // terminal window.
-    this.io.print('ERROR: ' + String(data) + '\r\n');
-    console.log('ERROR: ' + String(data));
+    var output = String(data);
+    if (output.search('\r\n') == -1) {
+      output = output.replace('\n', '\r\n');
+    }
+    this.io.print(output + '\r\n');
+    console.error(output);
   } else if (type == 'get_ssh_key') {
     var thiz = this;
     chrome.storage.local.get('ssh_key', function(o) {
