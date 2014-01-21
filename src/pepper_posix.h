@@ -139,8 +139,6 @@ class POSIX {
 
   int Connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 
-  // TODO: Provide a method to change blocking mode.
-
   // Register a filename and File factory to be used when that file is
   // opened.
   void RegisterFile(string filename, File *(*factory)()) {
