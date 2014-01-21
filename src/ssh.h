@@ -198,7 +198,7 @@ class Session : public ResultCode {
   Session &operator=(Session &);
 };
 
-// Represents a key. Do not instantiate directly; call Session::GetPublicKey().
+// Represents a key.
 class Key {
  friend class Session;
 
