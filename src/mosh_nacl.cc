@@ -503,7 +503,7 @@ class MoshClientInstance : public pp::Instance {
             // For safety, zero the sensitive input ASAP.
             memset(input, 0, sizeof(input));
             thiz->ssh_key_.clear();
-            if (result = false) {
+            if (result == false) {
               thiz->Error("Error reading key: %s", s.GetLastError().c_str());
               break;
             }
