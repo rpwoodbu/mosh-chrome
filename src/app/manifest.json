@@ -1,10 +1,10 @@
 {
   "manifest_version": 2,
-  "minimum_chrome_version": "32",
+  "minimum_chrome_version": "31",
   "name": "Mosh",
   "description": "Mosh (mobile shell) for Chrome.",
   "offline_enabled": true,
-  "version": "0.1.1.17",
+  "version": "0.1.1.18",
   "app": {
     "background": {
       "scripts": ["background.js"]
