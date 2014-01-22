@@ -385,11 +385,21 @@ class MoshClientInstance : public pp::Instance {
   // Used by SSHLogin() to get a line of input from the keyboard.
   static void GetKeyboardLine(char *buf, size_t len) {
     int i = 0;
-    for (; i < len; ++i) {
-      buf[i] = getchar();
-      if (buf[i] == '\r') {
+    while (i < len) {
+      char in = getchar();
+      // Handle return/enter.
+      if (in == '\r') {
         break;
       }
+      // Handle backspace.
+      if (in == 0x8 || in == 0x7f) {
+        if (i > 0) {
+          --i;
+        }
+        continue;
+      }
+      buf[i] = in;
+      ++i;
     }
     buf[i] = 0;
   }
