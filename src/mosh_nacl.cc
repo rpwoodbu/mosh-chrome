@@ -532,7 +532,7 @@ class MoshClientInstance : public pp::Instance {
     }
 
     ssh::Channel *c = s.NewChannel();
-    if (c->Execute("mosh-server") == false) {
+    if (c->Execute("mosh-server new -s -c 256 -l LANG=en_US.UTF-8") == false) {
       thiz->Error("Failed to execute mosh-server: %s",
           s.GetLastError().c_str());
       return NULL;
