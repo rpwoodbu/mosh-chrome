@@ -1,6 +1,6 @@
 // pepper_posix_selector.cc - Selector for Pepper POSIX adapters.
 
-// Copyright 2013 Richard Woodbury
+// Copyright 2013, 2014 Richard Woodbury
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
