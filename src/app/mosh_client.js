@@ -104,6 +104,7 @@ mosh.CommandInstance.prototype.run = function() {
   this.io.onVTKeystroke = this.sendKeyboard_.bind(this);
   this.io.sendString = this.sendKeyboard_.bind(this);
   this.io.onTerminalResize = this.onTerminalResize_.bind(this);
+  this.io.terminal_.prefs_.set('scrollbar-visible', false);
 
   this.moshNaCl_ = window.document.createElement('embed');
   this.moshNaCl_.style.cssText = (
