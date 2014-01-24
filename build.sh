@@ -237,12 +237,7 @@ pushd src > /dev/null
 # Copy hterm dist files into app directory.
 mkdir -p app/hterm
 cp -f ../deps/chromium_assets/chromeapps/hterm/dist/js/* app/hterm
-
-if [[ ${FAST} == "fast" ]]; then
-  make nmf
-else
-  make all
-fi
+make all
 popd > /dev/null # src
 
 echo "Done."

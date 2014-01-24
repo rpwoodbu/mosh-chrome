@@ -35,8 +35,6 @@ Building
     $ ./build.sh fast
 
   This will not work if you have not had a successful build in the "slow" mode.
-  Also note that it does not rebuild the .zip file, so DO NOT DISTRUBITE a "fast"
-  build.
 
   To build on other platforms, you will need to get and setup the NaCl SDK and
   naclports yourself, and set `NACL_SDK_ROOT` and `NACL_PORTS` appropriately (see
