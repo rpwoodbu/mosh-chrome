@@ -556,11 +556,21 @@ class MoshClientInstance : public pp::Instance {
 
     char key[23];
     thiz->port_ = new char[6];
-    int result = sscanf(buf.c_str(), "\r\nMOSH CONNECT %5s %22s\r\n",
-        thiz->port_, key);
-    if (result != 2) {
-      thiz->Error("Bad response when running mosh-server: '%s'", buf.c_str());
-      return NULL;
+    size_t left_pos = 0;
+    while (true) {
+      const char *newline = "\r\n";
+      size_t right_pos = buf.find(newline, left_pos);
+      if (right_pos == string::npos) {
+        thiz->Error("Bad response when running mosh-server: '%s'", buf.c_str());
+        return NULL;
+      }
+      string substr = buf.substr(left_pos, right_pos - left_pos);
+      int result = sscanf(substr.c_str(), "MOSH CONNECT %5s %22s",
+          thiz->port_, key);
+      if (result == 2) {
+        break;
+      }
+      left_pos = right_pos + strlen(newline);
     }
 
     setenv("MOSH_KEY", key, 1);
