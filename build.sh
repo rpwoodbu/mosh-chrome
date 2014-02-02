@@ -95,7 +95,7 @@ if [[ "${NACL_PORTS}" == "" ]]; then
   fi
   if [[ "${FAST}" != "fast" ]]; then
     pushd "build/${NACL_PORTS_DIR}" > /dev/null
-    gclient sync
+    gclient sync --revision 9f7d91e
     popd > /dev/null
   fi
   export NACL_PORTS="$(pwd)/build/${NACL_PORTS_DIR}"
