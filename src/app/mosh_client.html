@@ -18,118 +18,49 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <head>
   <title>Mosh Sessions</title>
   <script src="mosh_client.js" type="text/javascript"></script>
-  <style>
-    html {
-      overflow: scroll;
-    }
-  </style>
 </head>
 <body>
-  <div id="setup">
-    <form id="args">
-      <table>
-        <tr>
-          <td>Mode:</td>
-          <td>
-            <label>
-              <input id="ssh-mode" name="mode" type="radio" value="ssh" checked>SSH</input>
-            </label>
-            <label>
-              <input id="manual-mode" name="mode" type="radio" value="manual">Manual</input>
-            </label>
-          </td>
-        </tr>
-        <tr id="username-row">
-          <td>Username:</td>
-          <td><input id="user" type="text" autofocus></td>
-        </tr>
-        <tr>
-          <td>Hostname or IP address:</td>
-          <td><input id="addr" type="text"></td>
-        </tr>
-        <tr id="key-row" hidden="true">
-          <td>MOSH_KEY</td>
-          <td><input id="key" type="password"></td>
-        </tr>
-        <tr>
-          <td>Port number:</td>
-          <td><input id="port" type="text"></td>
-        </tr>
-      </table>
-      <input id="connect" type="submit" value="Connect">
-    </form>
-
-    <h3>Instructions</h3>
-    <p>
-    <strong>NEW!</strong>
-    <a href="http://github.com/rpwoodbu/mosh-chrome" target="_blank">Mosh for Chrome</a>
-    now supports ssh-based connection setup! Just fill in the fields, and just
-    like the "mosh" command, an ssh connection will be made to the server to
-    establish trust, start the mosh-server, and get the encryption key.
-    Key-based auth is available, but complicated to setup (see project site for
-    details).
-    <p>
-    Should you need to setup the connection manually, choose "manual" mode.
-    Then manually ssh to the remote machine and run 'mosh-server'. It will
-    print the key and the port number; enter those into this form, as well as
-    the IP address or hostname of the remote machine, and click 'Connect'.
-    'mosh-server' gives you about a minute to do this before giving up and
-    exiting. You can close your ssh session once 'mosh-server' is running.
-
-
-    <h3>Known issues</h3>
-    <p>
-    <ul>
-      <li>Too easy to close the window by mistake.
-      <li>Unicode input doesn't work (rendering does).
-      <li>Key-based ssh auth is hard to setup and only works with one key.
-      <li>You only get one chance to enter your ssh key passphrase or ssh password.
-      <li>Only one session at a time.
-    </ul>
-
-    <h3>Changelog</h3>
-    <ul>
-      <li>0.1.2.19 (2014-01-24) - Fix bug connecting to older versions of
-        mosh-server. Also remove useless scrollbar.
-      <li>0.1.1.17 (2014-01-22) - Improve how mosh-server is started when using
-        ssh session setup: shows 256 colors, has a fallback locale, and binds
-        to interface used for ssh session. Also fix bug with using backspace to
-        correct password/passphrase.
-      <li>0.1.0.16 (2014-01-20) - First official release. Now works with all
-        architectures, thanks to PNaCl.
-      <li>0.0.0.15 (2014-01-17) - Fix regression with reconnecting after
-        network hiccup.
-      <li>0.0.0.14 (2014-01-17) - Add keyboard-interactive and key ssh auth.
-      <li>0.0.0.13 (2014-01-15) - Add ssh-based connection setup.
-      <li>0.0.0.12 (2014-01-05) - Fix Unicode rendering (input still lacking).
-        This also fixes the bad interaction with tmux, as tmux uses Unicode
-        characters for drawing borders. This was accomplished by building
-        against newlib instead of glibc (long story). This could be the source
-        of new and exciting bugs. But besides fixing Unicode support, this
-        paves the way for ARM support, and ultimately using Portable Native
-        Client (PNaCl), which allows a single build to run on any architecture.
-        (PNaCl doesn't yet support C++ exceptions, but when it does, we're
-        ready.)
-      <li>0.0.0.11 (2013-12-23) - Improved error reporting. stderr now goes to
-        the terminal (just like the real mosh-client), and also the Javascript
-        console. If in doubt, check the Javascript console, as the terminal may
-        obscure errors.  <li>0.0.0.10 (2013-12-16) - Now permits hostnames as
-        well as IP addresses. Crypto randomness is now actually random. Tested
-        successfully on Linux and MacOS.  <li>0.0.0.9 (2013-12-15) - Fix for
-        x86_32 failing to start. Tested on Linux; not yet tested on MacOS.
-      <li>0.0.0.8 (2013-12-02) - Build against pepper_31 and newer naclports.
-        Eliminate spurious new browser tab on connect.
-      <li>0.0.0.7 (2013-11-30) - Add support for i686 (needed for 32-bit
-        Chrome, e.g.  MacOS).
-      <li>0.0.0.6 (2013-10-16) - Fix bug in readfrom() emulation which caused
-        Mosh to show a crypto error, rendering the session useless.
-      <li>0.0.0.5 (2013-10-15) - Clean up initial screen and add this info.
-      <li>0.0.0.4 (2013-10-14) - Big code refactor.
-      <li>0.0.0.3 (2013-10-08) - Fix bug in packet handling code which caused
-        perceived sluggishness.
-      <li>0.0.0.2 (2013-10-08) - Add application icon.
-      <li>0.0.0.1 (2013-10-07) - Initial working version.
-
-  </div>
+  <table width="100%"><tr>
+    <td>
+      <form id="args">
+        <table>
+          <tr>
+            <td>Mode:</td>
+            <td>
+              <label>
+                <input id="ssh-mode" name="mode" type="radio" value="ssh" checked>SSH</input>
+              </label>
+              <label>
+                <input id="manual-mode" name="mode" type="radio" value="manual">Manual</input>
+              </label>
+            </td>
+          </tr>
+          <tr id="username-row">
+            <td>Username:</td>
+            <td><input id="user" type="text" autofocus></td>
+          </tr>
+          <tr>
+            <td>Hostname or IP address:</td>
+            <td><input id="addr" type="text"></td>
+          </tr>
+          <tr id="key-row" hidden="true">
+            <td>MOSH_KEY</td>
+            <td><input id="key" type="password"></td>
+          </tr>
+          <tr>
+            <td>Port number:</td>
+            <td><input id="port" type="text"></td>
+          </tr>
+        </table>
+        <input id="connect" type="submit" value="Connect">
+      </form>
+    </td>
+    <td align="right" valign="top">
+      <a href="https://github.com/rpwoodbu/mosh-chrome/wiki/Documentation" target="_blank">Help</a><br>
+      <a href="https://github.com/rpwoodbu/mosh-chrome/issues?state=open" target="_blank">Known Issues</a><br>
+      <a href="https://github.com/rpwoodbu/mosh-chrome/releases" target="_blank">Changelog</a>
+      <div id="version"></div>
+    </td>
+  </tr></table>
 </body>
 </html>

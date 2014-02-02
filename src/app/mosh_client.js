@@ -18,6 +18,10 @@
 'use strict';
 
 window.onload = function() {
+  var versionDiv = document.querySelector('#version');
+  var manifest = chrome.runtime.getManifest();
+  versionDiv.innerText = 'v' + manifest['version'];
+
   var connectButton = document.querySelector('#connect');
   connectButton.onclick = onConnectClick;
   var sshModeButton = document.querySelector('#ssh-mode');
