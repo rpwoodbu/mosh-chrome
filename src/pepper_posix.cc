@@ -155,6 +155,10 @@ int POSIX::Socket(int domain, int type, int protocol) {
   if (file != NULL) {
     int fd = NextFileDescriptor();
     file->target_ = selector_.NewTarget(fd);
+    if (type == SOCK_STREAM) {
+      // TCP should not be writable at first.
+      file->target_->UpdateWrite(false);
+    }
     files_[fd] = file;
     return fd;
   }
@@ -355,9 +359,12 @@ int POSIX::FCntl(int fd, int cmd, va_list arg) {
     long long_arg = va_arg(arg, long);
     if (long_arg & O_NONBLOCK) {
       blocking = false;
+      long_arg &= ~O_NONBLOCK;
     }
-    Log("POSIX::FCntl(): Got F_SETFL, but unsupported arg: 0%lo", long_arg);
-    // TODO: Consider this an error?
+    if (long_arg != 0) {
+      Log("POSIX::FCntl(): Got F_SETFL, but unsupported arg: 0%lo", long_arg);
+      // TODO: Consider this an error?
+    }
     file->SetBlocking(blocking);
     return 0;
   }
