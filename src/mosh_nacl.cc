@@ -410,6 +410,7 @@ class MoshClientInstance : public pp::Instance {
 
     setenv("HOME", "dummy", 1); // To satisfy libssh.
     ssh::Session s(thiz->addr_, atoi(thiz->port_), thiz->ssh_user_);
+    s.SetOption(SSH_OPTIONS_TIMEOUT, 30); // Extend connection timeout to 30s.
     if (s.Connect() == false) {
       thiz->Error("Could not connect via ssh: %s", s.GetLastError().c_str());
       return NULL;
