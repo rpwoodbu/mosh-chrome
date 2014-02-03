@@ -63,12 +63,15 @@ class TCP : public ReadWriter {
   // Connect replaces connect().
   virtual int Connect(const PP_NetAddress_IPv4 &address) = 0;
 
+  // Connection status, errno-style.
+  int connection_errno_;
+
  protected:
   // AddData is used by the subclass to add data to the incoming buffer.
   // This method can be called from another thread than the one used to call
   // the other methods. Takes ownership of *message and its associated buffers.
   void AddData(const void *buf, size_t count);
- 
+
  private:
   std::deque<char> buffer_; // Guard with buffer_lock_.
   pthread_mutex_t buffer_lock_;

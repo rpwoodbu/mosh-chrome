@@ -393,4 +393,32 @@ int POSIX::Connect(
   return tcp->Connect(pp_addr);
 }
 
+int POSIX::GetSockOpt(int sockfd, int level, int optname,
+    void *optval, socklen_t *optlen) {
+  if (files_.count(sockfd) == 0) {
+    return EBADF;
+  }
+  TCP *tcp = dynamic_cast<TCP *>(files_[sockfd]);
+  if (tcp == NULL) {
+    errno = EBADF;
+    return -1;
+  }
+
+  if (optname == SO_ERROR && level == SOL_SOCKET) {
+    // This allows nonblocking TCP connections to discover the disposition of a
+    // connection attempt.
+    if (*optlen < sizeof(tcp->connection_errno_)) {
+      errno = EINVAL;
+      return -1;
+    }
+    *(int *)optval = tcp->connection_errno_;
+    return 0;
+  }
+
+  // No other options are currently implemented.
+  Log("POSIX::GetSockOpt(): Unsupported optname/level");
+  errno = EINVAL;
+  return -1;
+}
+
 } // namespace PepperPOSIX

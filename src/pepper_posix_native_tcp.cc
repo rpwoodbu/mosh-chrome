@@ -44,7 +44,7 @@ int NativeTCP::Bind(const PP_NetAddress_IPv4 &address) {
   pp::NetAddress net_address(instance_handle_, address);
   pp::Var string_address = net_address.DescribeAsString(true);
   if (string_address.is_undefined()) {
-    Log("NativeTCP::Bind() Address is bogus.");
+    Log("NativeTCP::Bind(): Address is bogus.");
     // TODO: Return something appropriate.
     return false;
   }
@@ -56,9 +56,12 @@ int NativeTCP::Connect(const PP_NetAddress_IPv4 &address) {
   address_ = pp::NetAddress(instance_handle_, address);
   pp::Var string_address = address_.DescribeAsString(true);
   if (string_address.is_undefined()) {
-    Log("NativeTCP::Connect() Address is bogus.");
+    Log("NativeTCP::Connect(): Address is bogus.");
     // TODO: Return something appropriate.
     return false;
+  }
+  if (IsBlocking() == true) {
+    Log("NativeTCP::Connect(): Not in non-blocking mode, not implemented!");
   }
   // API calls need to be done on the main thread.
   pp::Module::Get()->core()->CallOnMainThread(
@@ -84,8 +87,28 @@ void NativeTCP::Connected(int32_t result) {
     StartReceive();
     return;
   }
-  // TODO: Handle connection failures more appropraitely.
+
   Log("NativeTCP::Connected(): Connection failed; result: %d", result);
+  switch (result) {
+   case PP_ERROR_NOACCESS:
+    connection_errno_ = EACCES;
+    break;
+   case PP_ERROR_ADDRESS_UNREACHABLE:
+    connection_errno_ = EHOSTUNREACH;
+    break;
+   case PP_ERROR_CONNECTION_REFUSED:
+    connection_errno_ = ECONNREFUSED;
+    break;
+   case PP_ERROR_CONNECTION_TIMEDOUT:
+    connection_errno_ = ETIMEDOUT;
+    break;
+   default:
+    connection_errno_ = EIO;
+    break;
+  }
+
+  target_->UpdateWrite(true);
+  target_->UpdateRead(true);
 }
 
 ssize_t NativeTCP::Send(const void *buf, size_t count, int flags) {

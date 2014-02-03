@@ -291,9 +291,7 @@ int setsockopt(int sockfd, int level, int optname,
 // This is needed to return TCP connection status.
 int getsockopt(int sockfd, int level, int optname,
     void *optval, socklen_t *optlen) {
-  Log("getsockopt(%d, %d, %d, ...", sockfd, level, optname);
-  // TODO: Wire this up for returning TCP connection status. For now, stub out.
-  return -1;
+  return GetPOSIX()->GetSockOpt(sockfd, level, optname, optval, optlen);
 }
 
 // For some reason, after linking in ssh.cc, dup() gets brought in from libnacl

@@ -24,7 +24,7 @@
 
 namespace PepperPOSIX {
 
-TCP::TCP() {
+TCP::TCP() : connection_errno_(0) {
   pthread_mutex_init(&buffer_lock_, NULL);
 }
 
@@ -40,6 +40,10 @@ ssize_t TCP::Receive(void *buf, size_t count, int flags) {
   }
   if (flags != 0) {
     Log("TCP::Receive(): Unsupported flag: 0x%x", flags);
+  }
+  if (connection_errno_ != 0) {
+    errno = ECONNABORTED;
+    return -1;
   }
 
   pthread_mutex_lock(&buffer_lock_);

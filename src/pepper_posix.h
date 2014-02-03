@@ -139,6 +139,9 @@ class POSIX {
 
   int Connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 
+  int GetSockOpt(int sockfd, int level, int optname,
+      void *optval, socklen_t *optlen);
+
   // Register a filename and File factory to be used when that file is
   // opened.
   void RegisterFile(string filename, File *(*factory)()) {
