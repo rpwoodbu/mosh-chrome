@@ -1,6 +1,6 @@
-[submodule "deps/chromium_assets"]
-	path = deps/chromium_assets
-	url = http://git.chromium.org/chromiumos/platform/assets.git
+[submodule "deps/libapps"]
+	path = deps/libapps
+	url = https://chromium.googlesource.com/apps/libapps
 [submodule "deps/mosh"]
 	path = deps/mosh
 	url = https://github.com/rpwoodbu/mosh.git

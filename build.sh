@@ -151,7 +151,7 @@ git submodule init
 git submodule update
 
 echo "Making hterm dist..."
-pushd deps/chromium_assets/chromeapps/hterm > /dev/null
+pushd deps/libapps/hterm > /dev/null
 if [[ ! -d dist ]]; then
   bin/mkdist.sh
 fi
@@ -236,7 +236,7 @@ fi
 pushd src > /dev/null
 # Copy hterm dist files into app directory.
 mkdir -p app/hterm
-cp -f ../deps/chromium_assets/chromeapps/hterm/dist/js/* app/hterm
+cp -f ../deps/libapps/hterm/dist/js/* app/hterm
 make all
 popd > /dev/null # src
 
