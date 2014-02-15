@@ -97,7 +97,7 @@ mosh.CommandInstance.prototype.run = function() {
   delete this.argv_;
 
   this.moshNaCl_.addEventListener('load', function(e) {
-    window.mosh_client_.io.print('loaded.\r\n');
+    window.mosh_client_.io.print('\r\nLoaded.\r\n');
     // Remove sensitive argument attributes.
     window.mosh_client_.moshNaCl_.removeAttribute('key');
   });
@@ -106,9 +106,10 @@ mosh.CommandInstance.prototype.run = function() {
     window.mosh_client_.io.print('\r\nMosh NaCl crashed.\r\n');
     console.log('Mosh NaCl crashed.');
   });
+  this.moshNaCl_.addEventListener('progress', this.onProgress_.bind(this));
 
   this.io.print("Loading NaCl module (takes a while the first time" +
-      " after an update)... ");
+      " after an update).\r\n");
   document.body.insertBefore(this.moshNaCl_, document.body.firstChild);
 };
 
@@ -145,4 +146,22 @@ mosh.CommandInstance.prototype.sendKeyboard_ = function(string) {
 mosh.CommandInstance.prototype.onTerminalResize_ = function(w, h) {
   // Send new size as an int, with the width as the high 16 bits.
   this.moshNaCl_.postMessage({'window_change': (w << 16) + h});
+};
+
+mosh.CommandInstance.prototype.onProgress_ = function(e) {
+  if (e.lengthComputable && e.total > 0) {
+    var divisions = 15;
+    var fraction = event.loaded / event.total;
+    var numDots = Math.floor(fraction * divisions);
+    var numSpaces = divisions - numDots;
+    var output = '\r[';
+    for (var i = 0; i < numDots; i++) {
+      output += '.';
+    }
+    for (var i = 0; i < numSpaces; i++) {
+      output += ' ';
+    }
+    output += ']';
+    this.io.print(output);
+  }
 };
