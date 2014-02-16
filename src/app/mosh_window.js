@@ -57,6 +57,9 @@ mosh.CommandInstance = function(argv) {
 
   // hterm.Terminal.IO instance.
   this.io = null;
+
+  // Whether the NaCl module is running.
+  this.running_ = false;
 };
 
 mosh.CommandInstance.run = function(argv) {
@@ -96,11 +99,7 @@ mosh.CommandInstance.prototype.run = function() {
   // Delete argv_, as it contains sensitive info.
   delete this.argv_;
 
-  this.moshNaCl_.addEventListener('load', function(e) {
-    window.mosh_client_.io.print('\r\nLoaded.\r\n');
-    // Remove sensitive argument attributes.
-    window.mosh_client_.moshNaCl_.removeAttribute('key');
-  });
+  this.moshNaCl_.addEventListener('load', this.onLoad_.bind(this));
   this.moshNaCl_.addEventListener('message', this.onMessage_.bind(this));
   this.moshNaCl_.addEventListener('crash', this.onCrash_.bind(this));
   this.moshNaCl_.addEventListener('progress', this.onProgress_.bind(this));
@@ -137,7 +136,11 @@ mosh.CommandInstance.prototype.onMessage_ = function(e) {
 };
 
 mosh.CommandInstance.prototype.sendKeyboard_ = function(string) {
-  this.moshNaCl_.postMessage({'keyboard': string});
+  if (this.running_) {
+    this.moshNaCl_.postMessage({'keyboard': string});
+  } else if (string == 'x') {
+    window.close();
+  }
 };
 
 mosh.CommandInstance.prototype.onTerminalResize_ = function(w, h) {
@@ -163,11 +166,20 @@ mosh.CommandInstance.prototype.onProgress_ = function(e) {
   }
 };
 
+mosh.CommandInstance.prototype.onLoad_ = function(e) {
+  this.io.print('\r\nLoaded.\r\n');
+  this.running_ = true;
+  // Remove sensitive argument attributes.
+  this.moshNaCl_.removeAttribute('key');
+};
+
 mosh.CommandInstance.prototype.onCrash_ = function(e) {
   var output = 'Mosh NaCl crashed.';
   if (this.moshNaCl_.exitStatus != -1) {
     output = 'Mosh has exited.';
   }
-  window.mosh_client_.io.print('\r\n' + output + '\r\n');
+  this.io.print('\r\n' + output + '\r\n');
   console.log(output);
+  this.io.print('Press "x" to close the window.\r\n');
+  this.running_ = false;
 };
