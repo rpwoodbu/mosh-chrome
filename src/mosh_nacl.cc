@@ -379,6 +379,7 @@ class MoshClientInstance : public pp::Instance {
     thiz->Log("Mosh(): Calling mosh_main");
     mosh_main(sizeof(argv) / sizeof(argv[0]), argv);
     thiz->Log("Mosh(): mosh_main returned");
+    exit(0);
     return 0;
   }
 
@@ -413,6 +414,7 @@ class MoshClientInstance : public pp::Instance {
     s.SetOption(SSH_OPTIONS_TIMEOUT, 30); // Extend connection timeout to 30s.
     if (s.Connect() == false) {
       thiz->Error("Could not connect via ssh: %s", s.GetLastError().c_str());
+      exit(1);
       return NULL;
     }
     // TODO: This _really_ needs to be more secure.
@@ -432,6 +434,7 @@ class MoshClientInstance : public pp::Instance {
     if (server_auths.size() == 0) {
       thiz->Error("Failed to get authentication types: %s",
           s.GetLastError().c_str());
+      exit(1);
       return NULL;
     }
     for (vector<ssh::AuthenticationType>::iterator i = server_auths.begin();
@@ -539,6 +542,7 @@ class MoshClientInstance : public pp::Instance {
 
     if (authenticated == false) {
       thiz->Error("ssh authentication failed: %s", s.GetLastError().c_str());
+      exit(1);
       return NULL;
     }
 
@@ -546,12 +550,14 @@ class MoshClientInstance : public pp::Instance {
     if (c->Execute("mosh-server new -s -c 256 -l LANG=en_US.UTF-8") == false) {
       thiz->Error("Failed to execute mosh-server: %s",
           s.GetLastError().c_str());
+      exit(1);
       return NULL;
     }
     string buf;
     if (c->Read(&buf, NULL) == false) {
       thiz->Error("Error reading from remote ssh server: %s",
           s.GetLastError().c_str());
+      exit(1);
       return NULL;
     }
 
@@ -563,6 +569,7 @@ class MoshClientInstance : public pp::Instance {
       size_t right_pos = buf.find(newline, left_pos);
       if (right_pos == string::npos) {
         thiz->Error("Bad response when running mosh-server: '%s'", buf.c_str());
+        exit(1);
         return NULL;
       }
       string substr = buf.substr(left_pos, right_pos - left_pos);

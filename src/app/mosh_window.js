@@ -102,10 +102,7 @@ mosh.CommandInstance.prototype.run = function() {
     window.mosh_client_.moshNaCl_.removeAttribute('key');
   });
   this.moshNaCl_.addEventListener('message', this.onMessage_.bind(this));
-  this.moshNaCl_.addEventListener('crash', function(e) {
-    window.mosh_client_.io.print('\r\nMosh NaCl crashed.\r\n');
-    console.log('Mosh NaCl crashed.');
-  });
+  this.moshNaCl_.addEventListener('crash', this.onCrash_.bind(this));
   this.moshNaCl_.addEventListener('progress', this.onProgress_.bind(this));
 
   this.io.print("Loading NaCl module (takes a while the first time" +
@@ -164,4 +161,13 @@ mosh.CommandInstance.prototype.onProgress_ = function(e) {
     output += ']';
     this.io.print(output);
   }
+};
+
+mosh.CommandInstance.prototype.onCrash_ = function(e) {
+  var output = 'Mosh NaCl crashed.';
+  if (this.moshNaCl_.exitStatus != -1) {
+    output = 'Mosh has exited.';
+  }
+  window.mosh_client_.io.print('\r\n' + output + '\r\n');
+  console.log(output);
 };
