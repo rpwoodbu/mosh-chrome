@@ -152,9 +152,13 @@ class Session : public ResultCode {
   ::std::vector<AuthenticationType> GetAuthenticationTypes();
 
   // Authenticate using password auth. Analog to ssh_userauth_password().
-  bool AuthUsingPassword(const string &password) {
+  //
+  // Using a plain char * to allow you to manage the lifecycle of sensitive
+  // data. This class does not make a copy of the string, but just passes it to
+  // libssh.
+  bool AuthUsingPassword(const char *password) {
     return ParseCode(
-      ssh_userauth_password(s_, NULL, password.c_str()), SSH_AUTH_SUCCESS);
+      ssh_userauth_password(s_, NULL, password), SSH_AUTH_SUCCESS);
   }
 
   // Authenticate using keyboard-interactive auth. Returns a
