@@ -71,7 +71,7 @@ function onConnectClick(e) {
           bg.state.windows[id] = createdWindow;
           createdWindow.contentWindow.args = args;
           createdWindow.contentWindow.state = bg.state;
-          chrome.app.window.current().minimize();
+          chrome.app.window.current().close();
         });
   });
 };

@@ -20,7 +20,7 @@ window.state = {};
 // This is a map of all open session windows.
 window.state.windows = {};
 
-chrome.app.runtime.onLaunched.addListener(function() {
+function NewSession() {
   chrome.app.window.create(
     'mosh_client.html',
     {
@@ -30,4 +30,15 @@ chrome.app.runtime.onLaunched.addListener(function() {
       },
       'id': 'mosh_client',
     });
+};
+
+chrome.app.runtime.onLaunched.addListener(NewSession);
+
+chrome.contextMenus.create({
+  'type': 'normal',
+  'id': 'new_session',
+  'title': 'New session',
+  'contexts': ['launcher'],
 });
+
+chrome.contextMenus.onClicked.addListener(function() { NewSession(); });

@@ -19,6 +19,7 @@
     ]},
     "clipboardRead",
     "clipboardWrite",
+    "contextMenus",
     "storage"
   ],
   "icons": {
