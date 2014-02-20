@@ -29,14 +29,11 @@ DEPOT_TOOLS_DIR="depot_tools"
 
 NACL_PORTS_URL="https://chromium.googlesource.com/external/naclports.git"
 NACL_PORTS_DIR="naclports"
+NACL_PORTS_REV=807ebc17
 
 PROTOBUF_DIR="protobuf-2.5.0"
 PROTOBUF_TAR="${PROTOBUF_DIR}.tar.bz2"
 PROTOBUF_URL="https://protobuf.googlecode.com/files/${PROTOBUF_TAR}"
-
-LIBSSH_DIR="libssh-0.6.0"
-LIBSSH_TAR="${LIBSSH_DIR}.tar.xz"
-LIBSSH_URL="https://red.libssh.org/attachments/download/71/${LIBSSH_TAR}"
 
 INCLUDE_OVERRIDE="$(pwd)/src/include"
 
@@ -95,7 +92,7 @@ if [[ "${NACL_PORTS}" == "" ]]; then
   fi
   if [[ "${FAST}" != "fast" ]]; then
     pushd "build/${NACL_PORTS_DIR}" > /dev/null
-    gclient sync --revision 9f7d91e
+    gclient sync --revision ${NACL_PORTS_REV}
     popd > /dev/null
   fi
   export NACL_PORTS="$(pwd)/build/${NACL_PORTS_DIR}"
@@ -120,18 +117,6 @@ export LD_LIBRARY_PATH="${PROTO_PATH}/.libs"
 export protobuf_CFLAGS=" "
 export protobuf_LIBS=" "
 
-# Get and patch (but not build) libssh.
-if [[ ! -d "build/${LIBSSH_DIR}" ]]; then
-  pushd "build" > /dev/null
-  if [[ ! -f "${LIBSSH_TAR}" ]]; then
-    wget "${LIBSSH_URL}"
-  fi
-  tar -xJf "${LIBSSH_TAR}"
-  cd "${LIBSSH_DIR}"
-  patch -p1 < ../../src/libssh.patch
-  popd > /dev/null
-fi
-
 #export NACL_GLIBC="1"
 
 pushd src > /dev/null
@@ -142,7 +127,7 @@ export NACL_ARCH="pnacl"
 
 echo "Building packages in NaCl Ports..."
 pushd "${NACL_PORTS}/src" > /dev/null
-make ncurses zlib openssl protobuf
+make ncurses zlib openssl protobuf libssh
 popd > /dev/null
 
 echo "Updating submodules..."
@@ -173,19 +158,6 @@ export CFLAGS="${CFLAGS} ${include_flags}"
 export CXXFLAGS="${CXXFLAGS} ${include_flags}"
 
 if [[ ${FAST} != "fast" ]]; then
-  libssh="build/${LIBSSH_DIR}/build/src/libssh.a"
-  if [[ ! -f "${libssh}" ]]; then
-    echo "Building libssh..."
-    pushd "build/${LIBSSH_DIR}" > /dev/null
-    rm -Rf "build"
-    mkdir "build"
-    cd "build"
-    cmake -DPNACL=ON -DWITH_ZLIB=OFF -DWITH_STATIC_LIB=ON -DWITH_SHARED_LIB=OFF -DWITH_EXAMPLES=OFF -DHAVE_GETADDRINFO=ON ..
-    make
-    popd > /dev/null
-    ${RANLIB} "${libssh}"
-  fi
-
   #
   # Mosh client build. Do in a subshell to avoid side effects.
   #
