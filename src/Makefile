@@ -51,7 +51,6 @@ LIBDIRS:=\
 	-L../build/mosh/src/terminal \
 	-L../build/mosh/src/util \
 	-L../build/mosh/src/protobufs \
-	-L../build/libssh-0.6.0/build/src
 
 LIBS:=\
 	-lmoshcrypto \
@@ -60,7 +59,15 @@ LIBS:=\
 	-lmoshterminal \
 	-lmoshutil \
 	-lmoshprotos \
-	-lssh
+	-lssh \
+	-lppapi_cpp \
+	-lppapi \
+	-lz \
+	-lssl \
+	-lncurses \
+	-lprotobuf \
+	-lcrypto \
+	-lglibc-compat
 
 OSNAME:=$(shell python $(NACL_SDK_ROOT)/tools/getos.py)
 TC_PATH:=$(abspath $(NACL_SDK_ROOT)/toolchain/$(OSNAME)_pnacl)
@@ -68,10 +75,9 @@ CXX:=$(TC_PATH)/bin/pnacl-clang++
 OBJCOPY:=$(TC_PATH)/../$(OSNAME)_x86_newlib/bin/i686-nacl-objcopy
 
 # Project Build flags
-override LDFLAGS+=-lppapi_cpp -lppapi -lz -lssl -lncurses -lprotobuf -lcrypto -lglibc-compat
 # TODO: Remove --pnacl-exceptions once exceptions are fully supported by PNaCl.
 override CXXFLAGS+=-pthread $(WARNINGS) -I$(NACL_SDK_ROOT)/include -fno-builtin \
-	-I../build/libssh-0.6.0/include --pnacl-exceptions=sjlj
+	--pnacl-exceptions=sjlj
 
 COMPAT_INC:=-I${TC_PATH}/ARCH-nacl/usr/include/glibc-compat
 NEWLIB_CXXFLAGS:=$(CXXFLAGS) -DUSE_NEWLIB $(COMPAT_INC)
