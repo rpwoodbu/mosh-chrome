@@ -475,78 +475,108 @@ class MoshClientInstance : public pp::Instance {
           ssh::KeyboardInteractive::kPending;
       char input[256];
 
-      switch(*i) {
-        case ssh::kPassword:
-          thiz->Output(TYPE_DISPLAY, "Password: ");
-          GetKeyboardLine(input, sizeof(input), false);
-          thiz->Output(TYPE_DISPLAY, "\r\n");
-          authenticated = s.AuthUsingPassword(input);
-          // For safety, zero the sensitive input ASAP.
-          memset(input, 0, sizeof(input));
-          if (authenticated == false) {
-            thiz->Error("Password authentication failed: %s",
-                s.GetLastError().c_str());
-          }
-          break;
-
-        case ssh::kInteractive:
-          kbd = s.AuthUsingKeyboardInteractive();
-          status = kbd->GetStatus();
-          while (status == ssh::KeyboardInteractive::kPending) {
-            thiz->Output(TYPE_DISPLAY, kbd->GetName());
-            thiz->Output(TYPE_DISPLAY, kbd->GetInstruction());
-            bool done = false;
-            while (!done) {
-              thiz->Output(TYPE_DISPLAY, kbd->GetNextPrompt());
-              GetKeyboardLine(input, sizeof(input), kbd->IsAnswerEchoed());
-              thiz->Output(TYPE_DISPLAY, "\r\n");
-              done = kbd->Answer(input);
-              // For safety, zero the sensitive input ASAP.
-              memset(input, 0, sizeof(input));
+      for (int tries = 3; !authenticated && tries > 0; --tries) {
+        switch(*i) {
+          case ssh::kPassword:
+            thiz->Output(TYPE_DISPLAY, "Password: ");
+            GetKeyboardLine(input, sizeof(input), false);
+            thiz->Output(TYPE_DISPLAY, "\r\n");
+            if (strlen(input) == 0) {
+              // User provided no input; skip this authentication type.
+              tries = 0;
+              break;
             }
-            status = kbd->GetStatus();
-          }
-          switch (status) {
-            case ssh::KeyboardInteractive::kAuthenticated:
-              authenticated = true;
-              break;
-            case ssh::KeyboardInteractive::kPartialAuthentication:
-              thiz->Error("Keyboard interactive succeeded but insufficient.");
-              break;
-            case ssh::KeyboardInteractive::kFailed: // fallthrough
-            default:
-              thiz->Error("Keyboard interactive auth failed.");
-              break;
-          }
-          break;
+            authenticated = s.AuthUsingPassword(input);
+            // For safety, zero the sensitive input ASAP.
+            memset(input, 0, sizeof(input));
+            if (authenticated == false && tries == 1) {
+              // Only display error on last try.
+              thiz->Error("Password authentication failed: %s",
+                  s.GetLastError().c_str());
+            }
+            break;
 
-        case ssh::kPublicKey:
-          if (thiz->ssh_key_.size() == 0) {
-            thiz->Output(TYPE_DISPLAY, "No ssh key found.\r\n");
-          } else {
+          case ssh::kInteractive:
+            kbd = s.AuthUsingKeyboardInteractive();
+            status = kbd->GetStatus();
+            while (status == ssh::KeyboardInteractive::kPending) {
+              thiz->Output(TYPE_DISPLAY, kbd->GetName());
+              thiz->Output(TYPE_DISPLAY, kbd->GetInstruction());
+              bool done = false;
+              while (!done) {
+                thiz->Output(TYPE_DISPLAY, kbd->GetNextPrompt());
+                GetKeyboardLine(input, sizeof(input), kbd->IsAnswerEchoed());
+                thiz->Output(TYPE_DISPLAY, "\r\n");
+                if (strlen(input) == 0) {
+                  // User provided no input; skip this authentication type.
+                  status = ssh::KeyboardInteractive::kFailed;
+                  tries = 0;
+                  break;
+                }
+                done = kbd->Answer(input);
+                // For safety, zero the sensitive input ASAP.
+                memset(input, 0, sizeof(input));
+              }
+              status = kbd->GetStatus();
+            }
+            {
+              const char *error = NULL;
+              switch (status) {
+                case ssh::KeyboardInteractive::kAuthenticated:
+                  authenticated = true;
+                  break;
+                case ssh::KeyboardInteractive::kPartialAuthentication:
+                  error = "Keyboard interactive succeeded but insufficient.";
+                  tries = 0;
+                  break;
+                case ssh::KeyboardInteractive::kFailed: // fallthrough
+                default:
+                  error = "Keyboard interactive auth failed.";
+                  break;
+              }
+              if (error != NULL && tries == 1) {
+                // Only display error on the last try.
+                thiz->Error(error);
+              }
+            }
+            break;
+
+          case ssh::kPublicKey:
+            if (thiz->ssh_key_.size() == 0) {
+              thiz->Output(TYPE_DISPLAY, "No ssh key found.\r\n");
+              tries = 0;
+              break;
+            }
             thiz->Output(TYPE_DISPLAY, "Passphrase: ");
             GetKeyboardLine(input, sizeof(input), false);
             thiz->Output(TYPE_DISPLAY, "\r\n");
-            ssh::Key key;
-            bool result = key.ImportPrivateKey(thiz->ssh_key_, input);
-            // For safety, zero the sensitive input ASAP.
-            memset(input, 0, sizeof(input));
-            thiz->ssh_key_.clear();
-            if (result == false) {
-              thiz->Error("Error reading key: %s", s.GetLastError().c_str());
+            if (strlen(input) == 0) {
+              // User provided no input; skip this authentication type.
+              tries = 0;
               break;
             }
-            if (s.AuthUsingKey(key) == false) {
-              thiz->Error("Key auth failed: %s", s.GetLastError().c_str());
-              break;
+            { // Scoping needed to satisfy compiler.
+              ssh::Key key;
+              bool result = key.ImportPrivateKey(thiz->ssh_key_, input);
+              // For safety, zero the sensitive input ASAP.
+              memset(input, 0, sizeof(input));
+              thiz->ssh_key_.clear();
+              if (result == false) {
+                thiz->Error("Error reading key: %s", s.GetLastError().c_str());
+                break;
+              }
+              if (s.AuthUsingKey(key) == false) {
+                thiz->Error("Key auth failed: %s", s.GetLastError().c_str());
+                break;
+              }
             }
             authenticated = true;
-          }
-          break;
+            break;
 
-        default:
-          // Should not get here.
-          assert(false);
+          default:
+            // Should not get here.
+            assert(false);
+        }
       }
 
       // For safety, and paranoia, zero the sensitive input here to be sure it
