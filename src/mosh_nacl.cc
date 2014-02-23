@@ -68,7 +68,7 @@ class Keyboard : public PepperPOSIX::Reader {
     while (keypresses_.size() > 0 && num_read < count) {
       ((char *)buf)[num_read] = keypresses_.front();
       keypresses_.pop_front();
-      num_read++;
+      ++num_read;
     }
 
     target_->UpdateRead(keypresses_.size() > 0);
@@ -384,7 +384,7 @@ class MoshClientInstance : public pp::Instance {
   }
 
   // Used by SSHLogin() to get a line of input from the keyboard.
-  static void GetKeyboardLine(char *buf, size_t len) {
+  static void GetKeyboardLine(char *buf, size_t len, bool echo) {
     int i = 0;
     while (i < len) {
       char in = getchar();
@@ -395,9 +395,17 @@ class MoshClientInstance : public pp::Instance {
       // Handle backspace.
       if (in == 0x8 || in == 0x7f) {
         if (i > 0) {
+          if (echo == true) {
+            // '\b' doesn't "rub out" on its own.
+            const char *backspace = "\b\x1b[K";
+            write(STDOUT_FILENO, backspace, strlen(backspace));
+          }
           --i;
         }
         continue;
+      }
+      if (echo == true) {
+        write(STDOUT_FILENO, &in, 1);
       }
       buf[i] = in;
       ++i;
@@ -470,7 +478,7 @@ class MoshClientInstance : public pp::Instance {
       switch(*i) {
         case ssh::kPassword:
           thiz->Output(TYPE_DISPLAY, "Password: ");
-          GetKeyboardLine(input, sizeof(input));
+          GetKeyboardLine(input, sizeof(input), false);
           thiz->Output(TYPE_DISPLAY, "\r\n");
           authenticated = s.AuthUsingPassword(input);
           // For safety, zero the sensitive input ASAP.
@@ -490,7 +498,7 @@ class MoshClientInstance : public pp::Instance {
             bool done = false;
             while (!done) {
               thiz->Output(TYPE_DISPLAY, kbd->GetNextPrompt());
-              GetKeyboardLine(input, sizeof(input));
+              GetKeyboardLine(input, sizeof(input), kbd->IsAnswerEchoed());
               thiz->Output(TYPE_DISPLAY, "\r\n");
               done = kbd->Answer(input);
               // For safety, zero the sensitive input ASAP.
@@ -510,7 +518,7 @@ class MoshClientInstance : public pp::Instance {
             thiz->Output(TYPE_DISPLAY, "No ssh key found.\r\n");
           } else {
             thiz->Output(TYPE_DISPLAY, "Passphrase: ");
-            GetKeyboardLine(input, sizeof(input));
+            GetKeyboardLine(input, sizeof(input), false);
             thiz->Output(TYPE_DISPLAY, "\r\n");
             ssh::Key key;
             bool result = key.ImportPrivateKey(thiz->ssh_key_, input);

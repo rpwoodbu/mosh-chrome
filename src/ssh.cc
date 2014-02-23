@@ -20,7 +20,7 @@
 namespace ssh {
 
 KeyboardInteractive::KeyboardInteractive(ssh_session s) :
-    s_(s), current_prompt_(0), num_prompts_(0) {}
+    s_(s), current_prompt_(0), num_prompts_(0), echo_answer_(false) {}
 
 KeyboardInteractive::Status KeyboardInteractive::GetStatus() {
   while (true) {
@@ -50,7 +50,11 @@ KeyboardInteractive::Status KeyboardInteractive::GetStatus() {
 }
 
 string KeyboardInteractive::GetNextPrompt() {
-  return string(ssh_userauth_kbdint_getprompt(s_, current_prompt_, NULL));
+  char echo = 0;
+  const char *prompt = ssh_userauth_kbdint_getprompt(
+      s_, current_prompt_, &echo);
+  echo_answer_ = echo > 0;
+  return prompt;
 }
 
 bool KeyboardInteractive::Answer(const char *answer) {

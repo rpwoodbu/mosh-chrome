@@ -101,6 +101,15 @@ class KeyboardInteractive {
   // Returns the next prompt from the server.
   string GetNextPrompt();
 
+  // For the current prompt, indicate whether the answer should be echoed to
+  // the user. Should be called after GetNextPrompt(); behavior is undefined
+  // otherwise.
+  // To be clear: This class never prints anything; it is the responsibility of
+  // the caller to implement echoing.
+  bool IsAnswerEchoed() const {
+    return echo_answer_;
+  }
+
   // Answer the most recently gotten prompt. Returns true if authentication is
   // complete; otherwise, call GetNextPrompt() to keep going.
   //
@@ -113,6 +122,7 @@ class KeyboardInteractive {
   ssh_session s_;
   int num_prompts_;
   int current_prompt_;
+  bool echo_answer_;
 
   // Disable copy and assign.
   KeyboardInteractive(KeyboardInteractive &);
