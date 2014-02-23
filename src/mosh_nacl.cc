@@ -506,11 +506,18 @@ class MoshClientInstance : public pp::Instance {
             }
             status = kbd->GetStatus();
           }
-          if (status != ssh::KeyboardInteractive::kAuthenticated) {
-            thiz->Error("Keyboard interactive auth failed or insufficient.");
-            break;
+          switch (status) {
+            case ssh::KeyboardInteractive::kAuthenticated:
+              authenticated = true;
+              break;
+            case ssh::KeyboardInteractive::kPartialAuthentication:
+              thiz->Error("Keyboard interactive succeeded but insufficient.");
+              break;
+            case ssh::KeyboardInteractive::kFailed: // fallthrough
+            default:
+              thiz->Error("Keyboard interactive auth failed.");
+              break;
           }
-          authenticated = true;
           break;
 
         case ssh::kPublicKey:
