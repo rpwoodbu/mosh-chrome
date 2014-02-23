@@ -334,10 +334,12 @@ class MoshClientInstance : public pp::Instance {
   void Launch(int32_t result) {
     if (result != PP_OK) {
       Error("Resolution failed: %d", result);
+      exit(1);
       return;
     }
     if (resolver_.GetNetAddressCount() < 1) {
       Error("There were no addresses.");
+      exit(1);
       return;
     }
     pp::NetAddress address = resolver_.GetNetAddress(0);
