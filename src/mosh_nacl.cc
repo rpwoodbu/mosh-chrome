@@ -62,21 +62,19 @@ class Keyboard : public PepperPOSIX::Reader {
   }
 
   virtual ssize_t Read(void *buf, size_t count) {
-    // TODO: Could submit in batches, but rarely will get in batches.
-    int result = 0;
+    int num_read = 0;
     pthread_mutex_lock(&keypresses_lock_);
-    if (keypresses_.size() > 0) {
-      ((char *)buf)[0] = keypresses_.front();
+
+    while (keypresses_.size() > 0 && num_read < count) {
+      ((char *)buf)[num_read] = keypresses_.front();
       keypresses_.pop_front();
-      target_->UpdateRead(keypresses_.size() > 0);
-      result = 1;
-    } else {
-      // Cannot use Log() here; circular dependency.
-      fprintf(stderr,
-          "Keyboard::Read(): From STDIN, no data, treat as nonblocking.\n");
+      num_read++;
     }
+
+    target_->UpdateRead(keypresses_.size() > 0);
+
     pthread_mutex_unlock(&keypresses_lock_);
-    return result;
+    return num_read;
   }
 
   // Handle input from the keyboard.
