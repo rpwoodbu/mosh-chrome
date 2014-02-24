@@ -558,15 +558,16 @@ class MoshClientInstance : public pp::Instance {
             { // Scoping needed to satisfy compiler.
               ssh::Key key;
               bool result = key.ImportPrivateKey(thiz->ssh_key_, input);
-              // For safety, zero the sensitive input ASAP.
-              memset(input, 0, sizeof(input));
-              thiz->ssh_key_.clear();
               if (result == false) {
-                thiz->Error("Error reading key: %s", s.GetLastError().c_str());
+                if (tries == 1) {
+                  // Only display error on the last try.
+                  thiz->Error("Error reading key: %s", s.GetLastError().c_str());
+                }
                 break;
               }
               if (s.AuthUsingKey(key) == false) {
                 thiz->Error("Key auth failed: %s", s.GetLastError().c_str());
+                tries = 0;
                 break;
               }
             }
@@ -579,8 +580,7 @@ class MoshClientInstance : public pp::Instance {
         }
       }
 
-      // For safety, and paranoia, zero the sensitive input here to be sure it
-      // is always done.
+      // For safety, zero the sensitive input.
       memset(input, 0, sizeof(input));
       thiz->ssh_key_.clear();
     }
