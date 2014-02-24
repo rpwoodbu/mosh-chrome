@@ -17,10 +17,29 @@
 
 'use strict';
 
+function onUpdateAvailable() {
+  chrome.runtime.getBackgroundPage(function(bg) {
+    var updateDiv = document.querySelector('#update');
+    if (bg.state.updateAvailable != null) {
+      var html = '';
+      html += '<strong>Update to v' + bg.state.updateAvailable +
+          ' is available.</strong><br>';
+      html += 'Close all Mosh windows to update. See changelog for details.';
+      updateDiv.innerHTML = html;
+    } else {
+      updateDiv.innerHTML = '';
+    }
+  });
+}
+
 window.onload = function() {
   var versionDiv = document.querySelector('#version');
   var manifest = chrome.runtime.getManifest();
   versionDiv.innerText = 'v' + manifest['version'];
+
+  // "Fire" this event in case it came in while this window wasn't open (very
+  // likely). The background page is responsible for propagating this.
+  onUpdateAvailable();
 
   var connectButton = document.querySelector('#connect');
   connectButton.onclick = onConnectClick;

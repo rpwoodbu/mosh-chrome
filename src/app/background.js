@@ -17,10 +17,12 @@
 
 // This stores the state of the app. It may be used by all child windows.
 window.state = {};
+// This stores the version available for update, or null if none.
+window.state.updateAvailable = null;
 // This is a map of all open session windows.
 window.state.windows = {};
 
-function NewSession() {
+function newSession() {
   chrome.app.window.create(
     'mosh_client.html',
     {
@@ -32,7 +34,17 @@ function NewSession() {
     });
 };
 
-chrome.app.runtime.onLaunched.addListener(NewSession);
+chrome.app.runtime.onLaunched.addListener(newSession);
+
+function updateAvailable(e) {
+  window.state.updateAvailable = e.version;
+  var w = chrome.app.window.get('mosh_client');
+  if (w != null) {
+    w.contentWindow.onUpdateAvailable();
+  }
+};
+
+chrome.runtime.onUpdateAvailable.addListener(updateAvailable);
 
 chrome.contextMenus.create({
   'type': 'normal',
@@ -41,4 +53,4 @@ chrome.contextMenus.create({
   'contexts': ['launcher'],
 });
 
-chrome.contextMenus.onClicked.addListener(function() { NewSession(); });
+chrome.contextMenus.onClicked.addListener(function() { newSession(); });
