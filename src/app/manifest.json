@@ -4,7 +4,7 @@
   "name": "Mosh",
   "description": "Mosh (mobile shell) for Chrome.",
   "offline_enabled": true,
-  "version": "0.2.1.21",
+  "version": "0.2.2.22",
   "app": {
     "background": {
       "scripts": ["background.js"]
