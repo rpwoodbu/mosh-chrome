@@ -42,6 +42,19 @@ function updateAvailable(e) {
   if (w != null) {
     w.contentWindow.onUpdateAvailable();
   }
+
+  var message = 'Update to v' + e.version + ' is available.';
+  message += ' Close all Mosh windows to update. See changelog for details.';
+  chrome.notifications.create(
+      'update_notification',
+      {
+        'type': 'basic',
+        'title': 'Mosh update available',
+        'message': message,
+        'iconUrl': 'laptop_terminal.png',
+        'priority': -2,
+      },
+      function(id) {});
 };
 
 chrome.runtime.onUpdateAvailable.addListener(updateAvailable);
