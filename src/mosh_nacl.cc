@@ -79,6 +79,10 @@ class Keyboard : public PepperPOSIX::Reader {
 
   // Handle input from the keyboard.
   void HandleInput(string input) {
+    if (input.size() == 0) {
+      // Nothing to see here.
+      return;
+    }
     pthread_mutex_lock(&keypresses_lock_);
     for (int i = 0; i < input.size(); ++i) {
       keypresses_.push_back(input[i]);
