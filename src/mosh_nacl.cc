@@ -353,10 +353,18 @@ void *MoshClientInstance::Mosh(void *data) {
   MoshClientInstance *thiz = reinterpret_cast<MoshClientInstance *>(data);
 
   setenv("TERM", "xterm-256color", 1);
-  char *argv[] = { "mosh-client", thiz->addr_, thiz->port_ };
+
+  // Some hoops to avoid a compiler warning.
+  const char *binary_name = "mosh-client";
+  char *argv0 = new char[sizeof(*binary_name)];
+  memcpy(argv0, binary_name, sizeof(*argv0));
+
+  char *argv[] = { argv0, thiz->addr_, thiz->port_ };
   thiz->Log("Mosh(): Calling mosh_main");
   mosh_main(sizeof(argv) / sizeof(argv[0]), argv);
   thiz->Log("Mosh(): mosh_main returned");
+
+  delete[] argv0;
   exit(0);
   return 0;
 }

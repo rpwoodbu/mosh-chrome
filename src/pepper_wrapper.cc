@@ -34,6 +34,43 @@
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
+#include <map>
+#include <string>
+
+using ::std::map;
+using ::std::string;
+
+// Literal strings are "const char *", but many of these old functions want to
+// return "char *". To avoid compiler warnings, we generate non-const strings
+// as needed, by way of calling Get("some_string"). We use C++ static
+// initialization (by putting the object in the global scope) to manage the
+// lifecycle of the backing memory.
+class BadInterning {
+ public:
+  ~BadInterning() {
+    for (map<string, char *>::iterator i = strings_.begin();
+        i != strings_.end();
+        ++i) {
+      delete[] i->second;
+    }
+  }
+
+  char *Get(const string &str) {
+    if (strings_.count(str) == 0) {
+      int size = str.size();
+      char *buf = new char[size+1];
+      str.copy(buf, size);
+      buf[size] = '\0';
+      strings_[str] = buf;
+    }
+    return strings_[str];
+  }
+
+ private:
+  map<string, char *> strings_;
+};
+
+BadInterning strings;
 
 extern "C" {
 
@@ -82,17 +119,17 @@ pid_t getpid(void) {
 #ifndef USE_NEWLIB
 char *setlocale(int category, const char *locale) {
   Log("setlocale(%d, \"%s\")", category, locale);
-  return "NaCl";
+  return strings.Get("NaCl");
 }
 #endif
 char *nl_langinfo(nl_item item) {
   switch (item) {
     case CODESET:
       Log("nl_langinfo(CODESET)");
-      return "UTF-8";
+      return strings.Get("UTF-8");
     default:
       Log("nl_langinfo(%d)", item);
-      return "Error";
+      return strings.Get("Error");
   }
 }
 
@@ -237,7 +274,7 @@ void freeaddrinfo(struct addrinfo *res) {
 
 char *gai_strerror(int errcode) {
   Log("gai_strerror(): Not implemented.");
-  return "gai_strerror not implemented";
+  return strings.Get("gai_strerror not implemented");
 }
 
 //
