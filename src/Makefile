@@ -24,9 +24,11 @@ CXX_SOURCES:=\
 	pepper_posix_tcp.cc \
 	pepper_posix_udp.cc \
 	pepper_wrapper.cc \
-	ssh.cc
+	ssh.cc \
+	ssh_login.cc
 
 CXX_HEADERS:=\
+	mosh_nacl.h \
 	pepper_posix.h \
 	pepper_posix_selector.h \
 	pepper_posix_native_udp.h \
@@ -34,7 +36,8 @@ CXX_HEADERS:=\
 	pepper_posix_tcp.h \
 	pepper_posix_udp.h \
 	pepper_wrapper.h \
-	ssh.h
+	ssh.h \
+	ssh_login.h
 
 OBJECTS:=\
 	../build/mosh/src/frontend/mosh-client.o \

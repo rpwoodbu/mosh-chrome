@@ -20,6 +20,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+#ifndef SSH_H
+#define SSH_H
+
 #include <libssh/libssh.h>
 #include <string>
 #include <vector>
@@ -278,3 +281,5 @@ class Channel : public ResultCode {
 };
 
 } // namespace ssh
+
+#endif // SSH_H
