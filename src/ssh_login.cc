@@ -31,19 +31,6 @@ SSHLogin::~SSHLogin() {
   delete session_;
 }
 
-void *SSHLogin::ThreadEntry(void *data) {
-  SSHLogin *thiz = reinterpret_cast<SSHLogin *>(data);
-  thiz->Start();
-  return NULL;
-}
-
-void SSHLogin::Launch() {
-  int thread_err = pthread_create(&thread_, NULL, ThreadEntry, this);
-  if (thread_err != 0) {
-    mosh_->Error("Failed to create SSH login thread: %s", strerror(thread_err));
-  }
-}
-
 void SSHLogin::GetKeyboardLine(char *buf, size_t len, bool echo) {
   int i = 0;
   while (i < len) {
@@ -73,17 +60,27 @@ void SSHLogin::GetKeyboardLine(char *buf, size_t len, bool echo) {
   buf[i] = 0;
 }
 
-void SSHLogin::Start() {
-  if (!RealStart()) {
-    // TODO: Propagate errors more cleanly.
-    exit(1);
+bool SSHLogin::AskYesNo(const string &prompt) {
+  for (int i = 0; i < RETRIES; ++i) {
+    mosh_->Output(MoshClientInstance::TYPE_DISPLAY, prompt + " (Yes/No): ");
+    char input_buf[INPUT_SIZE];
+    GetKeyboardLine(input_buf, sizeof(input_buf), true);
+    mosh_->Output(MoshClientInstance::TYPE_DISPLAY, "\r\n");
+    string input = input_buf;
+    if (input == "yes" || input == "Yes") {
+      return true;
+    }
+    if (input == "no" || input == "No") {
+      return false;
+    }
+    mosh_->Output(MoshClientInstance::TYPE_DISPLAY,
+        "Please specify Yes or No.\r\n");
   }
 
-  pp::Module::Get()->core()->CallOnMainThread(
-      0, mosh_->cc_factory_.NewCallback(&MoshClientInstance::LaunchMosh));
+  return false;
 }
 
-bool SSHLogin::RealStart() {
+bool SSHLogin::Start() {
   setenv("HOME", "dummy", 1); // To satisfy libssh.
 
   delete session_;
@@ -149,11 +146,39 @@ bool SSHLogin::RealStart() {
 }
 
 bool SSHLogin::CheckFingerprint() {
-  // TODO: Actually track known hosts and check with the user if unknown.
+  const string server_name = addr_ + ":" + port_;
+  const string server_fp = session_->GetPublicKey()->MD5();
+
   mosh_->Output(MoshClientInstance::TYPE_DISPLAY,
-      "Fingerprint of remote ssh host (MD5): " +
-      session_->GetPublicKey()->MD5() + "\r\n");
-  return true;
+      "Fingerprint of remote ssh host (MD5):\r\n  " + server_fp + "\r\n");
+
+  const pp::Var stored_fp_var = known_hosts_.Get(server_name);
+  if (stored_fp_var.is_undefined()) {
+    bool result = AskYesNo("Server fingerprint unknown. Store and continue?");
+    if (result == true) {
+      known_hosts_.Set(server_name, server_fp);
+      return true;
+    }
+  } else {
+    string stored_fp = stored_fp_var.AsString();
+    if (stored_fp == server_fp) {
+      return true;
+    }
+    mosh_->Output(MoshClientInstance::TYPE_DISPLAY,
+        "WARNING!!! Server fingerprint differs! "
+        "Possible man-in-the-middle attack.\r\n"
+        "Stored fingerprint (MD5):\r\n  " + stored_fp + "\r\n");
+    bool result = AskYesNo("Connect anyway, and store new fingerprint?");
+    if (result == true) {
+      result = AskYesNo("Don't take this lightly. Are you really sure?");
+      if (result == true) {
+        known_hosts_.Set(server_name, server_fp);
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
 
 vector<ssh::AuthenticationType> *SSHLogin::GetAuthTypes() {

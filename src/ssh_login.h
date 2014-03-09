@@ -21,12 +21,13 @@
 #ifndef SSH_LOGIN_H
 #define SSH_LOGIN_H
 
-#include <pthread.h>
 #include <stddef.h>
 #include <string>
 #include <vector>
 
 #include "ssh.h"
+#include "ppapi/cpp/var.h"
+#include "ppapi/cpp/var_dictionary.h"
 
 using ::std::string;
 using ::std::vector;
@@ -40,8 +41,8 @@ class SSHLogin {
   explicit SSHLogin(MoshClientInstance *mosh);
   ~SSHLogin();
 
-  // Launch login in new thread.
-  void Launch();
+  // Begin the SSH login session. Returns true iff SSH Login succeeded.
+  bool Start();
 
   string addr() const { return addr_; }
   void set_addr(const string &addr) { addr_ = addr; }
@@ -55,14 +56,10 @@ class SSHLogin {
   string key() const { return key_; }
   void set_key(const string &key) { key_ = key; }
 
+  pp::VarDictionary known_hosts() const { return known_hosts_; }
+  void set_known_hosts(const pp::Var &var) { known_hosts_ = var; }
+
  private:
-  // Entry point after thread is created. Handles communication of the
-  // disposition of SSHLogin to MoshClientInstance.
-  void Start();
-
-  // The real work of the SSHLogin begins here; called from Start().
-  bool RealStart();
-
   // Passed as function pointer to pthread_create(). |data| is |this|.
   static void *ThreadEntry(void *data);
 
@@ -77,6 +74,10 @@ class SSHLogin {
   // caller.
   vector<ssh::AuthenticationType> *GetAuthTypes();
 
+  // Ask a yes/no question to the user, and return the answer as a bool.
+  // Prefers to return false if input is not parseable.
+  bool AskYesNo(const string &prompt);
+
   bool DoPasswordAuth();
   bool DoInteractiveAuth();
   bool DoPublicKeyAuth();
@@ -86,8 +87,8 @@ class SSHLogin {
   string port_;
   string user_;
   string key_;
+  pp::VarDictionary known_hosts_;
   MoshClientInstance *mosh_;
-  pthread_t thread_;
   ssh::Session *session_;
 
   // Disable copy and assignment.

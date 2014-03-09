@@ -208,15 +208,23 @@ void MoshClientInstance::HandleMessage(const pp::Var &var) {
     if (key.is_undefined() == false) {
       ssh_login_.set_key(key.AsString());
     }
-    ssh_login_.set_addr(addr_);
-    ssh_login_.set_port(port_);
-    ssh_login_.Launch();
+    // Now get the known hosts.
+    Output(TYPE_GET_KNOWN_HOSTS, "");
+  } else if (dict.HasKey("known_hosts")) {
+    pp::Var known_hosts = dict.Get("known_hosts");
+    if (known_hosts.is_undefined() == false) {
+      ssh_login_.set_known_hosts(known_hosts);
+    }
+    // The assumption is that Output(TYPE_GET_SSH_KEY, "") was already
+    // called, which precipitated Output(TYPE_GET_KNOWN_HOSTS, ""), so now we
+    // are ready to do the SSH login.
+    LaunchSSHLogin();
   } else {
     Log("HandleMessage(): Got a message of an unexpected type.");
   }
 }
 
-void MoshClientInstance::Output(OutputType t, const string &s) {
+void MoshClientInstance::Output(OutputType t, const pp::Var &data) {
   string type;
   switch (t) {
    case TYPE_DISPLAY:
@@ -231,15 +239,21 @@ void MoshClientInstance::Output(OutputType t, const string &s) {
    case TYPE_GET_SSH_KEY:
     type = "get_ssh_key";
     break;
+   case TYPE_GET_KNOWN_HOSTS:
+    type = "sync_get_known_hosts";
+    break;
+   case TYPE_SET_KNOWN_HOSTS:
+    type = "sync_set_known_hosts";
+    break;
    default:
     // Bad type.
     return;
   }
 
   pp::VarDictionary dict;
-  dict.Set(pp::Var("type"), pp::Var(type));
-  dict.Set(pp::Var("data"), pp::Var(s));
-  PostMessage(pp::Var(dict));
+  dict.Set("type", type);
+  dict.Set("data", data);
+  PostMessage(dict);
 }
 
 void MoshClientInstance::Logv(OutputType t, const char *format, va_list argp) {
@@ -343,13 +357,13 @@ void MoshClientInstance::Launch(int32_t result) {
 }
 
 void MoshClientInstance::LaunchMosh(int32_t unused) {
-  int thread_err = pthread_create(&thread_, NULL, Mosh, this);
+  int thread_err = pthread_create(&thread_, NULL, MoshThread, this);
   if (thread_err != 0) {
     Error("Failed to create Mosh thread: %s", strerror(thread_err));
   }
 }
 
-void *MoshClientInstance::Mosh(void *data) {
+void *MoshClientInstance::MoshThread(void *data) {
   MoshClientInstance *thiz = reinterpret_cast<MoshClientInstance *>(data);
 
   setenv("TERM", "xterm-256color", 1);
@@ -366,7 +380,33 @@ void *MoshClientInstance::Mosh(void *data) {
 
   delete[] argv0;
   exit(0);
-  return 0;
+  return NULL;
+}
+
+void MoshClientInstance::LaunchSSHLogin() {
+  ssh_login_.set_addr(addr_);
+  ssh_login_.set_port(port_);
+
+  int thread_err = pthread_create(&thread_, NULL, SSHLoginThread, this);
+  if (thread_err != 0) {
+    Error("Failed to create SSHLogin thread: %s", strerror(thread_err));
+  }
+}
+
+void *MoshClientInstance::SSHLoginThread(void *data) {
+  MoshClientInstance *thiz = reinterpret_cast<MoshClientInstance *>(data);
+
+  if (thiz->ssh_login_.Start() == false) {
+    thiz->Error("SSH Login failed.");
+    exit(1);
+  }
+
+  thiz->Output(TYPE_SET_KNOWN_HOSTS, thiz->ssh_login_.known_hosts());
+
+  pp::Module::Get()->core()->CallOnMainThread(
+      0, thiz->cc_factory_.NewCallback(&MoshClientInstance::LaunchMosh));
+
+  return NULL;
 }
 
 // Initialize static data for MoshClientInstance.

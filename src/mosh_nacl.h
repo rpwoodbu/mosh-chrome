@@ -52,10 +52,12 @@ class MoshClientInstance : public pp::Instance {
     TYPE_LOG,
     TYPE_ERROR,
     TYPE_GET_SSH_KEY,
+    TYPE_GET_KNOWN_HOSTS,
+    TYPE_SET_KNOWN_HOSTS,
   };
 
   // Low-level function to output data to Javascript.
-  void Output(OutputType t, const string &s);
+  void Output(OutputType t, const pp::Var &data);
 
   // Sends messages to the Javascript console log.
   void Logv(OutputType t, const char *format, va_list argp);
@@ -66,28 +68,31 @@ class MoshClientInstance : public pp::Instance {
   // Sends error messages to the Javascript console log and terminal.
   void Error(const char *format, ...);
 
-  // Launches Mosh in a new thread. Must be visible to SSHLogin. Must take one
-  // argument to be used as a completion callback.
-  void LaunchMosh(int32_t unused);
-
   // Allow SSHLogin to set the port based on its findings. Takes ownership.
   void set_port(char *port) { delete port_; port_ = port; }
 
   // Pepper POSIX emulation.
   PepperPOSIX::POSIX *posix_;
+
   // Window change "file"; must be visible to sigaction().
   class WindowChange *window_change_;
-
-  // Must be visible to SSHLogin.
-  // TODO: Clean up the interface between this class and SSHLogin.
-  pp::CompletionCallbackFactory<MoshClientInstance> cc_factory_;
 
  private:
   // Launcher that can be a callback.
   void Launch(int32_t result);
 
-  // New thread entry point for Mosh.
-  static void *Mosh(void *data);
+  // Launches Mosh in a new thread. Must take one argument to be used as a
+  // completion callback.
+  void LaunchMosh(int32_t unused);
+
+  // New thread entry point for Mosh. |data| is |this|.
+  static void *MoshThread(void *data);
+
+  // Launches SSHLogin in a new thread.
+  void LaunchSSHLogin();
+
+  // New thread entry point for SSHLogin. |data| is |this|.
+  static void *SSHLoginThread(void *data);
 
   static int num_instances_; // This needs to be a singleton.
   pthread_t thread_;
@@ -102,6 +107,7 @@ class MoshClientInstance : public pp::Instance {
   pp::InstanceHandle instance_handle_;
   class Keyboard *keyboard_;
   pp::HostResolver resolver_;
+  pp::CompletionCallbackFactory<MoshClientInstance> cc_factory_;
 
   // Disable copy and assignment.
   MoshClientInstance(const MoshClientInstance&);

@@ -125,11 +125,38 @@ mosh.CommandInstance.prototype.onMessage_ = function(e) {
     }
     this.io.print(output + '\r\n');
     console.error(output);
-  } else if (type == 'get_ssh_key') {
+  } else if (type.match(/^get_.+/)) {
     var thiz = this;
-    chrome.storage.local.get('ssh_key', function(o) {
-      thiz.moshNaCl_.postMessage({'ssh_key': o['ssh_key']});
+    var name = type.slice(4);
+    chrome.storage.local.get(name, function(o) {
+      var result = {};
+      result[name] = o[name];
+      thiz.moshNaCl_.postMessage(result);
     });
+  } else if (type.match(/^set_.+/)) {
+    var name = type.slice(4);
+    var param = {};
+    param[name] = data;
+    // Wash out any string "objects" by going through JSON (hacky).
+    var j = JSON.stringify(param);
+    param = JSON.parse(j);
+    chrome.storage.local.set(param);
+  } else if (type.match(/^sync_get_.+/)) {
+    var thiz = this;
+    var name = type.slice(9);
+    chrome.storage.sync.get(name, function(o) {
+      var result = {};
+      result[name] = o[name];
+      thiz.moshNaCl_.postMessage(result);
+    });
+  } else if (type.match(/^sync_set_.+/)) {
+    var name = type.slice(9);
+    var param = {};
+    param[name] = data;
+    // Wash out any string "objects" by going through JSON (hacky).
+    var j = JSON.stringify(param);
+    param = JSON.parse(j);
+    chrome.storage.sync.set(param);
   } else {
     console.log('Unknown message type: ' + JSON.stringify(e.data));
   }
