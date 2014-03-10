@@ -1,7 +1,4 @@
 // ssh_login.h - SSH Login for Mosh.
-//
-// This file contains the Mosh-specific bits of the NaCl port of the
-// client.
 
 // Copyright 2013, 2014 Richard Woodbury
 //
@@ -32,13 +29,11 @@
 using ::std::string;
 using ::std::vector;
 
-class MoshClientInstance;
-
 // SSHLogin takes care of the SSH connection and conversation to initiate the
 // Mosh session.
 class SSHLogin {
  public:
-  explicit SSHLogin(MoshClientInstance *mosh);
+  SSHLogin();
   ~SSHLogin();
 
   // Begin the SSH login session. Returns true iff SSH Login succeeded.
@@ -58,6 +53,10 @@ class SSHLogin {
 
   pp::VarDictionary known_hosts() const { return known_hosts_; }
   void set_known_hosts(const pp::Var &var) { known_hosts_ = var; }
+
+  string mosh_port() const { return mosh_port_; }
+
+  string mosh_key() const { return mosh_key_; }
 
  private:
   // Passed as function pointer to pthread_create(). |data| is |this|.
@@ -87,8 +86,9 @@ class SSHLogin {
   string port_;
   string user_;
   string key_;
+  string mosh_port_;
+  string mosh_key_;
   pp::VarDictionary known_hosts_;
-  MoshClientInstance *mosh_;
   ssh::Session *session_;
 
   // Disable copy and assignment.

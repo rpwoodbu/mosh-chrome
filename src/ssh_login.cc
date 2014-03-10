@@ -1,7 +1,4 @@
 // ssh_login.cc - SSH Login for Mosh.
-//
-// This file contains the Mosh-specific bits of the NaCl port of the
-// client.
 
 // Copyright 2013, 2014 Richard Woodbury
 //
@@ -25,7 +22,7 @@
 const int INPUT_SIZE = 256;
 const int RETRIES = 3;
 
-SSHLogin::SSHLogin(MoshClientInstance *mosh) : mosh_(mosh), session_(NULL) {}
+SSHLogin::SSHLogin() : session_(NULL) {}
 
 SSHLogin::~SSHLogin() {
   delete session_;
@@ -62,10 +59,10 @@ void SSHLogin::GetKeyboardLine(char *buf, size_t len, bool echo) {
 
 bool SSHLogin::AskYesNo(const string &prompt) {
   for (int i = 0; i < RETRIES; ++i) {
-    mosh_->Output(MoshClientInstance::TYPE_DISPLAY, prompt + " (Yes/No): ");
+    printf("%s (Yes/No): ", prompt.c_str());
     char input_buf[INPUT_SIZE];
     GetKeyboardLine(input_buf, sizeof(input_buf), true);
-    mosh_->Output(MoshClientInstance::TYPE_DISPLAY, "\r\n");
+    printf("\r\n");
     string input = input_buf;
     if (input == "yes" || input == "Yes") {
       return true;
@@ -73,8 +70,7 @@ bool SSHLogin::AskYesNo(const string &prompt) {
     if (input == "no" || input == "No") {
       return false;
     }
-    mosh_->Output(MoshClientInstance::TYPE_DISPLAY,
-        "Please specify Yes or No.\r\n");
+    printf("Please specify Yes or No.\r\n");
   }
 
   return false;
@@ -88,7 +84,7 @@ bool SSHLogin::Start() {
   session_->SetOption(SSH_OPTIONS_TIMEOUT, 30); // Extend connection timeout to 30s.
 
   if (session_->Connect() == false) {
-    mosh_->Error("Could not connect via ssh: %s",
+    fprintf(stderr, "Could not connect via ssh: %s\r\n",
         session_->GetLastError().c_str());
     return false;
   }
@@ -106,9 +102,8 @@ bool SSHLogin::Start() {
   for (vector<ssh::AuthenticationType>::iterator i = auths->begin();
       authenticated == false && i != auths->end();
       ++i) {
-    mosh_->Output(MoshClientInstance::TYPE_DISPLAY,
-      "Trying authentication type " + ssh::GetAuthenticationTypeName(*i) +
-      "\r\n");
+    printf("Trying authentication type %s\r\n",
+        ssh::GetAuthenticationTypeName(*i).c_str());
 
     switch(*i) {
       case ssh::kPassword:
@@ -133,7 +128,7 @@ bool SSHLogin::Start() {
   key_.clear();
 
   if (authenticated == false) {
-    mosh_->Error("ssh authentication failed: %s",
+    fprintf(stderr, "ssh authentication failed: %s\r\n",
         session_->GetLastError().c_str());
     return false;
   }
@@ -149,8 +144,8 @@ bool SSHLogin::CheckFingerprint() {
   const string server_name = addr_ + ":" + port_;
   const string server_fp = session_->GetPublicKey()->MD5();
 
-  mosh_->Output(MoshClientInstance::TYPE_DISPLAY,
-      "Fingerprint of remote ssh host (MD5):\r\n  " + server_fp + "\r\n");
+  printf("Fingerprint of remote ssh host (MD5):\r\n  %s\r\n",
+      server_fp.c_str());
 
   const pp::Var stored_fp_var = known_hosts_.Get(server_name);
   if (stored_fp_var.is_undefined()) {
@@ -164,10 +159,9 @@ bool SSHLogin::CheckFingerprint() {
     if (stored_fp == server_fp) {
       return true;
     }
-    mosh_->Output(MoshClientInstance::TYPE_DISPLAY,
-        "WARNING!!! Server fingerprint differs! "
+    printf("WARNING!!! Server fingerprint differs! "
         "Possible man-in-the-middle attack.\r\n"
-        "Stored fingerprint (MD5):\r\n  " + stored_fp + "\r\n");
+        "Stored fingerprint (MD5):\r\n  %s\r\n", stored_fp.c_str());
     bool result = AskYesNo("Connect anyway, and store new fingerprint?");
     if (result == true) {
       result = AskYesNo("Don't take this lightly. Are you really sure?");
@@ -189,12 +183,11 @@ vector<ssh::AuthenticationType> *SSHLogin::GetAuthTypes() {
   client_auths.push_back(ssh::kInteractive);
   client_auths.push_back(ssh::kPassword);
 
-  mosh_->Output(MoshClientInstance::TYPE_DISPLAY,
-      "Authentication types supported by server:\r\n");
+  printf("Authentication types supported by server:\r\n");
   vector<ssh::AuthenticationType> server_auths =
     session_->GetAuthenticationTypes();
   if (server_auths.size() == 0) {
-    mosh_->Error("Failed to get authentication types: %s",
+    fprintf(stderr, "Failed to get authentication types: %s\r\n",
         session_->GetLastError().c_str());
     return NULL;
   }
@@ -202,14 +195,12 @@ vector<ssh::AuthenticationType> *SSHLogin::GetAuthTypes() {
   for (vector<ssh::AuthenticationType>::iterator i = server_auths.begin();
       i != server_auths.end();
       ++i) {
-    mosh_->Output(MoshClientInstance::TYPE_DISPLAY,
-        " - " + ssh::GetAuthenticationTypeName(*i));
+    printf(" - %s", ssh::GetAuthenticationTypeName(*i).c_str());
     if (std::find(client_auths.begin(), client_auths.end(), *i) ==
         client_auths.end()) {
-      mosh_->Output(MoshClientInstance::TYPE_DISPLAY,
-          " (not supported by client)");
+      printf(" (not supported by client)");
     }
-    mosh_->Output(MoshClientInstance::TYPE_DISPLAY, "\r\n");
+    printf("\r\n");
   }
 
   // In order to maintain the order of client_auths, but still display
@@ -232,9 +223,9 @@ vector<ssh::AuthenticationType> *SSHLogin::GetAuthTypes() {
 bool SSHLogin::DoPasswordAuth() {
   for (int tries = RETRIES; tries > 0; --tries) {
     char input[INPUT_SIZE];
-    mosh_->Output(MoshClientInstance::TYPE_DISPLAY, "Password: ");
+    printf("Password: ");
     GetKeyboardLine(input, sizeof(input), false);
-    mosh_->Output(MoshClientInstance::TYPE_DISPLAY, "\r\n");
+    printf("\r\n");
     if (strlen(input) == 0) {
       // User provided no input; skip this authentication type.
       return false;
@@ -247,7 +238,7 @@ bool SSHLogin::DoPasswordAuth() {
     }
     if (tries == 1) {
       // Only display error on last try.
-      mosh_->Error("Password authentication failed: %s",
+      fprintf(stderr, "Password authentication failed: %s\r\n",
           session_->GetLastError().c_str());
     }
   }
@@ -260,16 +251,18 @@ bool SSHLogin::DoInteractiveAuth() {
   for (int tries = RETRIES; tries > 0; --tries) {
     ssh::KeyboardInteractive::Status status = kbd->GetStatus();
     while (status == ssh::KeyboardInteractive::kPending) {
-      mosh_->Output(MoshClientInstance::TYPE_DISPLAY, kbd->GetName());
-      mosh_->Output(MoshClientInstance::TYPE_DISPLAY,
-          kbd->GetInstruction());
+      if (kbd->GetName().size() > 0) {
+        printf("%s\r\n", kbd->GetName().c_str());
+      }
+      if (kbd->GetInstruction().size() > 0) {
+        printf("%s\r\n", kbd->GetInstruction().c_str());
+      }
       bool done = false;
       while (!done) {
         char input[INPUT_SIZE];
-        mosh_->Output(MoshClientInstance::TYPE_DISPLAY,
-            kbd->GetNextPrompt());
+        printf("%s", kbd->GetNextPrompt().c_str());
         GetKeyboardLine(input, sizeof(input), kbd->IsAnswerEchoed());
-        mosh_->Output(MoshClientInstance::TYPE_DISPLAY, "\r\n");
+        printf("\r\n");
         if (strlen(input) == 0) {
           // User provided no input; skip this authentication type.
           status = ssh::KeyboardInteractive::kFailed;
@@ -297,7 +290,7 @@ bool SSHLogin::DoInteractiveAuth() {
     }
     if (error != NULL && tries == 1) {
       // Only display error on the last try.
-      mosh_->Error(error);
+      fprintf(stderr, "%s\r\n", error);
     }
   }
   return false;
@@ -306,14 +299,13 @@ bool SSHLogin::DoInteractiveAuth() {
 bool SSHLogin::DoPublicKeyAuth() {
   for (int tries = RETRIES; tries > 0; --tries) {
     if (key_.size() == 0) {
-      mosh_->Output(MoshClientInstance::TYPE_DISPLAY,
-          "No ssh key found.\r\n");
+      printf("No ssh key found.\r\n");
       return false;
     }
-    mosh_->Output(MoshClientInstance::TYPE_DISPLAY, "Passphrase: ");
+    printf("Passphrase: ");
     char input[INPUT_SIZE];
     GetKeyboardLine(input, sizeof(input), false);
-    mosh_->Output(MoshClientInstance::TYPE_DISPLAY, "\r\n");
+    printf("\r\n");
     if (strlen(input) == 0) {
       // User provided no input; skip this authentication type.
       return false;
@@ -324,12 +316,14 @@ bool SSHLogin::DoPublicKeyAuth() {
     if (result == false) {
       if (tries == 1) {
         // Only display error on the last try.
-        mosh_->Error("Error reading key: %s", session_->GetLastError().c_str());
+        fprintf(stderr, "Error reading key: %s\r\n",
+            session_->GetLastError().c_str());
       }
       continue;
     }
     if (session_->AuthUsingKey(key) == false) {
-      mosh_->Error("Key auth failed: %s", session_->GetLastError().c_str());
+      fprintf(stderr, "Key auth failed: %s\r\n",
+          session_->GetLastError().c_str());
       return false;
     }
     // If we got here, auth succeeded.
@@ -341,26 +335,26 @@ bool SSHLogin::DoPublicKeyAuth() {
 bool SSHLogin::DoConversation() {
   ssh::Channel *c = session_->NewChannel();
   if (c->Execute("mosh-server new -s -c 256 -l LANG=en_US.UTF-8") == false) {
-    mosh_->Error("Failed to execute mosh-server: %s",
+    fprintf(stderr, "Failed to execute mosh-server: %s\r\n",
         session_->GetLastError().c_str());
     return false;
   }
   string buf;
   if (c->Read(&buf, NULL) == false) {
-    mosh_->Error("Error reading from remote ssh server: %s",
+    fprintf(stderr, "Error reading from remote ssh server: %s\r\n",
         session_->GetLastError().c_str());
     return false;
   }
 
   char key[23];
-  char *port = new char[6];
-  mosh_->set_port(port); // Takes ownership.
+  char port[6];
   size_t left_pos = 0;
   while (true) {
     const char *newline = "\r\n";
     size_t right_pos = buf.find(newline, left_pos);
     if (right_pos == string::npos) {
-      mosh_->Error("Bad response when running mosh-server: '%s'", buf.c_str());
+      fprintf(stderr, "Bad response when running mosh-server: '%s'\r\n",
+          buf.c_str());
       return false;
     }
     string substr = buf.substr(left_pos, right_pos - left_pos);
@@ -370,9 +364,7 @@ bool SSHLogin::DoConversation() {
     }
     left_pos = right_pos + strlen(newline);
   }
-  // TODO: This should probably be communicated more cleanly to
-  // MoshClientInstance, so that it can make the determination as to what to do
-  // with it.
-  setenv("MOSH_KEY", key, 1);
+  mosh_key_ = key;
+  mosh_port_ = port;
   return true;
 }

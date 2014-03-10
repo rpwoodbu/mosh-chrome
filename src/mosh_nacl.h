@@ -68,9 +68,6 @@ class MoshClientInstance : public pp::Instance {
   // Sends error messages to the Javascript console log and terminal.
   void Error(const char *format, ...);
 
-  // Allow SSHLogin to set the port based on its findings. Takes ownership.
-  void set_port(char *port) { delete port_; port_ = port; }
-
   // Pepper POSIX emulation.
   PepperPOSIX::POSIX *posix_;
 

@@ -172,8 +172,7 @@ PepperPOSIX::File *DevURandomFactory() {
 MoshClientInstance::MoshClientInstance(PP_Instance instance) :
     pp::Instance(instance), addr_(NULL), port_(NULL), ssh_mode_(false),
     posix_(NULL), keyboard_(NULL), instance_handle_(this),
-    window_change_(NULL), resolver_(instance_handle_), cc_factory_(this),
-    ssh_login_(this) {
+    window_change_(NULL), resolver_(instance_handle_), cc_factory_(this) {
   ++num_instances_;
   assert (num_instances_ == 1);
   ::instance = this;
@@ -401,6 +400,14 @@ void *MoshClientInstance::SSHLoginThread(void *data) {
     exit(1);
   }
 
+  // Extract Mosh port and key.
+  delete[] thiz->port_;
+  thiz->port_ = new char[6];
+  memset(thiz->port_, 0, 6);
+  thiz->ssh_login_.mosh_port().copy(thiz->port_, 5);
+  setenv("MOSH_KEY", thiz->ssh_login_.mosh_key().c_str(), 1);
+
+  // Save any updates to known hosts.
   thiz->Output(TYPE_SET_KNOWN_HOSTS, thiz->ssh_login_.known_hosts());
 
   pp::Module::Get()->core()->CallOnMainThread(
