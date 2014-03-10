@@ -157,6 +157,8 @@ mosh.CommandInstance.prototype.onMessage_ = function(e) {
     var j = JSON.stringify(param);
     param = JSON.parse(j);
     chrome.storage.sync.set(param);
+  } else if (type == 'exit') {
+    this.exit_('Mosh has exited.');
   } else {
     console.log('Unknown message type: ' + JSON.stringify(e.data));
   }
@@ -201,10 +203,10 @@ mosh.CommandInstance.prototype.onLoad_ = function(e) {
 };
 
 mosh.CommandInstance.prototype.onCrash_ = function(e) {
-  var output = 'Mosh NaCl crashed.';
-  if (this.moshNaCl_.exitStatus != -1) {
-    output = 'Mosh has exited.';
-  }
+  this.exit_('Mosh NaCl crashed.');
+}
+
+mosh.CommandInstance.prototype.exit_ = function(output) {
   this.io.print('\r\n' + output + '\r\n');
   console.log(output);
   this.io.print('Press "x" to close the window.\r\n');

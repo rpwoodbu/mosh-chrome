@@ -54,6 +54,7 @@ class MoshClientInstance : public pp::Instance {
     TYPE_GET_SSH_KEY,
     TYPE_GET_KNOWN_HOSTS,
     TYPE_SET_KNOWN_HOSTS,
+    TYPE_EXIT,
   };
 
   // Low-level function to output data to Javascript.

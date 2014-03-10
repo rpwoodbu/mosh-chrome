@@ -244,6 +244,9 @@ void MoshClientInstance::Output(OutputType t, const pp::Var &data) {
    case TYPE_SET_KNOWN_HOSTS:
     type = "sync_set_known_hosts";
     break;
+   case TYPE_EXIT:
+    type = "exit";
+    break;
    default:
     // Bad type.
     return;
@@ -333,12 +336,12 @@ bool MoshClientInstance::Init(
 void MoshClientInstance::Launch(int32_t result) {
   if (result != PP_OK) {
     Error("Resolution failed: %d", result);
-    exit(1);
+    Output(TYPE_EXIT, "");
     return;
   }
   if (resolver_.GetNetAddressCount() < 1) {
     Error("There were no addresses.");
-    exit(1);
+    Output(TYPE_EXIT, "");
     return;
   }
   pp::NetAddress address = resolver_.GetNetAddress(0);
@@ -378,7 +381,7 @@ void *MoshClientInstance::MoshThread(void *data) {
   thiz->Log("Mosh(): mosh_main returned");
 
   delete[] argv0;
-  exit(0);
+  thiz->Output(TYPE_EXIT, "");
   return NULL;
 }
 
@@ -397,7 +400,8 @@ void *MoshClientInstance::SSHLoginThread(void *data) {
 
   if (thiz->ssh_login_.Start() == false) {
     thiz->Error("SSH Login failed.");
-    exit(1);
+    thiz->Output(TYPE_EXIT, "");
+    return NULL;
   }
 
   // Extract Mosh port and key.
