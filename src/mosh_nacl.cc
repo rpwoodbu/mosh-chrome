@@ -369,6 +369,13 @@ void *MoshClientInstance::MoshThread(void *data) {
   MoshClientInstance *thiz = reinterpret_cast<MoshClientInstance *>(data);
 
   setenv("TERM", "xterm-256color", 1);
+  if (getenv("LANG") == NULL) {
+    // Chrome cleans the environment, but on Linux and Chrome OS, it leaves
+    // $LANG. Mac and Windows don't get this variable, at least not as of
+    // 33.0.1750.117. This is critical for ncurses wide character support. We
+    // work around this omission here.
+    setenv("LANG", "C.UTF-8", 1);
+  }
 
   // Some hoops to avoid a compiler warning.
   const char *binary_name = "mosh-client";
