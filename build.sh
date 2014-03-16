@@ -135,9 +135,9 @@ git submodule sync
 git submodule init
 git submodule update
 
-echo "Making hterm dist..."
 pushd deps/libapps/hterm > /dev/null
-if [[ ! -d dist ]]; then
+if [[ ${FAST} != "fast" ]]; then
+  echo "Making hterm dist..."
   bin/mkdist.sh
 fi
 popd > /dev/null
