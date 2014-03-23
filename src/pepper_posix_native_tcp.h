@@ -1,4 +1,4 @@
-// pepper_posix_native_udp.h - Native Pepper UDP implementation.
+// pepper_posix_native_tcp.h - Native Pepper TCP implementation.
 
 // Copyright 2013, 2014 Richard Woodbury
 //
