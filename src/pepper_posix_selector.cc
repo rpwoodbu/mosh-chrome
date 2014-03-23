@@ -45,6 +45,7 @@ void Selector::Deregister(const Target *target) {
 }
 
 void Selector::Notify() {
+  pthread::MutexLock m(&notify_mutex_);
   notify_cv_.Signal();
 }
 
@@ -61,16 +62,17 @@ vector<Target*> Selector::Select(
     abstime.tv_nsec += timeout->tv_nsec;
   }
 
-  // Check if any data is available.
-  vector<Target*> result = HasData(read_targets, write_targets);
-  if (result.size() > 0) {
-    // Data available now; return immediately.
-    return result;
-  }
-
-  // Wait for a target to have data.
   {
     pthread::MutexLock m(&notify_mutex_);
+
+    // Check if any data is available.
+    vector<Target*> result = HasData(read_targets, write_targets);
+    if (result.size() > 0) {
+      // Data available now; return immediately.
+      return result;
+    }
+
+    // Wait for a target to have data.
     if (timeout == NULL) {
       notify_cv_.Wait(&notify_mutex_);
     } else {
