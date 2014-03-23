@@ -22,7 +22,8 @@
 #define PEPPER_POSIX_SELECTOR_HPP
 
 #include <vector>
-#include <pthread.h>
+
+#include "pthread_locks.h"
 
 namespace PepperPOSIX {
 
@@ -77,8 +78,8 @@ class Selector {
       const vector<Target*> &write_targets);
 
   vector<Target*> targets_;
-  pthread_mutex_t notify_mutex_;
-  pthread_cond_t notify_cv_;
+  pthread::Mutex notify_mutex_;
+  pthread::Conditional notify_cv_;
 
   // Disable copy and assignment.
   Selector(const Selector&);

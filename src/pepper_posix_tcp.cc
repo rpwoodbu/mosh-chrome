@@ -24,13 +24,9 @@
 
 namespace PepperPOSIX {
 
-TCP::TCP() : connection_errno_(0) {
-  pthread_mutex_init(&buffer_lock_, NULL);
-}
+TCP::TCP() : connection_errno_(0) { }
 
-TCP::~TCP() {
-  pthread_mutex_destroy(&buffer_lock_);
-}
+TCP::~TCP() { }
 
 ssize_t TCP::Receive(void *buf, size_t count, int flags) {
   bool peek = false;
@@ -46,9 +42,8 @@ ssize_t TCP::Receive(void *buf, size_t count, int flags) {
     return -1;
   }
 
-  pthread_mutex_lock(&buffer_lock_);
+  pthread::MutexLock m(&buffer_lock_);
   if (buffer_.size() == 0) {
-    pthread_mutex_unlock(&buffer_lock_);
     Log("TCP::Receive(): EWOULDBLOCK");
     errno = EWOULDBLOCK;
     return -1;
@@ -72,7 +67,6 @@ ssize_t TCP::Receive(void *buf, size_t count, int flags) {
     }
     target_->UpdateRead(buffer_.size() > 0);
   }
-  pthread_mutex_unlock(&buffer_lock_);
 
   return read_count;
 }
@@ -86,13 +80,16 @@ ssize_t TCP::Write(const void *buf, size_t count) {
 }
 
 void TCP::AddData(const void *buf, size_t count) {
-  pthread_mutex_lock(&buffer_lock_);
   const char *cbuf = (const char *)buf;
-  for (; count > 0; --count) {
-    buffer_.push_back(*cbuf);
-    ++cbuf;
+
+  {
+    pthread::MutexLock m(&buffer_lock_);
+    for (; count > 0; --count) {
+      buffer_.push_back(*cbuf);
+      ++cbuf;
+    }
   }
-  pthread_mutex_unlock(&buffer_lock_);
+
   target_->UpdateRead(true);
 }
 

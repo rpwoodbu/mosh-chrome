@@ -36,6 +36,7 @@ CXX_HEADERS:=\
 	pepper_posix_tcp.h \
 	pepper_posix_udp.h \
 	pepper_wrapper.h \
+	pthread_locks.h \
 	ssh.h \
 	ssh_login.h
 

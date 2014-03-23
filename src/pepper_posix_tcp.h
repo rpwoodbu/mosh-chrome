@@ -23,10 +23,10 @@
 
 #include "pepper_posix.h"
 #include "pepper_posix_selector.h"
+#include "pthread_locks.h"
 
 #include <deque>
 #include <vector>
-#include <pthread.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/uio.h>
@@ -74,7 +74,7 @@ class TCP : public ReadWriter {
 
  private:
   std::deque<char> buffer_; // Guard with buffer_lock_.
-  pthread_mutex_t buffer_lock_;
+  pthread::Mutex buffer_lock_;
 
   // Disable copy and assignment.
   TCP(const TCP &);

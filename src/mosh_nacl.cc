@@ -19,6 +19,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "mosh_nacl.h"
+#include "pthread_locks.h"
 
 #include <algorithm>
 #include <deque>
@@ -46,16 +47,10 @@ static class MoshClientInstance *instance = NULL;
 // plumbing is in the MoshClientInstance::HandleMessage().
 class Keyboard : public PepperPOSIX::Reader {
  public:
-  Keyboard() {
-    pthread_mutex_init(&keypresses_lock_, NULL);
-  }
-  virtual ~Keyboard() {
-    pthread_mutex_destroy(&keypresses_lock_);
-  }
-
   virtual ssize_t Read(void *buf, size_t count) {
     int num_read = 0;
-    pthread_mutex_lock(&keypresses_lock_);
+
+    pthread::MutexLock m(&keypresses_lock_);
 
     while (keypresses_.size() > 0 && num_read < count) {
       ((char *)buf)[num_read] = keypresses_.front();
@@ -65,7 +60,6 @@ class Keyboard : public PepperPOSIX::Reader {
 
     target_->UpdateRead(keypresses_.size() > 0);
 
-    pthread_mutex_unlock(&keypresses_lock_);
     return num_read;
   }
 
@@ -75,18 +69,19 @@ class Keyboard : public PepperPOSIX::Reader {
       // Nothing to see here.
       return;
     }
-    pthread_mutex_lock(&keypresses_lock_);
-    for (int i = 0; i < input.size(); ++i) {
-      keypresses_.push_back(input[i]);
+    {
+      pthread::MutexLock m(&keypresses_lock_);
+      for (int i = 0; i < input.size(); ++i) {
+        keypresses_.push_back(input[i]);
+      }
     }
-    pthread_mutex_unlock(&keypresses_lock_);
     target_->UpdateRead(true);
   }
 
  private:
   // Queue of keyboard keypresses.
   std::deque<char> keypresses_; // Guard with keypresses_lock_.
-  pthread_mutex_t keypresses_lock_;
+  pthread::Mutex keypresses_lock_;
 };
 
 // Implements the plumbing to get stdout to the terminal.

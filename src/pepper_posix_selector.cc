@@ -22,17 +22,12 @@
 
 namespace PepperPOSIX {
 
-Selector::Selector() {
-  pthread_mutex_init(&notify_mutex_, NULL);
-  pthread_cond_init(&notify_cv_, NULL);
-}
+Selector::Selector() { }
 
 Selector::~Selector() {
   // It is a logical error to delete Selector before all Targets have been
   // deleted.
   assert(targets_.size() == 0);
-  pthread_cond_destroy(&notify_cv_);
-  pthread_mutex_destroy(&notify_mutex_);
 }
 
 Target *Selector::NewTarget(int id) {
@@ -50,7 +45,7 @@ void Selector::Deregister(const Target *target) {
 }
 
 void Selector::Notify() {
-  pthread_cond_signal(&notify_cv_);
+  notify_cv_.Signal();
 }
 
 vector<Target*> Selector::Select(
@@ -74,13 +69,14 @@ vector<Target*> Selector::Select(
   }
 
   // Wait for a target to have data.
-  pthread_mutex_lock(&notify_mutex_);
-  if (timeout == NULL) {
-    pthread_cond_wait(&notify_cv_, &notify_mutex_);
-  } else {
-    pthread_cond_timedwait(&notify_cv_, &notify_mutex_, &abstime);
+  {
+    pthread::MutexLock m(&notify_mutex_);
+    if (timeout == NULL) {
+      notify_cv_.Wait(&notify_mutex_);
+    } else {
+      notify_cv_.TimedWait(&notify_mutex_, abstime);
+    }
   }
-  pthread_mutex_unlock(&notify_mutex_);
 
   // Must check again to see who has data.
   return HasData(read_targets, write_targets);

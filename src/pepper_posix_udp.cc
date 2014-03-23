@@ -38,34 +38,32 @@ void DestroyMessage(struct ::msghdr *message) {
   delete message;
 }
 
-UDP::UDP() {
-  pthread_mutex_init(&packets_lock_, NULL);
-}
+UDP::UDP() { }
 
 UDP::~UDP() {
   // There really shouldn't be another thread actively involved at destruction
   // time, but getting the lock nonetheless.
-  pthread_mutex_lock(&packets_lock_);
+  pthread::MutexLock m(&packets_lock_);
   for (std::deque<struct ::msghdr *>::iterator i = packets_.begin();
       i != packets_.end();
       ++i) {
     DestroyMessage(*i);
   }
-  pthread_mutex_unlock(&packets_lock_);
-  pthread_mutex_destroy(&packets_lock_);
 }
 
 ssize_t UDP::Receive(struct ::msghdr *message, int flags) {
-  pthread_mutex_lock(&packets_lock_);
-  if (packets_.size() == 0) {
-    pthread_mutex_unlock(&packets_lock_);
-    errno = EWOULDBLOCK;
-    return -1;
+  struct ::msghdr *latest = NULL;
+
+  {
+    pthread::MutexLock m(&packets_lock_);
+    if (packets_.size() == 0) {
+      errno = EWOULDBLOCK;
+      return -1;
+    }
+    latest = packets_.front();
+    packets_.pop_front();
+    target_->UpdateRead(packets_.size() > 0);
   }
-  struct ::msghdr *latest = packets_.front();
-  packets_.pop_front();
-  target_->UpdateRead(packets_.size() > 0);
-  pthread_mutex_unlock(&packets_lock_);
 
   if (message->msg_namelen >= latest->msg_namelen) {
     memcpy(message->msg_name, latest->msg_name, latest->msg_namelen);
@@ -91,9 +89,10 @@ ssize_t UDP::Receive(struct ::msghdr *message, int flags) {
 }
 
 void UDP::AddPacket(struct ::msghdr *message) {
-  pthread_mutex_lock(&packets_lock_);
-  packets_.push_back(message);
-  pthread_mutex_unlock(&packets_lock_);
+  {
+    pthread::MutexLock m(&packets_lock_);
+    packets_.push_back(message);
+  }
   target_->UpdateRead(true);
 }
 
