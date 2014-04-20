@@ -304,24 +304,27 @@ bool SSHLogin::DoPublicKeyAuth() {
       printf("No ssh key found.\r\n");
       return false;
     }
-    printf("Passphrase: ");
-    char input[INPUT_SIZE];
-    GetKeyboardLine(input, sizeof(input), false);
-    printf("\r\n");
-    if (strlen(input) == 0) {
-      // User provided no input; skip this authentication type.
-      return false;
-    }
+    // First see if key loads with no passphrase.
     ssh::Key key;
-    bool result = key.ImportPrivateKey(key_, input);
-    memset(input, 0, sizeof(input));
-    if (result == false) {
-      if (tries == 1) {
-        // Only display error on the last try.
-        fprintf(stderr, "Error reading key: %s\r\n",
-            session_->GetLastError().c_str());
+    if (!key.ImportPrivateKey(key_, "")) {
+      printf("Passphrase: ");
+      char input[INPUT_SIZE];
+      GetKeyboardLine(input, sizeof(input), false);
+      printf("\r\n");
+      if (strlen(input) == 0) {
+        // User provided no input; skip this authentication type.
+        return false;
       }
-      continue;
+      bool result = key.ImportPrivateKey(key_, input);
+      memset(input, 0, sizeof(input));
+      if (result == false) {
+        if (tries == 1) {
+          // Only display error on the last try.
+          fprintf(stderr, "Error reading key: %s\r\n",
+              session_->GetLastError().c_str());
+        }
+        continue;
+      }
     }
     if (session_->AuthUsingKey(key) == false) {
       fprintf(stderr, "Key auth failed: %s\r\n",
