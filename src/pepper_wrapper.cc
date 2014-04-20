@@ -198,15 +198,6 @@ size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream) {
   return write(fd, ptr, size*nmemb);
 }
 
-int fprintf(FILE *stream, const char *format, ...) {
-  char buf[1024];
-  va_list argp;
-  va_start(argp, format);
-  int size = vsnprintf(buf, sizeof(buf), format, argp);
-  va_end(argp);
-  return write(fileno(stream), buf, size);
-}
-
 int fileno(FILE *stream) {
 #ifdef USE_NEWLIB
   return stream->_file;
@@ -293,16 +284,6 @@ ssize_t read(int fd, void *buf, size_t count) {
 
 ssize_t write(int fd, const void *buf, size_t count) {
   return GetPOSIX()->Write(fd, buf, count);
-}
-
-// printf is used rarely (only once at the time of this writing).
-int printf(const char *format, ...) {
-  char buf[1024];
-  va_list argp;
-  va_start(argp, format);
-  int size = vsnprintf(buf, sizeof(buf), format, argp);
-  va_end(argp);
-  return write(STDOUT_FILENO, buf, size);
 }
 
 int close(int fd) {
