@@ -51,6 +51,11 @@ class SSHLogin {
   string key() const { return key_; }
   void set_key(const string &key) { key_ = key; }
 
+  // The command to run on the remote host. Set to the empty string to use the
+  // default.
+  string command() const { return command_; }
+  void set_command(const string &command) { command_ = command; }
+
   pp::VarDictionary known_hosts() const { return known_hosts_; }
   void set_known_hosts(const pp::Var &var) { known_hosts_ = var; }
 
@@ -86,6 +91,7 @@ class SSHLogin {
   string port_;
   string user_;
   string key_;
+  string command_;
   string mosh_port_;
   string mosh_key_;
   pp::VarDictionary known_hosts_;

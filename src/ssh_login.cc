@@ -21,6 +21,8 @@
 
 const int INPUT_SIZE = 256;
 const int RETRIES = 3;
+const string kCommandDefault(
+    "mosh-server new -s -c 256 -l LANG=en_US.UTF-8");
 
 SSHLogin::SSHLogin() : session_(NULL) {}
 
@@ -334,7 +336,11 @@ bool SSHLogin::DoPublicKeyAuth() {
 
 bool SSHLogin::DoConversation() {
   ssh::Channel *c = session_->NewChannel();
-  if (c->Execute("mosh-server new -s -c 256 -l LANG=en_US.UTF-8") == false) {
+  const string *command = &kCommandDefault;
+  if (command_.size() > 0) {
+    command = &command_;
+  }
+  if (c->Execute(*command) == false) {
     fprintf(stderr, "Failed to execute mosh-server: %s\r\n",
         session_->GetLastError().c_str());
     return false;
