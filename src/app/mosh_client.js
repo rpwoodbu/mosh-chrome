@@ -59,6 +59,7 @@ function onConnectClick(e) {
   args['port'] = form['port'].value;
   args['user'] = form['user'].value;
   args['key'] = form['key'].value;
+  args['command'] = form['command'].value;
   for (var i = 0; i < form['mode'].length; ++i) {
     if (form['mode'][i].checked) {
       args['mode'] = form['mode'][i].value;
@@ -100,14 +101,17 @@ function updateMode(e) {
   var portField = document.querySelector('#port');
   var usernameRow = document.querySelector('#username-row');
   var keyRow = document.querySelector('#key-row');
+  var commandRow = document.querySelector('#command-row');
 
   if (sshModeButton.checked) {
     portField.value = 22;
     usernameRow.hidden = false;
     keyRow.hidden = true;
+    commandRow.hidden = false;
   } else {
     portField.value = 60001;
     usernameRow.hidden = true;
     keyRow.hidden = false;
+    commandRow.hidden = true;
   }
 }

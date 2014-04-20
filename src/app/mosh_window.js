@@ -88,11 +88,9 @@ mosh.CommandInstance.prototype.run = function() {
       'height: 0;');
   this.moshNaCl_.setAttribute('src', 'mosh_client.nmf');
   this.moshNaCl_.setAttribute('type', 'application/x-pnacl');
-  this.moshNaCl_.setAttribute('key', this.argv_.argString['key']);
-  this.moshNaCl_.setAttribute('addr', this.argv_.argString['addr']);
-  this.moshNaCl_.setAttribute('port', this.argv_.argString['port']);
-  this.moshNaCl_.setAttribute('user', this.argv_.argString['user']);
-  this.moshNaCl_.setAttribute('mode', this.argv_.argString['mode']);
+  for (var k in this.argv_.argString) {
+    this.moshNaCl_.setAttribute(k, this.argv_.argString[k]);
+  }
   if (window.ssh_key) {
     this.moshNaCl_.setAttribute('ssh_key', window.ssh_key);
     // Delete the key for good measure, although it is still available in local
