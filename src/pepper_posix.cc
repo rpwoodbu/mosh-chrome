@@ -48,8 +48,9 @@ POSIX::POSIX(const pp::InstanceHandle &instance_handle,
   files_[STDERR_FILENO] = std_err;
   if (std_err != NULL) {
     std_err->target_ = selector_.NewTarget(STDERR_FILENO);
-    // Prevent buffering in stderr.
-    assert(setvbuf(stderr, NULL, _IONBF, 0) == 0);
+    // Prevent buffering in stderr, but keep line mode as that works better for
+    // keeping log lines together.
+    assert(setvbuf(stderr, NULL, _IOLBF, 0) == 0);
   }
   if (signal_ != NULL) {
     // "Pseudo" file descriptor in Target needs to be set out of issuance
