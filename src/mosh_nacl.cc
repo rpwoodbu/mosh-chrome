@@ -408,11 +408,16 @@ void *MoshClientInstance::SSHLoginThread(void *data) {
     return NULL;
   }
 
-  // Extract Mosh port and key.
+  // Extract Mosh params.
   delete[] thiz->port_;
   thiz->port_ = new char[6];
   memset(thiz->port_, 0, 6);
   thiz->ssh_login_.mosh_port().copy(thiz->port_, 5);
+  delete[] thiz->addr_;
+  size_t addr_len = thiz->ssh_login_.mosh_addr().size();
+  thiz->addr_ = new char[addr_len+1];
+  memset(thiz->addr_, 0, addr_len+1);
+  thiz->ssh_login_.mosh_addr().copy(thiz->addr_, addr_len);
   setenv("MOSH_KEY", thiz->ssh_login_.mosh_key().c_str(), 1);
 
   // Save any updates to known hosts.

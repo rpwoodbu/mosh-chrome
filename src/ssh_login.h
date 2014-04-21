@@ -63,6 +63,8 @@ class SSHLogin {
 
   string mosh_key() const { return mosh_key_; }
 
+  string mosh_addr() const { return mosh_addr_; }
+
  private:
   // Passed as function pointer to pthread_create(). |data| is |this|.
   static void *ThreadEntry(void *data);
@@ -94,6 +96,7 @@ class SSHLogin {
   string command_;
   string mosh_port_;
   string mosh_key_;
+  string mosh_addr_;
   pp::VarDictionary known_hosts_;
   ssh::Session *session_;
 

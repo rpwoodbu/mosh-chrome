@@ -355,25 +355,45 @@ bool SSHLogin::DoConversation() {
     return false;
   }
 
-  char key[23];
-  char port[6];
+  // Default Mosh address to the one with which we connected. It
+  // will get overridden if there's a MOSH IP line in the
+  // response.
+  mosh_addr_ = addr_;
+
   size_t left_pos = 0;
   while (true) {
     const char *newline = "\r\n";
     size_t right_pos = buf.find(newline, left_pos);
     if (right_pos == string::npos) {
-      fprintf(stderr, "Bad response when running mosh-server: '%s'\r\n",
-          buf.c_str());
-      return false;
+      break;
     }
     string substr = buf.substr(left_pos, right_pos - left_pos);
-    int result = sscanf(substr.c_str(), "MOSH CONNECT %5s %22s", port, key);
-    if (result == 2) {
-      break;
+    if (substr.find("MOSH CONNECT") == 0) {  // Found at beginning of line.
+      char key[23];
+      char port[6];
+      if (sscanf(substr.c_str(), "MOSH CONNECT %5s %22s", port, key) != 2) {
+        fprintf(stderr, "Badly formatted MOSH CONNECT line: %s\r\n",
+            substr.c_str());
+        return false;
+      }
+      mosh_key_ = key;
+      mosh_port_ = port;
+    } else if (substr.find("MOSH IP") == 0) {  // Found at beginning of line.
+      char addr[64];
+      if (sscanf(substr.c_str(), "MOSH IP %63s", addr) != 1) {
+        fprintf(stderr, "Badly formatted MOSH IP line: %s\r\n", substr.c_str());
+        return false;
+      }
+      mosh_addr_ = addr;
     }
     left_pos = right_pos + strlen(newline);
   }
-  mosh_key_ = key;
-  mosh_port_ = port;
+
+  if (mosh_key_.size() == 0 || mosh_port_.size() == 0) {
+    fprintf(stderr, "Bad response when running mosh-server: '%s'\r\n",
+        buf.c_str());
+    return false;
+  }
   return true;
+
 }
