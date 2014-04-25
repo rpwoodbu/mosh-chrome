@@ -19,6 +19,8 @@
 
 #include <algorithm>
 #include <assert.h>
+#include <errno.h>
+#include <unistd.h>
 
 namespace PepperPOSIX {
 
@@ -52,36 +54,66 @@ void Selector::Notify() {
 vector<Target*> Selector::Select(
     const vector<Target*> &read_targets, const vector<Target*> &write_targets,
     const struct timespec *timeout) {
-  // Calculate absolute time for timeout. This should be done ASAP to reduce
-  // the chances of this method not returning by the timeout specified. There
-  // are no guarantees, of course.
   struct timespec abstime;
-  clock_gettime(CLOCK_REALTIME, &abstime);
   if (timeout != NULL) {
+    // Calculate absolute time for timeout. This should be done ASAP to reduce
+    // the chances of this method not returning by the timeout specified. There
+    // are no guarantees, of course.
+    clock_gettime(CLOCK_REALTIME, &abstime);
     abstime.tv_sec += timeout->tv_sec;
     abstime.tv_nsec += timeout->tv_nsec;
   }
 
-  {
-    pthread::MutexLock m(&notify_mutex_);
+  // Check if any data is available.
+  vector<Target*> result = HasData(read_targets, write_targets);
+  if (result.size() > 0) {
+    // Data available now; return immediately.
+    return result;
+  }
 
-    // Check if any data is available.
-    vector<Target*> result = HasData(read_targets, write_targets);
+  // Wait for a target to have data. Simple no-timeout case.
+  if (timeout == NULL) {
+    {
+      pthread::MutexLock m(&notify_mutex_);
+      notify_cv_.Wait(&notify_mutex_);
+    }
+    return HasData(read_targets, write_targets);
+  }
+
+  // Timeout case.
+  for (;;) {
+    int wait_errno = 0;
+    {
+      pthread::MutexLock m(&notify_mutex_);
+      if (!notify_cv_.TimedWait(&notify_mutex_, abstime)) {
+        wait_errno = notify_cv_.GetLastError();
+      }
+    }
+
+    result = HasData(read_targets, write_targets);
     if (result.size() > 0) {
-      // Data available now; return immediately.
+      // We have data... no need to check anything.
       return result;
     }
 
-    // Wait for a target to have data.
-    if (timeout == NULL) {
-      notify_cv_.Wait(&notify_mutex_);
+    if (wait_errno == ETIMEDOUT) {
+      struct timespec now;
+      clock_gettime(CLOCK_REALTIME, &now);
+      if (now.tv_sec < abstime.tv_sec) {
+        // Premature timeout. Retry.
+        // TODO: Remove this hack once the NaCl bug that causes this is fixed.
+        wait_errno = 0;
+        usleep(100000);
+      } else {
+        // We have a proper timeout. Return the empty result.
+        return result;
+      }
     } else {
-      notify_cv_.TimedWait(&notify_mutex_, abstime);
+      // Something went wrong. Avoid looping forever, though, and just return
+      // the empty result.
+      return result;
     }
   }
-
-  // Must check again to see who has data.
-  return HasData(read_targets, write_targets);
 }
 
 const vector<Target*> Selector::HasData(
