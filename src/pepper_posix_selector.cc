@@ -64,6 +64,8 @@ vector<Target*> Selector::Select(
     abstime.tv_nsec += timeout->tv_nsec;
   }
 
+  pthread::MutexLock m(&notify_mutex_);
+
   // Check if any data is available.
   vector<Target*> result = HasData(read_targets, write_targets);
   if (result.size() > 0) {
@@ -73,21 +75,15 @@ vector<Target*> Selector::Select(
 
   // Wait for a target to have data. Simple no-timeout case.
   if (timeout == NULL) {
-    {
-      pthread::MutexLock m(&notify_mutex_);
-      notify_cv_.Wait(&notify_mutex_);
-    }
+    notify_cv_.Wait(&notify_mutex_);
     return HasData(read_targets, write_targets);
   }
 
   // Timeout case.
   for (;;) {
     int wait_errno = 0;
-    {
-      pthread::MutexLock m(&notify_mutex_);
-      if (!notify_cv_.TimedWait(&notify_mutex_, abstime)) {
-        wait_errno = notify_cv_.GetLastError();
-      }
+    if (!notify_cv_.TimedWait(&notify_mutex_, abstime)) {
+      wait_errno = notify_cv_.GetLastError();
     }
 
     result = HasData(read_targets, write_targets);
