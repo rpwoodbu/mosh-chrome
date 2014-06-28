@@ -95,6 +95,13 @@ mosh.CommandInstance.prototype.run = function() {
   // Delete argv_, as it contains sensitive info.
   delete this.argv_;
 
+  // Output special text (e.g., ANSI escape sequences) if desired.
+  chrome.storage.sync.get('term_init_string', function(o) {
+    if (o != null) {
+      window.mosh_client_.io.print(o['term_init_string']);
+    }
+  });
+
   this.moshNaCl_.addEventListener('load', this.onLoad_.bind(this));
   this.moshNaCl_.addEventListener('message', this.onMessage_.bind(this));
   this.moshNaCl_.addEventListener('crash', this.onCrash_.bind(this));
