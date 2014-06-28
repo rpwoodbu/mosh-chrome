@@ -91,12 +91,6 @@ mosh.CommandInstance.prototype.run = function() {
   for (var k in this.argv_.argString) {
     this.moshNaCl_.setAttribute(k, this.argv_.argString[k]);
   }
-  if (window.ssh_key) {
-    this.moshNaCl_.setAttribute('ssh_key', window.ssh_key);
-    // Delete the key for good measure, although it is still available in local
-    // storage.
-    delete window.ssh_key;
-  }
 
   // Delete argv_, as it contains sensitive info.
   delete this.argv_;
