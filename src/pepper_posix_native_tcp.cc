@@ -129,7 +129,7 @@ void NativeTCP::StartReceive() {
       receive_buffer_, sizeof(receive_buffer_),
       factory_.NewCallback(&NativeTCP::Received));
   if (result != PP_OK_COMPLETIONPENDING) {
-    Log("NativeTCP::StartReceive(): RecvFrom unexpectedly returned %d", result);
+    Log("NativeTCP::StartReceive(): Read unexpectedly returned %d", result);
     // TODO: Perhaps crash here?
   }
 }
