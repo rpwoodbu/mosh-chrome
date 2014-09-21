@@ -47,12 +47,38 @@ window.onload = function() {
   sshModeButton.onchange = updateMode;
   var manualModeButton = document.querySelector('#manual-mode');
   manualModeButton.onchange = updateMode;
+  loadFields();
   var form = document.querySelector('#args');
   form.onsubmit = function() { return false; };
   updateMode();
 };
 
+var kSyncFieldNames = [ 'addr', 'port', 'user', 'command' ];
+
+function loadFields() {
+  var form = document.querySelector('#args');
+  kSyncFieldNames.forEach(function(field) {
+    var key = 'field_' + field;
+    chrome.storage.local.get(key, function(o) {
+      if (o[key] !== undefined) {
+        form[field].value = o[key];
+      }
+    });
+  });
+}
+
+function saveFields() {
+  var form = document.querySelector('#args');
+  kSyncFieldNames.forEach(function(field) {
+    var key = 'field_' + field;
+    var o = {};
+    o[key] = form[field].value;
+    chrome.storage.local.set(o);
+  });
+}
+
 function onConnectClick(e) {
+  saveFields();
   var args = {}
   var form = document.querySelector('#args');
   args['addr'] = form['addr'].value;
