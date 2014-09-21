@@ -47,6 +47,8 @@ window.onload = function() {
   sshModeButton.onchange = updateMode;
   var manualModeButton = document.querySelector('#manual-mode');
   manualModeButton.onchange = updateMode;
+  var sshKeyLink = document.querySelector('#ssh-key');
+  sshKeyLink.onclick = onSshKeyClick;
   loadFields();
   var form = document.querySelector('#args');
   form.onsubmit = function() { return false; };
@@ -140,4 +142,18 @@ function updateMode(e) {
     keyRow.hidden = false;
     commandRow.hidden = true;
   }
+}
+
+function onSshKeyClick(e) {
+  chrome.app.window.create(
+      'ssh_key.html',
+      {
+        'bounds': {
+          'width': 400,
+          'height': 300,
+        },
+        'id': 'ssh_key',
+      });
+  // Prevent default handling.
+  return true;
 }
