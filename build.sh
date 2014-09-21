@@ -189,7 +189,7 @@ if [[ ${FAST} != "fast" ]]; then
 
     if [[ "${NACL_GLIBC}" != "1" ]]; then
       # Do things specific to newlib.
-      export CXXFLAGS="${CXXFLAGS} -I${INCLUDE_OVERRIDE} -DHAVE_FORKPTY -DHAVE_SYS_UIO_H"
+      export CXXFLAGS="${CXXFLAGS} -I${INCLUDE_OVERRIDE} -DHAVE_FORKPTY -DHAVE_SYS_UIO_H -O2"
     fi
     # Do configure step in a subshell as we need to fake it out a little.
     (
