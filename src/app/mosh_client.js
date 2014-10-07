@@ -52,6 +52,8 @@ window.onload = function() {
   manualModeButton.onchange = updateMode;
   var sshKeyLink = document.querySelector('#ssh-key');
   sshKeyLink.onclick = onSshKeyClick;
+  var prefsLink = document.querySelector('#prefs');
+  prefsLink.onclick = onPrefsClick;
   var form = document.querySelector('#args');
   form.onsubmit = function() { return false; };
 
@@ -234,6 +236,20 @@ function onSshKeyClick(e) {
           'height': 300,
         },
         'id': 'ssh_key',
+      });
+  // Prevent default handling.
+  return true;
+}
+
+function onPrefsClick(e) {
+  chrome.app.window.create(
+      'mosh_prefs.html',
+      {
+        'bounds': {
+          'width': 400,
+          'height': 300,
+        },
+        'id': 'preferences_editor',
       });
   // Prevent default handling.
   return true;
