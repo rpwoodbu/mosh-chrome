@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html> <!--
+Copyright 2013, 2014 Richard Woodbury
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-->
+<head>
+  <title>Mosh Preferences</title>
+  <script src="hterm/hterm_deps.js" type="text/javascript"></script>
+  <script src="hterm/hterm.js" type="text/javascript"></script>
+  <script src='./nassh_preferences_editor.js'></script>
+  <link rel='stylesheet' href='./nassh_preferences.css'></link>
+  <style>
+    /* Instantiating a terminal in this window means that we must manually
+       create a scrollable area. */
+    html, body {
+      height: 100%;
+    }
+    #scroller {
+      overflow: scroll;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div id="scroller">
+    <title>Mosh Preferences</title>
+    <input type='hidden' id='profile' value='mosh'>
+    <div id="terminal"></div>
+    <button id="reset">Reset to defaults</button>
+    <p><div id="settings"></div></p>
+  </div>
+</body>
+</html>
