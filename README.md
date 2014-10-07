@@ -15,6 +15,8 @@ Building
 
     $ ./build.sh
 
+  If you haven't done this before, see INSTALL.md.
+
   This will download and build all dependencies. The directory "src/app" will
   contain all the assets necessary to run the client in the browser. Go to
   chrome://extensions, enable "Developer mode", and click the "Load unpacked
