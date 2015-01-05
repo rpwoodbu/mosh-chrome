@@ -19,6 +19,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# Number of make jobs to run simultaneously.
+JOBS=1
+if [[ -x /usr/bin/nproc ]]; then
+  # For N cores, Run N+1 make jobs.
+  JOBS=$(($(/usr/bin/nproc) + 1))
+fi
+
 NACL_SDK_ZIP="nacl_sdk.zip"
 NACL_SDK_URL="http://storage.googleapis.com/nativeclient-mirror/nacl/nacl_sdk/${NACL_SDK_ZIP}"
 NACL_SDK_DIR="nacl_sdk"
@@ -106,7 +113,7 @@ if [[ ! -d "build/${PROTOBUF_DIR}" ]]; then
   tar -xjf "${PROTOBUF_TAR}"
   cd "${PROTOBUF_DIR}"
   ./configure
-  make
+  make -j${JOBS}
   popd > /dev/null
 fi
 PROTO_PATH="$(pwd)/build/${PROTOBUF_DIR}/src"
@@ -200,7 +207,7 @@ if [[ ${FAST} != "fast" ]]; then
     )
     echo "Building Mosh with NaCl compiler..."
     make clean
-    make || echo "*** Ignore error IFF it was the linking step. ***"
+    make -j${JOBS} || echo "*** Ignore error IFF it was the linking step. ***"
     popd > /dev/null # ${build_dir}
   )
 fi
@@ -209,7 +216,7 @@ pushd src > /dev/null
 # Copy hterm dist files into app directory.
 mkdir -p app/hterm
 cp -f ../deps/libapps/hterm/dist/js/* app/hterm
-make all
+make -j${JOBS} all
 popd > /dev/null # src
 
 echo "Done."
