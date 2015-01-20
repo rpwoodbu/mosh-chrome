@@ -29,18 +29,19 @@ fi
 NACL_SDK_ZIP="nacl_sdk.zip"
 NACL_SDK_URL="http://storage.googleapis.com/nativeclient-mirror/nacl/nacl_sdk/${NACL_SDK_ZIP}"
 NACL_SDK_DIR="nacl_sdk"
-NACL_SDK_VERSION="pepper_33"
+NACL_SDK_VERSION="pepper_39"
 
 DEPOT_TOOLS_URL="https://chromium.googlesource.com/chromium/tools/depot_tools.git"
 DEPOT_TOOLS_DIR="depot_tools"
 
 NACL_PORTS_URL="https://chromium.googlesource.com/external/naclports.git"
 NACL_PORTS_DIR="naclports"
-NACL_PORTS_REV=807ebc17
+NACL_PORTS_REV=0c496b3
 
-PROTOBUF_DIR="protobuf-2.5.0"
+PROTOBUF_VERSION="2.6.0"
+PROTOBUF_DIR="protobuf-${PROTOBUF_VERSION}"
 PROTOBUF_TAR="${PROTOBUF_DIR}.tar.bz2"
-PROTOBUF_URL="https://protobuf.googlecode.com/files/${PROTOBUF_TAR}"
+PROTOBUF_URL="https://github.com/google/protobuf/releases/download/v${PROTOBUF_VERSION}/${PROTOBUF_TAR}"
 
 INCLUDE_OVERRIDE="$(pwd)/src/include"
 
@@ -150,16 +151,16 @@ fi
 popd > /dev/null
 
 echo "Loading naclports environment..."
-. ${NACL_PORTS}/src/build_tools/nacl_env.sh
+. ${NACL_PORTS}/src/build_tools/nacl-env.sh
 
 # Make PNaCl tools available.
 export CC=${NACLCC}
 export CXX=${NACLCXX}
 export AR=${NACLAR}
 export RANLIB=${NACLRANLIB}
-export PKG_CONFIG_LIBDIR=${NACL_TOOLCHAIN_ROOT}/usr/lib/pkgconfig
+export PKG_CONFIG_LIBDIR=${NACL_PREFIX}/lib/pkgconfig
 
-glibc_compat="${NACL_TOOLCHAIN_ROOT}/usr/include/glibc-compat"
+glibc_compat="${NACL_PREFIX}/include/glibc-compat"
 include_flags="-I${glibc_compat} -I${NACL_SDK_ROOT}/include/pnacl -I${NACL_SDK_ROOT}/include"
 export CFLAGS="${CFLAGS} ${include_flags}"
 export CXXFLAGS="${CXXFLAGS} ${include_flags}"
@@ -181,7 +182,7 @@ if [[ ${FAST} != "fast" ]]; then
     # assert.h can find it. It changes for each port, and in unexpected
     # ways, which complicates things.
     rm -f build/include
-    ln -s "${NACL_TOOLCHAIN_ROOT}/usr/include" build/include
+    ln -s "${NACL_PREFIX}/../include" build/include
 
     build_dir="build/mosh"
     mkdir -p "${build_dir}"

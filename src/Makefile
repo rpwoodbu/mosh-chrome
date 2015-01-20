@@ -47,14 +47,13 @@ OBJECTS:=\
 
 LIBDIRS:=\
 	-L$(NACL_SDK_ROOT)/lib/pnacl/Release \
-	-L$(NACLPORTS_TOOLCHAIN/ROOT)/usr/lib \
 	-L../build/mosh/src/frontend \
 	-L../build/mosh/src/crypto \
 	-L../build/mosh/src/network \
 	-L../build/mosh/src/statesync \
 	-L../build/mosh/src/terminal \
 	-L../build/mosh/src/util \
-	-L../build/mosh/src/protobufs \
+	-L../build/mosh/src/protobufs
 
 LIBS:=\
 	-lmoshcrypto \

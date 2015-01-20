@@ -12,36 +12,12 @@
 // Include anything we want later to override.
 #include <unistd.h>
 
-// Include anything that wasn't included properly.
-#include <sys/time.h>
-
 extern "C" {
 
 // Override dup() from unistd.h.
 #undef dup
 #define dup(x) __wrap_dup(x)
 int __wrap_dup(int);
-
-// Newlib headers are missing posix_memalign().
-int posix_memalign(void **memptr, size_t alignment, size_t size);
-
-// Define getrlimit() and friends, which we "implement" in the wrapper.
-#define RLIMIT_CORE 0
-typedef int rlim_t;
-struct rlimit {
-  rlim_t rlim_cur;  /* Soft limit */
-  rlim_t rlim_max;  /* Hard limit (ceiling for rlim_cur) */
-};
-int getrlimit(int resource, struct rlimit *rlim);
-int setrlimit(int resource, const struct rlimit *rlim);
-
-// Define some things needed for Internet functions.
-typedef uint32_t u_int32_t;
-// TODO: Make this do something better than just ignore alignment.
-#define _ALIGN(n) n
-
-// Nullify cfmakeraw, as we don't need it to function.
-#define cfmakeraw(n) ;
 
 // Define pselect.
 #include <sys/signal.h>
@@ -50,10 +26,6 @@ extern int pselect (int __nfds, fd_set *__restrict __readfds,
     fd_set *__restrict __exceptfds,
     const struct timespec *__restrict __timeout,
     const sigset_t *__restrict __sigmask);
-
-// Newlib's getopt() seems to crash. Redirect it to our implementation.
-#define getopt(a, b, c) mygetopt(a, b, c)
-int mygetopt(int argc, char * const argv[], const char *optstring);
 
 } // extern "C"
 

@@ -143,15 +143,6 @@ int tcsetattr(int fd, int optional_actions, const struct termios *termios_p) {
   return 0;
 }
 
-// The getopt() in newlib crashes. We don't really need it anyway. Stub it out.
-// getopt() is redirected to mygetopt() using the magic include file.
-#ifdef USE_NEWLIB
-int mygetopt(int argc, char * const argv[], const char *optstring) {
-  optind = 1;
-  return -1;
-}
-#endif
-
 //
 // Wrap fopen() and friends to capture access to stderr and /dev/urandom.
 //
@@ -206,14 +197,19 @@ int fileno(FILE *stream) {
 #endif
 }
 
-int fclose(FILE *stream) {
-  int result = close(fileno(stream));
-  if (result == 0) {
-    delete stream;
-    return 0;
-  }
-  return result;
-}
+// For some reason, there are linking errors when trying to override fclose().
+// However, nothing calls it, so omitting it is safe. Still, leaving this right
+// here in case it is needed.
+//
+// int fclose(FILE *stream) {
+//   Log("fclose: fd=%d", fileno(stream));
+//   int result = close(fileno(stream));
+//   if (result == 0) {
+//     delete stream;
+//     return 0;
+//   }
+//   return result;
+// }
 
 // Fake getaddrinfo(), as we expect it will always be an IP address and numeric
 // port.
@@ -328,8 +324,14 @@ int pselect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 }
 
 int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
-    const struct timespec *timeout) {
-  return pselect(nfds, readfds, writefds, exceptfds, timeout, NULL);
+    struct timeval *timeout) {
+  if (timeout != NULL) {
+    struct timespec ts;
+    ts.tv_sec = timeout->tv_sec;
+    ts.tv_nsec = timeout->tv_usec * 1000;
+    return pselect(nfds, readfds, writefds, exceptfds, &ts, NULL);
+  }
+  return pselect(nfds, readfds, writefds, exceptfds, NULL, NULL);
 }
 
 ssize_t recv(int sockfd, void *buf, size_t len, int flags) {
