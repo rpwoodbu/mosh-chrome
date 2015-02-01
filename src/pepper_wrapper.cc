@@ -334,6 +334,12 @@ int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
   return pselect(nfds, readfds, writefds, exceptfds, NULL, NULL);
 }
 
+int poll(struct pollfd *fds, nfds_t nfds, int timeout) {
+  Log("poll(_, %d, %d): Not implemented.", nfds, timeout);
+  errno = EINVAL;
+  return -1;
+}
+
 ssize_t recv(int sockfd, void *buf, size_t len, int flags) {
   return GetPOSIX()->Recv(sockfd, buf, len, flags);
 }
