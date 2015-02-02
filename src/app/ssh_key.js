@@ -17,7 +17,17 @@
 
 'use strict';
 
+var kSSHKey = 'ssh_key';
+
 window.onload = function() {
+  chrome.storage.local.get(kSSHKey, function(keys) {
+    if (keys[kSSHKey] !== undefined) {
+      var field = document.querySelector('#key');
+      field.placeholder = 'Key is saved, but hidden for security. ' +
+          'Enter another key to replace the existing key, ' +
+          'or leave this field blank and hit save to erase.';
+    }
+  });
   var saveButton = document.querySelector('#save');
   saveButton.onclick = onSaveClick;
   var form = document.querySelector('#key-form');
@@ -26,8 +36,12 @@ window.onload = function() {
 
 function onSaveClick(e) {
   var field = document.querySelector('#key');
-  var o = {};
-  o['ssh_key'] = field.value;
-  chrome.storage.local.set(o);
+  if (field.value === "") {
+    chrome.storage.local.remove(kSSHKey);
+  } else {
+    var o = {};
+    o[kSSHKey] = field.value;
+    chrome.storage.local.set(o);
+  }
   window.close();
 }
