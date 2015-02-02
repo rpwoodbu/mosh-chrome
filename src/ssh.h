@@ -5,7 +5,7 @@
 // ssh_get_publickey() in any way. This wrapper aims to be better, but will be
 // a subset of the functionality needed for the immediate purposes.
 
-// Copyright 2013, 2014 Richard Woodbury
+// Copyright 2013, 2014, 2015 Richard Woodbury
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

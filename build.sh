@@ -4,7 +4,7 @@
 # browser. If you have already built once and are doing active development on
 # the Native Client port, invoke with the parameter "fast".
 
-# Copyright 2013 Richard Woodbury
+# Copyright 2013, 2014, 2015 Richard Woodbury
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

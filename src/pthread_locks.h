@@ -2,7 +2,7 @@
 //
 // This primarily adds RAII semantics to pthread locking facilities.
 
-// Copyright 2013, 2014 Richard Woodbury
+// Copyright 2013, 2014, 2015 Richard Woodbury
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

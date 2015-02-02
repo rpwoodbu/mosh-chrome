@@ -3,7 +3,7 @@
 // This file is just to fake out Mosh's configure script so that it believes
 // ncurses works (which it does, but it doesn't believe so under newlib).
 
-// Copyright 2013, 2014 Richard Woodbury
+// Copyright 2013, 2014, 2015 Richard Woodbury
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
