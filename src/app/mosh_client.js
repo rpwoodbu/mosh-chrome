@@ -17,6 +17,9 @@
 
 'use strict';
 
+var kSSHDefaultPort = 22;
+var kMoshDefaultPort = 60001;
+
 function onUpdateAvailable() {
   chrome.runtime.getBackgroundPage(function(bg) {
     var updateDiv = document.querySelector('#update');
@@ -63,6 +66,7 @@ function loadFields() {
     var key = 'field_' + field;
     chrome.storage.local.get(key, function(o) {
       if (o[key] !== undefined) {
+        console.log("Setting " + field + " to " + o[key]); // DONOTSUBMIT
         form[field].value = o[key];
       }
     });
@@ -77,9 +81,13 @@ function saveFields() {
   var form = document.querySelector('#args');
   kSyncFieldNames.forEach(function(field) {
     var key = 'field_' + field;
-    var o = {};
-    o[key] = form[field].value;
-    chrome.storage.local.set(o);
+    if (form[field].value === "") {
+      chrome.storage.local.remove(key);
+    } else {
+      var o = {};
+      o[key] = form[field].value;
+      chrome.storage.local.set(o);
+    }
   });
 }
 
@@ -136,12 +144,19 @@ function updateMode(e) {
   var commandRow = document.querySelector('#command-row');
 
   if (sshModeButton.checked) {
-    portField.value = 22;
+    console.log("ssh button checked"); // DONOTSUBMIT
+    if (portField.value === "") {
+      console.log("setting port"); // DONOTSUBMIT
+      portField.value = kSSHDefaultPort;
+      console.log("port is " + portField.value);
+    }
     usernameRow.hidden = false;
     keyRow.hidden = true;
     commandRow.hidden = false;
   } else {
-    portField.value = 60001;
+    if (portField.value === "") {
+      portField.value = kMoshDefaultPort;
+    }
     usernameRow.hidden = true;
     keyRow.hidden = false;
     commandRow.hidden = true;
