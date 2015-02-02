@@ -48,9 +48,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             <td>MOSH_KEY</td>
             <td><input id="key" type="password"></td>
           </tr>
-          <tr>
-            <td>Port number:</td>
-            <td><input id="port" type="text" disabled></td>
+          <tr id="ssh-port-row" hidden="true">
+            <td>SSH port:</td>
+            <td><input id="ssh-port" type="text" disabled></td>
+          </tr>
+          <tr id="mosh-port-row" hidden="true">
+            <td>Mosh port:</td>
+            <td><input id="mosh-port" type="text" disabled></td>
           </tr>
           <tr id="command-row">
             <td>Remote command:</td>

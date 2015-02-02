@@ -58,7 +58,7 @@ window.onload = function() {
   updateMode();
 };
 
-var kSyncFieldNames = [ 'addr', 'port', 'user', 'command' ];
+var kSyncFieldNames = [ 'addr', 'ssh-port', 'mosh-port', 'user', 'command' ];
 
 function loadFields() {
   var form = document.querySelector('#args');
@@ -66,7 +66,6 @@ function loadFields() {
     var key = 'field_' + field;
     chrome.storage.local.get(key, function(o) {
       if (o[key] !== undefined) {
-        console.log("Setting " + field + " to " + o[key]); // DONOTSUBMIT
         form[field].value = o[key];
       }
     });
@@ -95,8 +94,14 @@ function onConnectClick(e) {
   saveFields();
   var args = {}
   var form = document.querySelector('#args');
+  var sshModeButton = document.querySelector('#ssh-mode');
+
   args['addr'] = form['addr'].value;
-  args['port'] = form['port'].value;
+  if (sshModeButton.checked) {
+    args['port'] = form['ssh-port'].value;
+  } else {
+    args['port'] = form['mosh-port'].value;
+  }
   args['user'] = form['user'].value;
   args['key'] = form['key'].value;
   args['command'] = form['command'].value;
@@ -138,26 +143,30 @@ function onConnectClick(e) {
 
 function updateMode(e) {
   var sshModeButton = document.querySelector('#ssh-mode');
-  var portField = document.querySelector('#port');
+  var sshPortField = document.querySelector('#ssh-port');
+  var moshPortField = document.querySelector('#mosh-port');
   var usernameRow = document.querySelector('#username-row');
+  var sshPortRow = document.querySelector('#ssh-port-row');
+  var moshPortRow = document.querySelector('#mosh-port-row');
   var keyRow = document.querySelector('#key-row');
   var commandRow = document.querySelector('#command-row');
 
   if (sshModeButton.checked) {
-    console.log("ssh button checked"); // DONOTSUBMIT
-    if (portField.value === "") {
-      console.log("setting port"); // DONOTSUBMIT
-      portField.value = kSSHDefaultPort;
-      console.log("port is " + portField.value);
+    if (sshPortField.value === "") {
+      sshPortField.value = kSSHDefaultPort;
     }
     usernameRow.hidden = false;
+    sshPortRow.hidden = false;
+    moshPortRow.hidden = true;
     keyRow.hidden = true;
     commandRow.hidden = false;
   } else {
-    if (portField.value === "") {
-      portField.value = kMoshDefaultPort;
+    if (moshPortField.value === "") {
+      moshPortField.value = kMoshDefaultPort;
     }
     usernameRow.hidden = true;
+    sshPortRow.hidden = true;
+    moshPortRow.hidden = false;
     keyRow.hidden = false;
     commandRow.hidden = true;
   }
