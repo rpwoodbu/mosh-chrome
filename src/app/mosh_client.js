@@ -66,6 +66,10 @@ function loadFields() {
         form[field].value = o[key];
       }
     });
+    // Form fields are disabled at first, so if Chrome is slow to run this
+    // function, the user can't start typing ahead of the fields getting
+    // loaded.
+    form[field].disabled = false;
   });
 }
 
