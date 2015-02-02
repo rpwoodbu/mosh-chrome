@@ -320,8 +320,9 @@ bool SSHLogin::DoPublicKeyAuth() {
       if (result == false) {
         if (tries == 1) {
           // Only display error on the last try.
-          fprintf(stderr, "Error reading key: %s\r\n",
-              session_->GetLastError().c_str());
+          fprintf(stderr, "Error reading key. This could be due to the wrong "
+              "passphrase, the key type being unsupported, or the key format "
+              "being incorrect or corrupt.\r\n");
         }
         continue;
       }
