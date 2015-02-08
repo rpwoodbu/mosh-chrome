@@ -64,7 +64,7 @@ class TCP : public ReadWriter {
   virtual int Connect(const PP_NetAddress_IPv4 &address) = 0;
 
   // Connection status, errno-style.
-  int connection_errno_;
+  int connection_errno_ = 0;
 
  protected:
   // AddData is used by the subclass to add data to the incoming buffer.

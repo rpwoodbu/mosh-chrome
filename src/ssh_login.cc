@@ -27,7 +27,7 @@ const int RETRIES = 3;
 const string kCommandDefault(
     "mosh-server new -s -c 256 -l LANG=en_US.UTF-8");
 
-SSHLogin::SSHLogin() : session_(nullptr) {}
+SSHLogin::SSHLogin() {}
 
 SSHLogin::~SSHLogin() {
   delete session_;

@@ -21,8 +21,7 @@ namespace ssh {
 
 using std::string;
 
-KeyboardInteractive::KeyboardInteractive(ssh_session s) :
-    s_(s), current_prompt_(0), num_prompts_(0), echo_answer_(false) {}
+KeyboardInteractive::KeyboardInteractive(ssh_session s) : s_(s) {}
 
 KeyboardInteractive::Status KeyboardInteractive::GetStatus() {
   while (true) {
@@ -72,8 +71,7 @@ bool KeyboardInteractive::Answer(const char *answer) {
 }
 
 Session::Session(const string &host, int port, const string &user) :
-    s_(ssh_new()), connected_(false), key_(nullptr),
-    keyboard_interactive_(nullptr) {
+    s_(ssh_new()) {
   SetOption(SSH_OPTIONS_HOST, host);
   SetOption(SSH_OPTIONS_PORT, port);
   SetOption(SSH_OPTIONS_USER, user);
@@ -180,7 +178,7 @@ Channel *Session::NewChannel() {
   return c;
 }
 
-Key::Key() : key_(nullptr) { }
+Key::Key() {}
 
 Key::~Key() {
   if (key_ != nullptr) {

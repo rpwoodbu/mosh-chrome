@@ -32,12 +32,9 @@ namespace PepperPOSIX {
 
 using std::vector;
 
-NativeUDP::NativeUDP(
-    const pp::InstanceHandle &instance_handle) :
-    instance_handle_(instance_handle), factory_(this) {
-  socket_ = new pp::UDPSocket(instance_handle);
-  bound_ = false;
-}
+NativeUDP::NativeUDP(const pp::InstanceHandle &instance_handle) :
+    socket_(new pp::UDPSocket(instance_handle)),
+    instance_handle_(instance_handle), factory_(this) {}
 
 NativeUDP::~NativeUDP() {
   delete socket_;

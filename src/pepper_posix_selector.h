@@ -36,7 +36,7 @@ class Target; // This is declared fully below.
 // Select() or SelectAll() to block until data is available.
 class Selector {
  public:
-  explicit Selector();
+  Selector();
   ~Selector();
   friend class Target; // Allow Target to access private members of Selector.
 
@@ -73,8 +73,8 @@ class Selector {
   void Deregister(const Target *target);
 
   // HasData returns a vector of Targets that have data ready to be read.
-  const std::vector<Target*> HasData(const std::vector<Target*> &read_targets,
-      const std::vector<Target*> &write_targets);
+  std::vector<Target*> HasData(const std::vector<Target*> &read_targets,
+      const std::vector<Target*> &write_targets) const;
 
   std::vector<Target*> targets_;
   pthread::Mutex notify_mutex_;
@@ -91,8 +91,7 @@ class Selector {
 class Target {
  public:
   // We default has_write_data_ to true, as many targets never block on writes.
-  Target(class Selector *s, int id) :
-      selector_(s), id_(id), has_read_data_(false), has_write_data_(true) {}
+  Target(class Selector *s, int id) : selector_(s), id_(id) {}
   ~Target();
 
   // UpdateRead updates Target whether there is pending data available in the
@@ -109,15 +108,15 @@ class Target {
   // superfluous notifications to Selector. 
   void UpdateWrite(bool has_data);
 
-  const bool has_read_data() { return has_read_data_; }
-  const bool has_write_data() { return has_write_data_; }
-  const int id() { return id_; }
+  bool has_read_data() const { return has_read_data_; }
+  bool has_write_data() const { return has_write_data_; }
+  int id() const { return id_; }
 
  private:
-  class Selector *selector_;
-  int id_;
-  bool has_read_data_;
-  bool has_write_data_;
+  class Selector *selector_ = nullptr;
+  int id_ = -1;
+  bool has_read_data_ = false;
+  bool has_write_data_ = true;
 
   // Disable copy and assignment.
   Target(const Target&);

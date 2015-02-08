@@ -49,8 +49,8 @@ class NativeUDP : public UDP {
   void StartReceive(int32_t unused);
   void Received(int32_t result, const pp::NetAddress &address);
 
-  pp::UDPSocket *socket_;
-  bool bound_;
+  pp::UDPSocket *socket_ = nullptr;
+  bool bound_ = false;
   const pp::InstanceHandle &instance_handle_;
   char receive_buffer_[UDP_RECEIVE_BUFFER_SIZE];
   pp::CompletionCallbackFactory<NativeUDP> factory_;

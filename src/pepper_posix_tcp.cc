@@ -24,7 +24,7 @@
 
 namespace PepperPOSIX {
 
-TCP::TCP() : connection_errno_(0) { }
+TCP::TCP() { }
 
 TCP::~TCP() { }
 

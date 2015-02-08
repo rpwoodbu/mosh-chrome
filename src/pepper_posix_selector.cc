@@ -114,8 +114,9 @@ vector<Target*> Selector::Select(
   }
 }
 
-const vector<Target*> Selector::HasData(
-    const vector<Target*> &read_targets, const vector<Target*> &write_targets) {
+vector<Target*> Selector::HasData(
+    const vector<Target*> &read_targets,
+    const vector<Target*> &write_targets) const {
   vector<Target*> result;
   for (vector<Target*>::const_iterator t = read_targets.begin();
       t != read_targets.end(); ++t) {

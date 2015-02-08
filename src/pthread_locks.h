@@ -28,17 +28,17 @@ class Mutex {
   friend class Conditional;
 
  public:
-  Mutex() : err_(0) { pthread_mutex_init(&mutex_, nullptr); }
+  Mutex() { pthread_mutex_init(&mutex_, nullptr); }
   ~Mutex() { pthread_mutex_destroy(&mutex_); }
 
   bool Lock() { err_ = pthread_mutex_lock(&mutex_); return err_ == 0; }
   bool Unlock() { err_ = pthread_mutex_unlock(&mutex_); return err_ == 0; }
 
-  int GetLastError() { return err_; }
+  int GetLastError() const { return err_; }
 
  private:
   pthread_mutex_t mutex_;
-  int err_;
+  int err_ = 0;
 
   // Disable copy and assignment.
   Mutex(const Mutex &);
@@ -52,7 +52,7 @@ class MutexLock {
   ~MutexLock() { m_->Unlock(); }
 
  private:
-  Mutex *m_;
+  Mutex *m_ = nullptr;
 
   // Disable copy and assignment.
   MutexLock(const MutexLock &);
@@ -61,7 +61,7 @@ class MutexLock {
 
 class Conditional {
  public:
-  Conditional() : err_(0) { pthread_cond_init(&cv_, nullptr); }
+  Conditional() { pthread_cond_init(&cv_, nullptr); }
   ~Conditional() { pthread_cond_destroy(&cv_); }
 
   bool Signal() { err_ = pthread_cond_signal(&cv_); return err_ == 0; }
@@ -77,11 +77,11 @@ class Conditional {
     return err_ == 0;
   }
 
-  int GetLastError() { return err_; }
+  int GetLastError() const { return err_; }
 
  private:
   pthread_cond_t cv_;
-  int err_;
+  int err_ = 0;
 
   // Disable copy and assignment.
   Conditional(const Conditional &);

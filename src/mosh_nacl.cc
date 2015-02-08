@@ -447,7 +447,7 @@ ssize_t ErrorLog::Write(const void *buf, size_t count) {
 
 class MoshClientModule : public pp::Module {
  public:
-  MoshClientModule() : pp::Module() {}
+  MoshClientModule() {}
   ~MoshClientModule() override {}
 
   pp::Instance *CreateInstance(PP_Instance instance) override {

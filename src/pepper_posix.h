@@ -43,7 +43,7 @@ namespace PepperPOSIX {
 // Abstract class representing a POSIX file.
 class File {
  public:
-  File() : target_(nullptr), blocking_(true) {}
+  File() {}
   virtual ~File() {
     Close();
     delete target_; 
@@ -60,10 +60,10 @@ class File {
   virtual const bool IsBlocking() { return blocking_; }
   virtual void SetBlocking(bool mode) { blocking_ = mode; }
 
-  Target *target_;
+  Target *target_ = nullptr;
 
  private:
-  bool blocking_;
+  bool blocking_ = true;
 
   // Disable copy and assignment.
   File(const File &);
@@ -83,8 +83,7 @@ class Writer : public virtual File {
 };
 
 // Abstract class defining a file that is read/write.
-class ReadWriter : public Reader, public Writer {
-};
+class ReadWriter : public Reader, public Writer {};
 
 // Special File to handle signals. Write a method in your implementation that
 // calls target_->UpdateRead(true) when there's an outstanding signal. Handle()

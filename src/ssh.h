@@ -35,11 +35,9 @@ class Channel;
 // Base class implementing shared error handling code.
 class ResultCode {
  public:
-  ResultCode() : last_code_(SSH_OK) {}
-
   // Get the error code from the last call. This code is what the underlyling
   // libssh call returns (e.g., SSH_OK, SSH_ERORR, etc.).
-  int GetLastErrorCode() { return last_code_; }
+  int GetLastErrorCode() const { return last_code_; }
 
  protected:
   // Converts return codes into simple error handling.
@@ -49,7 +47,7 @@ class ResultCode {
   }
 
  private:
-  int last_code_;
+  int last_code_ = SSH_OK;
 };
 
 // Types of authentications. This maps to libssh's bitfield macros as noted.
@@ -121,9 +119,9 @@ class KeyboardInteractive {
 
  private:
   ssh_session s_;
-  int num_prompts_;
-  int current_prompt_;
-  bool echo_answer_;
+  int num_prompts_ = 0;
+  int current_prompt_ = 0;
+  bool echo_answer_ = false;
 
   // Disable copy and assign.
   KeyboardInteractive(KeyboardInteractive &);
@@ -203,10 +201,10 @@ class Session : public ResultCode {
 
  private:
   ssh_session s_;
-  bool connected_;
-  Key *key_;
+  bool connected_ = false;
+  Key *key_ = nullptr;
   ::std::vector<Channel *> channels_;
-  KeyboardInteractive *keyboard_interactive_;
+  KeyboardInteractive *keyboard_interactive_ = nullptr;
 
   // Disable copy and assign.
   Session(Session &);
@@ -236,7 +234,7 @@ class Key {
   std::string MD5();
 
  private:
-  ssh_key key_;
+  ssh_key key_ = nullptr;
 
   // Disable copy and assign.
   Key(Key &);

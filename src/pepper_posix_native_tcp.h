@@ -52,7 +52,7 @@ class NativeTCP : public TCP {
   void StartReceive();
   void Received(int32_t result);
 
-  pp::TCPSocket *socket_;
+  pp::TCPSocket *socket_ = nullptr;
   const pp::InstanceHandle &instance_handle_;
   char receive_buffer_[TCP_RECEIVE_BUFFER_SIZE];
   pp::CompletionCallbackFactory<NativeTCP> factory_;

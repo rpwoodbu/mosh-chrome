@@ -95,7 +95,7 @@ class SSHLogin {
   std::string mosh_key_;
   std::string mosh_addr_;
   pp::VarDictionary known_hosts_;
-  ssh::Session *session_;
+  ssh::Session *session_ = nullptr;
 
   // Disable copy and assignment.
   SSHLogin(const SSHLogin &);
