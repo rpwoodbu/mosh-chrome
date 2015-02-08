@@ -27,7 +27,7 @@ const int RETRIES = 3;
 const string kCommandDefault(
     "mosh-server new -s -c 256 -l LANG=en_US.UTF-8");
 
-SSHLogin::SSHLogin() : session_(NULL) {}
+SSHLogin::SSHLogin() : session_(nullptr) {}
 
 SSHLogin::~SSHLogin() {
   delete session_;
@@ -99,7 +99,7 @@ bool SSHLogin::Start() {
   }
 
   vector<ssh::AuthenticationType> *auths = GetAuthTypes();
-  if (auths == NULL) {
+  if (auths == nullptr) {
     return false;
   }
 
@@ -127,7 +127,7 @@ bool SSHLogin::Start() {
   }
 
   delete auths;
-  auths = NULL;
+  auths = nullptr;
 
   // For safety, clear the sensitive data.
   key_.clear();
@@ -194,7 +194,7 @@ vector<ssh::AuthenticationType> *SSHLogin::GetAuthTypes() {
   if (server_auths.size() == 0) {
     fprintf(stderr, "Failed to get authentication types: %s\r\n",
         session_->GetLastError().c_str());
-    return NULL;
+    return nullptr;
   }
 
   for (vector<ssh::AuthenticationType>::iterator i = server_auths.begin();
@@ -280,7 +280,7 @@ bool SSHLogin::DoInteractiveAuth() {
       }
       status = kbd->GetStatus();
     }
-    const char *error = NULL;
+    const char *error = nullptr;
     switch (status) {
       case ssh::KeyboardInteractive::kAuthenticated:
         return true;
@@ -293,7 +293,7 @@ bool SSHLogin::DoInteractiveAuth() {
         error = "Keyboard interactive auth failed.";
         break;
     }
-    if (error != NULL && tries == 1) {
+    if (error != nullptr && tries == 1) {
       // Only display error on the last try.
       fprintf(stderr, "%s\r\n", error);
     }
@@ -353,7 +353,7 @@ bool SSHLogin::DoConversation() {
     return false;
   }
   string buf;
-  if (c->Read(&buf, NULL) == false) {
+  if (c->Read(&buf, nullptr) == false) {
     fprintf(stderr, "Error reading from remote ssh server: %s\r\n",
         session_->GetLastError().c_str());
     return false;

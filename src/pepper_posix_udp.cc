@@ -35,7 +35,7 @@ void DestroyMessage(struct ::msghdr *message) {
     free(message->msg_iov[i].iov_base);
     free(message->msg_iov + i);
   }
-  assert(message->msg_control == NULL); // This isn't being used.
+  assert(message->msg_control == nullptr); // This isn't being used.
 
   delete message;
 }
@@ -54,7 +54,7 @@ UDP::~UDP() {
 }
 
 ssize_t UDP::Receive(struct ::msghdr *message, int flags) {
-  struct ::msghdr *latest = NULL;
+  struct ::msghdr *latest = nullptr;
 
   {
     pthread::MutexLock m(&packets_lock_);
@@ -102,7 +102,7 @@ ssize_t StubUDP::Send(
     const vector<char> &buf, int flags, const PP_NetAddress_IPv4 &addr) {
   Log("StubUDP::Send(): size=%d", buf.size());
   Log("StubUDP::Send(): Pretending we received something.");
-  AddPacket(NULL);
+  AddPacket(nullptr);
   return buf.size();
 }
 

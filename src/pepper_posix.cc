@@ -48,14 +48,14 @@ POSIX::POSIX(const pp::InstanceHandle &instance_handle,
   if (std_out != nullptr) {
     std_out->target_ = selector_.NewTarget(STDOUT_FILENO);
     // Prevent buffering in stdout.
-    assert(setvbuf(stdout, NULL, _IONBF, 0) == 0);
+    assert(setvbuf(stdout, nullptr, _IONBF, 0) == 0);
   }
   files_[STDOUT_FILENO] = move(std_out);
   if (std_err != nullptr) {
     std_err->target_ = selector_.NewTarget(STDERR_FILENO);
     // Prevent buffering in stderr, but keep line mode as that works better for
     // keeping log lines together.
-    assert(setvbuf(stderr, NULL, _IOLBF, 0) == 0);
+    assert(setvbuf(stderr, nullptr, _IOLBF, 0) == 0);
   }
   files_[STDERR_FILENO] = move(std_err);
   if (signal_ != nullptr) {
@@ -97,7 +97,7 @@ ssize_t POSIX::Read(int fd, void *buf, size_t count) {
     return -1;
   }
   Reader *reader = dynamic_cast<Reader *>(files_[fd].get());
-  if (reader == NULL) {
+  if (reader == nullptr) {
     errno = EBADF;
     return -1;
   }
@@ -105,7 +105,7 @@ ssize_t POSIX::Read(int fd, void *buf, size_t count) {
   if (reader->IsBlocking()) {
     vector<Target *> read_targets, write_targets;
     read_targets.push_back(reader->target_);
-    selector_.Select(read_targets, write_targets, NULL);
+    selector_.Select(read_targets, write_targets, nullptr);
   }
 
   return reader->Read(buf, count);
@@ -117,7 +117,7 @@ ssize_t POSIX::Write(int fd, const void *buf, size_t count) {
     return -1;
   }
   Writer *writer = dynamic_cast<Writer *>(files_[fd].get());
-  if (writer == NULL) {
+  if (writer == nullptr) {
     errno = EBADF;
     return -1;
   }
@@ -125,7 +125,7 @@ ssize_t POSIX::Write(int fd, const void *buf, size_t count) {
   if (writer->IsBlocking()) {
     vector<Target *> read_targets, write_targets;
     write_targets.push_back(writer->target_);
-    selector_.Select(read_targets, write_targets, NULL);
+    selector_.Select(read_targets, write_targets, nullptr);
   }
 
   return writer->Write(buf, count);
@@ -174,7 +174,7 @@ int POSIX::Dup(int oldfd) {
   }
   // Currently can only dup UDP sockets.
   UDP *udp = dynamic_cast<UDP *>(files_[oldfd].get());
-  if (udp == NULL) {
+  if (udp == nullptr) {
     errno = EBADF;
     return -1;
   }
@@ -191,16 +191,16 @@ int POSIX::PSelect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfd
 
   vector<Target *> read_targets, write_targets;
   for (int fd = 0; fd < nfds; ++fd) {
-    if (readfds != NULL && FD_ISSET(fd, readfds)) {
+    if (readfds != nullptr && FD_ISSET(fd, readfds)) {
       read_targets.push_back(files_[fd]->target_);
     }
-    if (writefds != NULL && FD_ISSET(fd, writefds)) {
+    if (writefds != nullptr && FD_ISSET(fd, writefds)) {
       write_targets.push_back(files_[fd]->target_);
     }
   }
 
   // Signal is handled specially.
-  if (signal_ != NULL) {
+  if (signal_ != nullptr) {
     read_targets.push_back(signal_->target_);
   }
 
@@ -213,28 +213,29 @@ int POSIX::PSelect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfd
     int fd = (*i)->id();
 
     // Signal is handled specially.
-    if (fd == SIGNAL_FD && signal_ != NULL && signal_->target_->has_read_data()) {
+    if (fd == SIGNAL_FD && signal_ != nullptr &&
+        signal_->target_->has_read_data()) {
       signal_->Handle();
       continue;
     }
 
-    if (readfds != NULL && FD_ISSET(fd, readfds) && (*i)->has_read_data()) {
+    if (readfds != nullptr && FD_ISSET(fd, readfds) && (*i)->has_read_data()) {
       FD_SET(fd, &new_readfds);
       ++result;
     }
-    if (writefds != NULL && FD_ISSET(fd, writefds) && (*i)->has_write_data()) {
+    if (writefds != nullptr && FD_ISSET(fd, writefds) && (*i)->has_write_data()) {
       FD_SET(fd, &new_writefds);
       ++result;
     }
   }
 
-  if (readfds != NULL) {
+  if (readfds != nullptr) {
     FD_ZERO(readfds);
   }
-  if (writefds != NULL) {
+  if (writefds != nullptr) {
     FD_ZERO(writefds);
   }
-  if (exceptfds != NULL) {
+  if (exceptfds != nullptr) {
     FD_ZERO(exceptfds);
   }
   for (int fd = 0; fd < nfds; ++fd) {
@@ -255,7 +256,7 @@ ssize_t POSIX::Recv(int sockfd, void *buf, size_t len, int flags) {
     return -1;
   }
   TCP *tcp = dynamic_cast<TCP *>(files_[sockfd].get());
-  if (tcp == NULL) {
+  if (tcp == nullptr) {
     errno = EBADF;
     return -1;
   }
@@ -263,7 +264,7 @@ ssize_t POSIX::Recv(int sockfd, void *buf, size_t len, int flags) {
   if (tcp->IsBlocking() && !(flags & MSG_DONTWAIT)) {
     vector<Target *> read_targets, write_targets;
     read_targets.push_back(tcp->target_);
-    selector_.Select(read_targets, write_targets, NULL);
+    selector_.Select(read_targets, write_targets, nullptr);
   }
 
   return tcp->Receive(buf, len, flags);
@@ -275,7 +276,7 @@ ssize_t POSIX::RecvMsg(int sockfd, struct msghdr *msg, int flags) {
     return -1;
   }
   UDP *udp = dynamic_cast<UDP *>(files_[sockfd].get());
-  if (udp == NULL) {
+  if (udp == nullptr) {
     errno = EBADF;
     return -1;
   }
@@ -283,7 +284,7 @@ ssize_t POSIX::RecvMsg(int sockfd, struct msghdr *msg, int flags) {
   if (udp->IsBlocking() && !(flags & MSG_DONTWAIT)) {
     vector<Target *> read_targets, write_targets;
     read_targets.push_back(udp->target_);
-    selector_.Select(read_targets, write_targets, NULL);
+    selector_.Select(read_targets, write_targets, nullptr);
   }
 
   return udp->Receive(msg, flags);
@@ -310,7 +311,7 @@ ssize_t POSIX::Send(int sockfd, const void *buf, size_t len, int flags) {
     return EBADF;
   }
   TCP *tcp = dynamic_cast<TCP *>(files_[sockfd].get());
-  if (tcp == NULL) {
+  if (tcp == nullptr) {
     errno = EBADF;
     return -1;
   }
@@ -318,7 +319,7 @@ ssize_t POSIX::Send(int sockfd, const void *buf, size_t len, int flags) {
   if (tcp->IsBlocking() && !(flags & MSG_DONTWAIT)) {
     vector<Target *> read_targets, write_targets;
     write_targets.push_back(tcp->target_);
-    selector_.Select(read_targets, write_targets, NULL);
+    selector_.Select(read_targets, write_targets, nullptr);
   }
 
   return tcp->Send(buf, len, flags);
@@ -330,7 +331,7 @@ ssize_t POSIX::SendTo(int sockfd, const void *buf, size_t len, int flags,
     return EBADF;
   }
   UDP *udp = dynamic_cast<UDP *>(files_[sockfd].get());
-  if (udp == NULL) {
+  if (udp == nullptr) {
     errno = EBADF;
     return -1;
   }
@@ -338,7 +339,7 @@ ssize_t POSIX::SendTo(int sockfd, const void *buf, size_t len, int flags,
   if (udp->IsBlocking() && !(flags & MSG_DONTWAIT)) {
     vector<Target *> read_targets, write_targets;
     write_targets.push_back(udp->target_);
-    selector_.Select(read_targets, write_targets, NULL);
+    selector_.Select(read_targets, write_targets, nullptr);
   }
 
   vector<char> buffer((const char*)buf, (const char*)buf+len);
@@ -382,7 +383,7 @@ int POSIX::Connect(
     return EBADF;
   }
   TCP *tcp = dynamic_cast<TCP *>(files_[sockfd].get());
-  if (tcp == NULL) {
+  if (tcp == nullptr) {
     errno = EBADF;
     return -1;
   }
@@ -399,7 +400,7 @@ int POSIX::GetSockOpt(int sockfd, int level, int optname,
     return EBADF;
   }
   TCP *tcp = dynamic_cast<TCP *>(files_[sockfd].get());
-  if (tcp == NULL) {
+  if (tcp == nullptr) {
     errno = EBADF;
     return -1;
   }

@@ -57,7 +57,7 @@ vector<Target*> Selector::Select(
     const vector<Target*> &read_targets, const vector<Target*> &write_targets,
     const struct timespec *timeout) {
   struct timespec abstime;
-  if (timeout != NULL) {
+  if (timeout != nullptr) {
     // Calculate absolute time for timeout. This should be done ASAP to reduce
     // the chances of this method not returning by the timeout specified. There
     // are no guarantees, of course.
@@ -76,7 +76,7 @@ vector<Target*> Selector::Select(
   }
 
   // Wait for a target to have data. Simple no-timeout case.
-  if (timeout == NULL) {
+  if (timeout == nullptr) {
     notify_cv_.Wait(&notify_mutex_);
     return HasData(read_targets, write_targets);
   }

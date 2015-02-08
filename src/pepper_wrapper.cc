@@ -157,7 +157,7 @@ FILE *fopen(const char *path, const char *mode) {
     flags = O_WRONLY;
   } else {
     errno = EINVAL;
-    return NULL;
+    return nullptr;
   }
 
   FILE *stream = new FILE;
@@ -241,7 +241,7 @@ int getaddrinfo(const char *node, const char *service,
   ai->ai_family = AF_INET;
   ai->ai_addrlen = sizeof(*addr);
   ai->ai_addr = (struct sockaddr *)addr;
-  if (hints != NULL) {
+  if (hints != nullptr) {
     ai->ai_protocol = hints->ai_protocol;
     ai->ai_socktype = hints->ai_socktype;
   }
@@ -251,7 +251,7 @@ int getaddrinfo(const char *node, const char *service,
 }
 
 void freeaddrinfo(struct addrinfo *res) {
-  while (res != NULL) {
+  while (res != nullptr) {
     struct addrinfo *last = res;
     delete res->ai_addr;
     res = res->ai_next;
@@ -325,13 +325,13 @@ int pselect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 
 int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
     struct timeval *timeout) {
-  if (timeout != NULL) {
+  if (timeout != nullptr) {
     struct timespec ts;
     ts.tv_sec = timeout->tv_sec;
     ts.tv_nsec = timeout->tv_usec * 1000;
-    return pselect(nfds, readfds, writefds, exceptfds, &ts, NULL);
+    return pselect(nfds, readfds, writefds, exceptfds, &ts, nullptr);
   }
-  return pselect(nfds, readfds, writefds, exceptfds, NULL, NULL);
+  return pselect(nfds, readfds, writefds, exceptfds, nullptr, nullptr);
 }
 
 int poll(struct pollfd *fds, nfds_t nfds, int timeout) {

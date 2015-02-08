@@ -26,7 +26,7 @@ KeyboardInteractive::KeyboardInteractive(ssh_session s) :
 
 KeyboardInteractive::Status KeyboardInteractive::GetStatus() {
   while (true) {
-    int result = ssh_userauth_kbdint(s_, NULL, NULL);
+    int result = ssh_userauth_kbdint(s_, nullptr, nullptr);
     if (result == SSH_AUTH_SUCCESS) {
       return kAuthenticated;
     }
@@ -72,7 +72,8 @@ bool KeyboardInteractive::Answer(const char *answer) {
 }
 
 Session::Session(const string &host, int port, const string &user) :
-    s_(ssh_new()), connected_(false), key_(NULL), keyboard_interactive_(NULL) {
+    s_(ssh_new()), connected_(false), key_(nullptr),
+    keyboard_interactive_(nullptr) {
   SetOption(SSH_OPTIONS_HOST, host);
   SetOption(SSH_OPTIONS_PORT, port);
   SetOption(SSH_OPTIONS_USER, user);
@@ -98,9 +99,9 @@ void Session::Disconnect() {
   if (connected_) {
     connected_ = false;
     delete key_;
-    key_ = NULL;
+    key_ = nullptr;
     delete keyboard_interactive_;
-    keyboard_interactive_ = NULL;
+    keyboard_interactive_ = nullptr;
     for (::std::vector<Channel *>::iterator it = channels_.begin();
         it != channels_.end();
         ++it) {
@@ -112,7 +113,7 @@ void Session::Disconnect() {
 }
 
 Key *Session::GetPublicKey() {
-  if (connected_ && key_ == NULL) {
+  if (connected_ && key_ == nullptr) {
     key_ = new Key();
     ssh_get_publickey(s_, &key_->key_);
   }
@@ -124,14 +125,14 @@ Key *Session::GetPublicKey() {
 
   // First we have to try the "none" method to get the types. This could lead
   // to confusion if it is actually sufficient to authenticate.
-  int result = ssh_userauth_none(s_, NULL);
+  int result = ssh_userauth_none(s_, nullptr);
   if (result == SSH_AUTH_ERROR || result == SSH_AUTH_SUCCESS) {
     ParseCode(result);
     // Returning an empty list.
     return auth_types;
   }
 
-  int auth_list = ssh_userauth_list(s_, NULL);
+  int auth_list = ssh_userauth_list(s_, nullptr);
   if (auth_list & SSH_AUTH_METHOD_PASSWORD) {
     auth_types.push_back(kPassword);
   }
@@ -169,7 +170,7 @@ KeyboardInteractive *Session::AuthUsingKeyboardInteractive() {
 }
 
 bool Session::AuthUsingKey(const Key &key) {
-  int result = ssh_userauth_publickey(s_, NULL, key.key_);
+  int result = ssh_userauth_publickey(s_, nullptr, key.key_);
   return ParseCode(result, SSH_AUTH_SUCCESS);
 }
 
@@ -179,21 +180,21 @@ Channel *Session::NewChannel() {
   return c;
 }
 
-Key::Key() : key_(NULL) { }
+Key::Key() : key_(nullptr) { }
 
 Key::~Key() {
-  if (key_ != NULL) {
+  if (key_ != nullptr) {
     ssh_key_free(key_);
   }
 }
 
 bool Key::ImportPrivateKey(const string &key, const char *passphrase) {
-  if (key_ != NULL) {
+  if (key_ != nullptr) {
     ssh_key_free(key_);
-    key_ = NULL;
+    key_ = nullptr;
   }
   int result = ssh_pki_import_privkey_base64(
-      key.c_str(), passphrase, NULL, NULL, &key_);
+      key.c_str(), passphrase, nullptr, nullptr, &key_);
   if (result != SSH_OK) {
     return false;
   }
@@ -201,13 +202,13 @@ bool Key::ImportPrivateKey(const string &key, const char *passphrase) {
 }
 
 Key *Key::GetPublicKey() {
-  if (key_ == NULL) {
-    return NULL;
+  if (key_ == nullptr) {
+    return nullptr;
   }
   ssh_key pubkey;
   int result = ssh_pki_export_privkey_to_pubkey(key_, &pubkey);
   if (result != SSH_OK) {
-    return NULL;
+    return nullptr;
   }
   Key *key = new Key();
   key->key_ = pubkey;
@@ -215,10 +216,10 @@ Key *Key::GetPublicKey() {
 }
 
 string Key::MD5() {
-  if (key_ == NULL) {
+  if (key_ == nullptr) {
     return string();
   }
-  unsigned char *hash_buf = NULL;
+  unsigned char *hash_buf = nullptr;
   size_t hash_len = 0;
   int result = ssh_get_publickey_hash(
       key_, SSH_PUBLICKEY_HASH_MD5, &hash_buf, &hash_len);
@@ -272,7 +273,7 @@ bool Channel::Read(string *out, string *err) {
 
   // First read all of stdout.
   unsigned int bytes_read = 1; // Prime the pump.
-  if (out != NULL) {
+  if (out != nullptr) {
     while (bytes_read > 0 && bytes_read != ssh_error) {
       bytes_read = ssh_channel_read(c_, buffer, sizeof(buffer), 0);
       out->append(buffer, bytes_read);
@@ -283,7 +284,7 @@ bool Channel::Read(string *out, string *err) {
   }
 
   // Now read all of stderr.
-  if (err != NULL) {
+  if (err != nullptr) {
     bytes_read = 1; // Prime the pump.
     while (bytes_read > 0 && bytes_read != ssh_error) {
       bytes_read = ssh_channel_read(c_, buffer, sizeof(buffer), 1);

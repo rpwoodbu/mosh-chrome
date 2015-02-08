@@ -149,7 +149,7 @@ void NativeTCP::Received(int32_t result) {
 int NativeTCP::Close() {
   // Destroying socket_ is the same as closing it.
   delete socket_;
-  socket_ = NULL;
+  socket_ = nullptr;
   return 0;
 }
 

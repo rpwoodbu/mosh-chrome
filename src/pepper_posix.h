@@ -43,7 +43,7 @@ namespace PepperPOSIX {
 // Abstract class representing a POSIX file.
 class File {
  public:
-  File() : target_(NULL), blocking_(true) {}
+  File() : target_(nullptr), blocking_(true) {}
   virtual ~File() {
     Close();
     delete target_; 
@@ -51,7 +51,7 @@ class File {
 
   virtual int Close() { return 0; }
   int fd() {
-    if (target_ == NULL) {
+    if (target_ == nullptr) {
       return -1;
     }
     return target_->id();
@@ -108,7 +108,7 @@ class POSIX {
   // and STDERR. Provide an implementation of Signal to handle signals, which
   // will be called from PSelect().
   //
-  // Set any of these to NULL if not used. Takes ownership of all.
+  // Set any of these to the default unique_ptr (nullptr) if not used.
   POSIX(
       const pp::InstanceHandle &instance_handle,
       std::unique_ptr<Reader> std_in,

@@ -169,7 +169,7 @@ class Session : public ResultCode {
   // libssh.
   bool AuthUsingPassword(const char *password) {
     return ParseCode(
-      ssh_userauth_password(s_, NULL, password), SSH_AUTH_SUCCESS);
+      ssh_userauth_password(s_, nullptr, password), SSH_AUTH_SUCCESS);
   }
 
   // Authenticate using keyboard-interactive auth. Returns a
@@ -222,14 +222,14 @@ class Key {
   ~Key();
 
   // Import a base64 formatted private key. If no passphrase is required, pass
-  // NULL; if the key was encrypted, the method will return false, and you can
-  // prompt the user for a passphrase and try again. Using char * to better
+  // nullptr; if the key was encrypted, the method will return false, and you
+  // can prompt the user for a passphrase and try again. Using char * to better
   // manage lifecycle of sensitive data.
   bool ImportPrivateKey(const std::string &key, const char *passphrase);
 
   // Get the public version of the private key. Only works if a private key is
   // loaded into the current object. Ownership is transferred to the caller.
-  // Returns NULL on error.
+  // Returns nullptr on error.
   Key *GetPublicKey();
 
   // Get key as MD5 hash. Will return an empty string on error.
@@ -255,7 +255,7 @@ class Channel : public ResultCode {
   bool Execute(const std::string &command);
 
   // Read the whole stdout/stderr contents from the remote side. Bring your
-  // own strings. Set to NULL if you don't care about one or the other.
+  // own strings. Set to nullptr if you don't care about one or the other.
   bool Read(std::string *out, std::string *err);
 
  private:

@@ -73,8 +73,8 @@ class SSHLogin {
   bool CheckFingerprint();
 
   // Returns the intersection of authentication types that both the client and
-  // the server support. Returns NULL on error. Ownership is transferred to the
-  // caller.
+  // the server support. Returns nullptr on error. Ownership is transferred to
+  // the caller.
   std::vector<ssh::AuthenticationType> *GetAuthTypes();
 
   // Ask a yes/no question to the user, and return the answer as a bool.
