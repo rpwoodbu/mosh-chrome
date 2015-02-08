@@ -43,7 +43,7 @@ namespace PepperPOSIX {
 class UDP : public File {
  public:
   UDP();
-  virtual ~UDP();
+  ~UDP() override;
 
   // Receive replaces recvmsg(); see its documentation for usage.
   ssize_t Receive(struct ::msghdr *message, int flags);
@@ -75,12 +75,12 @@ class UDP : public File {
 class StubUDP : public UDP {
  public:
   // Bind replaces bind().
-  virtual int Bind(const PP_NetAddress_IPv4 &address);
+  int Bind(const PP_NetAddress_IPv4 &address) override;
 
   // Send replaces sendto. Usage is similar, but tweaked for C++.
-  virtual ssize_t Send(
+  ssize_t Send(
     const std::vector<char> &buf, int flags,
-    const PP_NetAddress_IPv4 &address);
+    const PP_NetAddress_IPv4 &address) override;
 
  private:
   // Disable copy and assignment.

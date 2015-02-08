@@ -32,19 +32,19 @@ namespace PepperPOSIX {
 class NativeTCP : public TCP {
  public:
   NativeTCP(const pp::InstanceHandle &instance_handle);
-  virtual ~NativeTCP();
+  ~NativeTCP() override;
 
   // Bind replaces bind().
-  virtual int Bind(const PP_NetAddress_IPv4 &address);
+  int Bind(const PP_NetAddress_IPv4 &address) override;
 
   // Connect replaces connect().
-  virtual int Connect(const PP_NetAddress_IPv4 &address);
+  int Connect(const PP_NetAddress_IPv4 &address) override;
 
   // Send replaces send().
-  virtual ssize_t Send(const void *buf, size_t count, int flags);
+  ssize_t Send(const void *buf, size_t count, int flags) override;
 
   // Close replaces close().
-  virtual int Close();
+  int Close() override;
 
  private:
   void ConnectOnMainThread(int32_t unused);

@@ -32,18 +32,18 @@ namespace PepperPOSIX {
 class NativeUDP : public UDP {
  public:
   NativeUDP(const pp::InstanceHandle &instance_handle);
-  virtual ~NativeUDP();
+  ~NativeUDP() override;
 
   // Bind replaces bind().
-  virtual int Bind(const PP_NetAddress_IPv4 &address);
+  int Bind(const PP_NetAddress_IPv4 &address) override;
 
   // Send replaces sendto. Usage is similar, but tweaked for C++.
-  virtual ssize_t Send(
+  ssize_t Send(
       const std::vector<char> &buf, int flags,
-      const PP_NetAddress_IPv4 &address);
+      const PP_NetAddress_IPv4 &address) override;
 
   // Close replaces close().
-  virtual int Close();
+  int Close() override;
 
  private:
   void StartReceive(int32_t unused);

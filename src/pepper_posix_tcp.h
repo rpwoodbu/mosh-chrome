@@ -43,16 +43,16 @@ namespace PepperPOSIX {
 class TCP : public ReadWriter {
  public:
   TCP();
-  virtual ~TCP();
+  ~TCP() override;
 
   // Read replaces read().
-  virtual ssize_t Read(void *buf, size_t count);
+  ssize_t Read(void *buf, size_t count) override;
 
   // Recv replaces recv().
   virtual ssize_t Receive(void *buf, size_t count, int flags);
 
   // Write replaces write().
-  virtual ssize_t Write(const void *buf, size_t count);
+  ssize_t Write(const void *buf, size_t count) override;
 
   // Send replaces send().
   virtual ssize_t Send(const void *buf, size_t count, int flags) = 0;
@@ -85,11 +85,11 @@ class TCP : public ReadWriter {
 class StubTCP : public TCP {
  public:
   StubTCP() {};
-  virtual ~StubTCP() {};
+  ~StubTCP() override {};
 
-  virtual ssize_t Send(const void *buf, size_t count, int flags);
-  virtual int Bind(const PP_NetAddress_IPv4 &address);
-  virtual int Connect(const PP_NetAddress_IPv4 &address);
+  ssize_t Send(const void *buf, size_t count, int flags) override;
+  int Bind(const PP_NetAddress_IPv4 &address) override;
+  int Connect(const PP_NetAddress_IPv4 &address) override;
  private:
   // Disable copy and assignment.
   StubTCP(const StubTCP &);
