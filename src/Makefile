@@ -80,7 +80,7 @@ OBJCOPY:=$(TC_PATH)/../$(OSNAME)_x86_newlib/bin/i686-nacl-objcopy
 # Project Build flags
 # TODO: Remove --pnacl-exceptions once exceptions are fully supported by PNaCl.
 override CXXFLAGS+=-pthread $(WARNINGS) -I$(NACL_SDK_ROOT)/include -fno-builtin \
-	--pnacl-exceptions=sjlj -O2
+	--pnacl-exceptions=sjlj -O2 -std=gnu++11
 
 COMPAT_INC:=-I${TC_PATH}/ARCH-nacl/usr/include/glibc-compat
 NEWLIB_CXXFLAGS:=$(CXXFLAGS) -DUSE_NEWLIB $(COMPAT_INC)

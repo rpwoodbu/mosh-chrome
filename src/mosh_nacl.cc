@@ -27,6 +27,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/ioctl.h>
