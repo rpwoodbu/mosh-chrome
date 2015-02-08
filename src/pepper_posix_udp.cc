@@ -27,6 +27,8 @@
 
 namespace PepperPOSIX {
 
+using std::vector;
+
 void DestroyMessage(struct ::msghdr *message) {
   free(message->msg_name);
   for (int i = 0; i < message->msg_iovlen; ++i) {

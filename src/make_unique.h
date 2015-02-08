@@ -1,8 +1,6 @@
-// pepper_wrapper.h - Main include file for Pepper wrapping.
-//
-// Implement the functions below to interface with Pepper wrapping.
+// make_unique.h - Convienience template function for making unique_ptr.
 
-// Copyright 2013, 2014, 2015 Richard Woodbury
+// Copyright 2015 Richard Woodbury
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,14 +15,14 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef PEPPER_WRAPPER
-#define PEPPER_WRAPPER
+#ifndef MAKE_UNIQUE_H
+#define MAKE_UNIQUE_H
 
-#include "pepper_posix.h"
+#include <memory>
 
-// Implement this to return an appropriate instance of PepperPOSIX::POSIX.
-// You may want to return a particular one based on the calling thread to
-// support multiple Pepper Instances.
-PepperPOSIX::POSIX& GetPOSIX();
+template <typename T>
+std::unique_ptr<T> make_unique(T* t) {
+  return std::unique_ptr<T>(t);
+}
 
-#endif // PEPPER_WRAPPER
+#endif // MAKE_UNIQUE_H

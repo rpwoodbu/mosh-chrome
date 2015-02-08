@@ -29,8 +29,6 @@
 
 namespace ssh {
 
-using ::std::string;
-
 class Key;
 class Channel;
 
@@ -63,7 +61,7 @@ enum AuthenticationType {
 };
 
 // Get a human-readable text representation of an authentication type.
-string GetAuthenticationTypeName(AuthenticationType type);
+std::string GetAuthenticationTypeName(AuthenticationType type);
 
 // Represents a keyboard-interactive authorization "subsession". Should only be
 // gotten from Session::AuthUsingKeyboardInteractive().
@@ -91,18 +89,18 @@ class KeyboardInteractive {
 
   // Returns the "name" string from the server. Must have called
   // GetStatus() first.
-  string GetName() {
-    return string(ssh_userauth_kbdint_getname(s_));
+  std::string GetName() {
+    return std::string(ssh_userauth_kbdint_getname(s_));
   }
 
   // Returns the "instruction" string from the server. Must have called
   // GetStatus() first.
-  string GetInstruction() {
-    return string(ssh_userauth_kbdint_getinstruction(s_));
+  std::string GetInstruction() {
+    return std::string(ssh_userauth_kbdint_getinstruction(s_));
   }
 
   // Returns the next prompt from the server.
-  string GetNextPrompt();
+  std::string GetNextPrompt();
 
   // For the current prompt, indicate whether the answer should be echoed to
   // the user. Should be called after GetNextPrompt(); behavior is undefined
@@ -135,12 +133,12 @@ class KeyboardInteractive {
 // Represents an ssh session.
 class Session : public ResultCode {
  public:
-  Session(const string &host, int port, const string &user);
+  Session(const std::string &host, int port, const std::string &user);
   ~Session();
 
   // Gets the human-readable error string from the last call. Analog to
   // ssh_get_error().
-  string GetLastError() { return string(ssh_get_error(s_)); }
+  std::string GetLastError() { return std::string(ssh_get_error(s_)); }
 
   // Connect to the host. Analog to ssh_connect().
   bool Connect();
@@ -190,7 +188,7 @@ class Session : public ResultCode {
 
   // Analog to ssh_options_set(), but easier to use as it is overloaded to
   // handle the various input types.
-  bool SetOption(enum ssh_options_e type, const string &option) {
+  bool SetOption(enum ssh_options_e type, const std::string &option) {
     return ParseCode(ssh_options_set(s_, type, option.c_str()));
   }
   bool SetOption(enum ssh_options_e type, const char *option) {
@@ -227,7 +225,7 @@ class Key {
   // NULL; if the key was encrypted, the method will return false, and you can
   // prompt the user for a passphrase and try again. Using char * to better
   // manage lifecycle of sensitive data.
-  bool ImportPrivateKey(const string &key, const char *passphrase);
+  bool ImportPrivateKey(const std::string &key, const char *passphrase);
 
   // Get the public version of the private key. Only works if a private key is
   // loaded into the current object. Ownership is transferred to the caller.
@@ -235,7 +233,7 @@ class Key {
   Key *GetPublicKey();
 
   // Get key as MD5 hash. Will return an empty string on error.
-  string MD5();
+  std::string MD5();
 
  private:
   ssh_key key_;
@@ -254,11 +252,11 @@ class Channel : public ResultCode {
   ~Channel();
 
   // Execute the command. Analog to ssh_channel_request_exec().
-  bool Execute(const string &command);
+  bool Execute(const std::string &command);
 
   // Read the whole stdout/stderr contents from the remote side. Bring your
   // own strings. Set to NULL if you don't care about one or the other.
-  bool Read(string *out, string *err);
+  bool Read(std::string *out, std::string *err);
 
  private:
   // Opens a session. This is private because it is handled automatically, and

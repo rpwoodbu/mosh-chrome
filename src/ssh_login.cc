@@ -19,6 +19,9 @@
 
 #include "mosh_nacl.h"
 
+using std::string;
+using std::vector;
+
 const int INPUT_SIZE = 256;
 const int RETRIES = 3;
 const string kCommandDefault(

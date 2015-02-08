@@ -24,6 +24,8 @@
 
 namespace PepperPOSIX {
 
+using std::vector;
+
 Selector::Selector() { }
 
 Selector::~Selector() {

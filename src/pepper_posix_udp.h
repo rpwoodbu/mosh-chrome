@@ -53,7 +53,7 @@ class UDP : public File {
 
   // Send replaces sendto(). Usage is similar, but tweaked for C++.
   virtual ssize_t Send(
-    const vector<char> &buf, int flags,
+    const std::vector<char> &buf, int flags,
     const PP_NetAddress_IPv4 &address) = 0;
 
  protected:
@@ -79,7 +79,7 @@ class StubUDP : public UDP {
 
   // Send replaces sendto. Usage is similar, but tweaked for C++.
   virtual ssize_t Send(
-    const vector<char> &buf, int flags,
+    const std::vector<char> &buf, int flags,
     const PP_NetAddress_IPv4 &address);
 
  private:

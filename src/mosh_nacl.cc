@@ -18,11 +18,13 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+#include "make_unique.h"
 #include "mosh_nacl.h"
 #include "pthread_locks.h"
 
 #include <algorithm>
 #include <deque>
+#include <functional>
 #include <vector>
 #include <errno.h>
 #include <signal.h>
@@ -36,19 +38,21 @@
 #include "irt.h"
 #include "ppapi/cpp/module.h"
 
+using ::std::function;
+using ::std::unique_ptr;
 using ::std::vector;
 
 // Forward declaration of mosh_main(), as it has no header file.
 int mosh_main(int argc, char *argv[]);
 
 // Used by pepper_wrapper.h functions.
-static class MoshClientInstance *instance = NULL;
+static class MoshClientInstance *instance = nullptr;
 
 // Implements most of the plumbing to get keystrokes to Mosh. A tiny amount of
 // plumbing is in the MoshClientInstance::HandleMessage().
 class Keyboard : public PepperPOSIX::Reader {
  public:
-  virtual ssize_t Read(void *buf, size_t count) {
+  ssize_t Read(void *buf, size_t count) override {
     int num_read = 0;
 
     pthread::MutexLock m(&keypresses_lock_);
@@ -65,7 +69,7 @@ class Keyboard : public PepperPOSIX::Reader {
   }
 
   // Handle input from the keyboard.
-  void HandleInput(string input) {
+  void HandleInput(const string& input) {
     if (input.size() == 0) {
       // Nothing to see here.
       return;
@@ -88,60 +92,58 @@ class Keyboard : public PepperPOSIX::Reader {
 // Implements the plumbing to get stdout to the terminal.
 class Terminal : public PepperPOSIX::Writer {
  public:
-  Terminal(MoshClientInstance *instance) : instance_(instance) {}
+  Terminal(MoshClientInstance& instance) : instance_(instance) {}
 
   // This has to be defined below MoshClientInstance due to dependence on it.
-  virtual ssize_t Write(const void *buf, size_t count);
+  ssize_t Write(const void *buf, size_t count) override;
 
  private:
-  MoshClientInstance *instance_;
+  MoshClientInstance& instance_;
 };
 
 // Implements the plumbing to get stderr to Javascript.
 class ErrorLog : public PepperPOSIX::Writer {
  public:
-  ErrorLog(MoshClientInstance *instance) : instance_(instance) {}
+  ErrorLog(MoshClientInstance& instance) : instance_(instance) {}
 
   // This has to be defined below MoshClientInstance due to dependence on it.
-  virtual ssize_t Write(const void *buf, size_t count);
+  ssize_t Write(const void *buf, size_t count) override;
 
  private:
-  MoshClientInstance *instance_;
+  MoshClientInstance& instance_;
 };
 
 // Implements the plumbing to get SIGWINCH to Mosh. A tiny amount of plumbing
 // is in MoshClientInstance::HandleMessage();
 class WindowChange : public PepperPOSIX::Signal {
  public:
-  WindowChange() : sigwinch_handler_(NULL), width_(80), height_(24) {}
-
   // Update geometry and send SIGWINCH.
   void Update(int width, int height) {
-    if (sigwinch_handler_ != NULL) {
+    if (sigwinch_handler_ != nullptr) {
       width_ = width;
       height_ = height;
       target_->UpdateRead(true);
     }
   }
 
-  void SetHandler(void (*sigwinch_handler)(int)) {
+  void SetHandler(function<void (int)> sigwinch_handler) {
     sigwinch_handler_ = sigwinch_handler;
   }
 
-  virtual void Handle() {
-    if (sigwinch_handler_ != NULL) {
+  void Handle() override {
+    if (sigwinch_handler_ != nullptr) {
       sigwinch_handler_(SIGWINCH);
       target_->UpdateRead(false);
     }
   }
 
-  int height() { return height_; }
-  int width() { return width_; }
+  int height() const { return height_; }
+  int width() const { return width_; }
 
  private:
-  int width_;
-  int height_;
-  void (*sigwinch_handler_)(int);
+  int width_ = 80;
+  int height_ = 24;
+  function<void (int)> sigwinch_handler_;
 };
 
 class DevURandom : public PepperPOSIX::Reader {
@@ -150,7 +152,7 @@ class DevURandom : public PepperPOSIX::Reader {
     nacl_interface_query(NACL_IRT_RANDOM_v0_1, &random_, sizeof(random_));
   }
 
-  virtual ssize_t Read(void *buf, size_t count) {
+  ssize_t Read(void *buf, size_t count) override {
     size_t bytes_read = 0;
     random_.get_random_bytes(buf, count, &bytes_read);
     return bytes_read;
@@ -161,14 +163,12 @@ class DevURandom : public PepperPOSIX::Reader {
 };
 
 // DevURandom factory for registration with PepperPOSIX::POSIX.
-PepperPOSIX::File *DevURandomFactory() {
-  return new DevURandom();
+unique_ptr<PepperPOSIX::File> DevURandomFactory() {
+  return make_unique(new DevURandom());
 }
 
 MoshClientInstance::MoshClientInstance(PP_Instance instance) :
-    pp::Instance(instance), addr_(NULL), port_(NULL), ssh_mode_(false),
-    posix_(NULL), keyboard_(NULL), instance_handle_(this),
-    window_change_(NULL), resolver_(instance_handle_), cc_factory_(this) {
+    pp::Instance(instance), resolver_(instance_handle_), cc_factory_(this) {
   ++num_instances_;
   assert (num_instances_ == 1);
   ::instance = this;
@@ -177,11 +177,8 @@ MoshClientInstance::MoshClientInstance(PP_Instance instance) :
 MoshClientInstance::~MoshClientInstance() {
   // Wait for thread to finish.
   if (thread_) {
-    pthread_join(thread_, NULL);
+    pthread_join(thread_, nullptr);
   }
-  delete[] addr_;
-  delete[] port_;
-  delete posix_;
 }
 
 void MoshClientInstance::HandleMessage(const pp::Var &var) {
@@ -254,9 +251,10 @@ void MoshClientInstance::Output(OutputType t, const pp::Var &data) {
   PostMessage(dict);
 }
 
-void MoshClientInstance::Logv(OutputType t, const char *format, va_list argp) {
+void MoshClientInstance::Logv(
+    OutputType t, const string& format, va_list argp) {
   char buf[1024];
-  int size = vsnprintf(buf, sizeof(buf), format, argp);
+  int size = vsnprintf(buf, sizeof(buf), format.c_str(), argp);
   Output(t, string((const char *)buf, size));
 }
 
@@ -283,16 +281,16 @@ bool MoshClientInstance::Init(
     int len = strlen(argv[i]) + 1;
     if (name == "key") {
       secret = argv[i];
-    } else if (name == "addr" && addr_ == NULL) {
+    } else if (name == "addr" && addr_ == nullptr) {
       // TODO: Support IPv6 when Mosh does.
       const PP_HostResolver_Hint hint = {PP_NETADDRESS_FAMILY_IPV4, 0};
       // Mosh will launch via this callback when the resolution completes.
       resolver_.Resolve(argv[i], 0, hint,
           cc_factory_.NewCallback(&MoshClientInstance::Launch));
       got_addr = true;
-    } else if (name == "port" && port_ == NULL) {
-      port_ = new char[len];
-      strncpy(port_, argv[i], len);
+    } else if (name == "port" && port_ == nullptr) {
+      port_.reset(new char[len]);
+      strncpy(port_.get(), argv[i], len);
     } else if (name == "mode") {
       if (string(argv[i]) == "ssh") {
         ssh_mode_ = true;
@@ -304,7 +302,7 @@ bool MoshClientInstance::Init(
     }
   }
 
-  if (got_addr == false || port_ == NULL) {
+  if (got_addr == false || port_ == nullptr) {
     Log("Must supply addr and port attributes.");
     return false;
   }
@@ -318,13 +316,18 @@ bool MoshClientInstance::Init(
     setenv("MOSH_KEY", secret, 1);
   }
 
-  // Setup communications.
+  // Setup communications. We keep pointers to |keyboard_| and
+  // |window_change_|, as we need to access their specialized methods. |posix_|
+  // owns them, but we own |posix_|, so it is all good so long as these "files"
+  // are not closed.
   keyboard_ = new Keyboard();
-  Terminal *terminal = new Terminal(this);
-  ErrorLog *error_log = new ErrorLog(this);
   window_change_ = new WindowChange();
-  posix_ = new PepperPOSIX::POSIX(
-      instance_handle_, keyboard_, terminal, error_log, window_change_);
+  posix_.reset(new PepperPOSIX::POSIX(
+     instance_handle_,
+     make_unique(keyboard_),
+     make_unique(new Terminal(*this)),
+     make_unique(new ErrorLog(*this)),
+     make_unique(window_change_)));
   posix_->RegisterFile("/dev/urandom", DevURandomFactory);
 
   // Mosh will launch via the resolution callback (see above).
@@ -345,8 +348,8 @@ void MoshClientInstance::Launch(int32_t result) {
   pp::NetAddress address = resolver_.GetNetAddress(0);
   string addr_str = address.DescribeAsString(false).AsString();
   int addr_len = addr_str.size() + 1;
-  addr_ = new char[addr_len];
-  strncpy(addr_, addr_str.c_str(), addr_len);
+  addr_.reset(new char[addr_len]);
+  strncpy(addr_.get(), addr_str.c_str(), addr_len);
 
   if (ssh_mode_) {
     // HandleMessage() will call LaunchSSHLogin().
@@ -357,17 +360,17 @@ void MoshClientInstance::Launch(int32_t result) {
 }
 
 void MoshClientInstance::LaunchMosh(int32_t unused) {
-  int thread_err = pthread_create(&thread_, NULL, MoshThread, this);
+  int thread_err = pthread_create(&thread_, nullptr, MoshThread, this);
   if (thread_err != 0) {
     Error("Failed to create Mosh thread: %s", strerror(thread_err));
   }
 }
 
 void *MoshClientInstance::MoshThread(void *data) {
-  MoshClientInstance *thiz = reinterpret_cast<MoshClientInstance *>(data);
+  MoshClientInstance* const thiz = reinterpret_cast<MoshClientInstance *>(data);
 
   setenv("TERM", "xterm-256color", 1);
-  if (getenv("LANG") == NULL) {
+  if (getenv("LANG") == nullptr) {
     // Chrome cleans the environment, but on Linux and Chrome OS, it leaves
     // $LANG. Mac and Windows don't get this variable, at least not as of
     // 33.0.1750.117. This is critical for ncurses wide character support. We
@@ -377,48 +380,45 @@ void *MoshClientInstance::MoshThread(void *data) {
 
   // Some hoops to avoid a compiler warning.
   const char *binary_name = "mosh-client";
-  char *argv0 = new char[sizeof(*binary_name)];
-  memcpy(argv0, binary_name, sizeof(*argv0));
+  auto argv0 = make_unique(new char[sizeof(*binary_name)]);
+  memcpy(argv0.get(), binary_name, sizeof(*argv0));
 
-  char *argv[] = { argv0, thiz->addr_, thiz->port_ };
+  char *argv[] = { argv0.get(), thiz->addr_.get(), thiz->port_.get() };
   thiz->Log("Mosh(): Calling mosh_main");
   mosh_main(sizeof(argv) / sizeof(argv[0]), argv);
   thiz->Log("Mosh(): mosh_main returned");
 
-  delete[] argv0;
   thiz->Output(TYPE_EXIT, "");
-  return NULL;
+  return nullptr;
 }
 
 void MoshClientInstance::LaunchSSHLogin() {
-  ssh_login_.set_addr(addr_);
-  ssh_login_.set_port(port_);
+  ssh_login_.set_addr(string(addr_.get()));
+  ssh_login_.set_port(string(port_.get()));
 
-  int thread_err = pthread_create(&thread_, NULL, SSHLoginThread, this);
+  int thread_err = pthread_create(&thread_, nullptr, SSHLoginThread, this);
   if (thread_err != 0) {
     Error("Failed to create SSHLogin thread: %s", strerror(thread_err));
   }
 }
 
 void *MoshClientInstance::SSHLoginThread(void *data) {
-  MoshClientInstance *thiz = reinterpret_cast<MoshClientInstance *>(data);
+  MoshClientInstance* const thiz = reinterpret_cast<MoshClientInstance *>(data);
 
   if (thiz->ssh_login_.Start() == false) {
     thiz->Error("SSH Login failed.");
     thiz->Output(TYPE_EXIT, "");
-    return NULL;
+    return nullptr;
   }
 
   // Extract Mosh params.
-  delete[] thiz->port_;
-  thiz->port_ = new char[6];
-  memset(thiz->port_, 0, 6);
-  thiz->ssh_login_.mosh_port().copy(thiz->port_, 5);
-  delete[] thiz->addr_;
+  thiz->port_.reset(new char[6]);
+  memset(thiz->port_.get(), 0, 6);
+  thiz->ssh_login_.mosh_port().copy(thiz->port_.get(), 5);
   size_t addr_len = thiz->ssh_login_.mosh_addr().size();
-  thiz->addr_ = new char[addr_len+1];
-  memset(thiz->addr_, 0, addr_len+1);
-  thiz->ssh_login_.mosh_addr().copy(thiz->addr_, addr_len);
+  thiz->addr_.reset(new char[addr_len+1]);
+  memset(thiz->addr_.get(), 0, addr_len+1);
+  thiz->ssh_login_.mosh_addr().copy(thiz->addr_.get(), addr_len);
   setenv("MOSH_KEY", thiz->ssh_login_.mosh_key().c_str(), 1);
 
   // Save any updates to known hosts.
@@ -427,7 +427,7 @@ void *MoshClientInstance::SSHLoginThread(void *data) {
   pp::Module::Get()->core()->CallOnMainThread(
       0, thiz->cc_factory_.NewCallback(&MoshClientInstance::LaunchMosh));
 
-  return NULL;
+  return nullptr;
 }
 
 // Initialize static data for MoshClientInstance.
@@ -435,22 +435,22 @@ int MoshClientInstance::num_instances_ = 0;
 
 ssize_t Terminal::Write(const void *buf, size_t count) {
   string s((const char *)buf, count);
-  instance_->Output(MoshClientInstance::TYPE_DISPLAY, s);
+  instance_.Output(MoshClientInstance::TYPE_DISPLAY, s);
   return count;
 }
 
 ssize_t ErrorLog::Write(const void *buf, size_t count) {
   string s((const char *)buf, count);
-  instance_->Output(MoshClientInstance::TYPE_ERROR, s);
+  instance_.Output(MoshClientInstance::TYPE_ERROR, s);
   return count;
 }
 
 class MoshClientModule : public pp::Module {
  public:
   MoshClientModule() : pp::Module() {}
-  virtual ~MoshClientModule() {}
+  ~MoshClientModule() override {}
 
-  virtual pp::Instance *CreateInstance(PP_Instance instance) {
+  pp::Instance *CreateInstance(PP_Instance instance) override {
     return new MoshClientInstance(instance);
   }
 };
@@ -471,7 +471,7 @@ Module *CreateModule() {
 int sigaction(int signum, const struct sigaction *act,
     struct sigaction *oldact) {
   Log("sigaction(%d, ...)", signum);
-  assert(oldact == NULL);
+  assert(oldact == nullptr);
   switch (signum) {
   case SIGWINCH:
     instance->window_change_->SetHandler(act->sa_handler);
@@ -504,14 +504,14 @@ int ioctl(int d, long unsigned int request, ...) {
 // Functions for pepper_wrapper.h.
 //
 
-PepperPOSIX::POSIX *GetPOSIX() {
-  return instance->posix_;
+PepperPOSIX::POSIX& GetPOSIX() {
+  return *instance->posix_;
 }
 
 void Log(const char *format, ...) {
   va_list argp;
   va_start(argp, format);
-  if (instance != NULL) {
+  if (instance != nullptr) {
     instance->Logv(MoshClientInstance::TYPE_LOG, format, argp);
   }
   va_end(argp);

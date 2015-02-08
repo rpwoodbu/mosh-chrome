@@ -30,56 +30,52 @@
 
 namespace PepperPOSIX {
 
+using std::move;
+using std::string;
+using std::unique_ptr;
+using std::vector;
+
 const int SIGNAL_FD = -1;
 
 POSIX::POSIX(const pp::InstanceHandle &instance_handle,
-    Reader *std_in, Writer *std_out, Writer *std_err, Signal *signal)
-  : instance_handle_(instance_handle), signal_(signal) {
-  files_[STDIN_FILENO] = std_in;
-  if (std_in != NULL) {
+    unique_ptr<Reader> std_in, unique_ptr<Writer> std_out,
+    unique_ptr<Writer> std_err, unique_ptr<Signal> signal)
+    : instance_handle_(instance_handle), signal_(move(signal)) {
+  if (std_in != nullptr) {
     std_in->target_ = selector_.NewTarget(STDIN_FILENO);
   }
-  files_[STDOUT_FILENO] = std_out;
-  if (std_out != NULL) {
+  files_[STDIN_FILENO] = move(std_in);
+  if (std_out != nullptr) {
     std_out->target_ = selector_.NewTarget(STDOUT_FILENO);
     // Prevent buffering in stdout.
     assert(setvbuf(stdout, NULL, _IONBF, 0) == 0);
   }
-  files_[STDERR_FILENO] = std_err;
-  if (std_err != NULL) {
+  files_[STDOUT_FILENO] = move(std_out);
+  if (std_err != nullptr) {
     std_err->target_ = selector_.NewTarget(STDERR_FILENO);
     // Prevent buffering in stderr, but keep line mode as that works better for
     // keeping log lines together.
     assert(setvbuf(stderr, NULL, _IOLBF, 0) == 0);
   }
-  if (signal_ != NULL) {
+  files_[STDERR_FILENO] = move(std_err);
+  if (signal_ != nullptr) {
     // "Pseudo" file descriptor in Target needs to be set out of issuance
     // range.
     signal_->target_ = selector_.NewTarget(SIGNAL_FD);
   }
 }
 
-POSIX::~POSIX() {
-  for (::std::map<int, File *>::iterator i = files_.begin();
-      i != files_.end();
-      ++i) {
-    Close(i->first);
-  }
-}
-
 int POSIX::Open(const char *pathname, int flags, mode_t mode) {
-  ::std::map<string, File *(*)()>::iterator factories_iter =
-      factories_.find(string(pathname));
+  auto factories_iter = factories_.find(string(pathname));
   if (factories_iter == factories_.end()) {
     errno = EACCES;
     return -1;
   }
-  File *file = factories_iter->second();
   // TODO: Error out if |file|'s type doesn't match |flags| (i.e., Reader
   // cannot be O_WRONLY).
   int fd = NextFileDescriptor();
-  files_[fd] = file;
-  file->target_ = selector_.NewTarget(fd);
+  files_[fd] = factories_iter->second();
+  files_[fd]->target_ = selector_.NewTarget(fd);
   return fd;
 }
 
@@ -90,7 +86,6 @@ int POSIX::Close(int fd) {
   }
 
   int result = files_[fd]->Close();
-  delete files_[fd];
   files_.erase(fd);
 
   return result;
@@ -101,7 +96,7 @@ ssize_t POSIX::Read(int fd, void *buf, size_t count) {
     errno = EBADF;
     return -1;
   }
-  Reader *reader = dynamic_cast<Reader *>(files_[fd]);
+  Reader *reader = dynamic_cast<Reader *>(files_[fd].get());
   if (reader == NULL) {
     errno = EBADF;
     return -1;
@@ -121,7 +116,7 @@ ssize_t POSIX::Write(int fd, const void *buf, size_t count) {
     errno = EBADF;
     return -1;
   }
-  Writer *writer = dynamic_cast<Writer *>(files_[fd]);
+  Writer *writer = dynamic_cast<Writer *>(files_[fd].get());
   if (writer == NULL) {
     errno = EBADF;
     return -1;
@@ -150,22 +145,21 @@ int POSIX::Socket(int domain, int type, int protocol) {
     return -1;
   }
 
-  File *file = NULL;
-
+  unique_ptr<File> file;
   if (type == SOCK_DGRAM && (protocol == 0 || protocol == IPPROTO_UDP)) {
-    file = new NativeUDP(instance_handle_);
+    file.reset(new NativeUDP(instance_handle_));
   } else if (type == SOCK_STREAM && (protocol == 0 || protocol == IPPROTO_TCP)) {
-    file = new NativeTCP(instance_handle_);
+    file.reset(new NativeTCP(instance_handle_));
   }
 
-  if (file != NULL) {
+  if (file != nullptr) {
     int fd = NextFileDescriptor();
     file->target_ = selector_.NewTarget(fd);
     if (type == SOCK_STREAM) {
       // TCP should not be writable at first.
       file->target_->UpdateWrite(false);
     }
-    files_[fd] = file;
+    files_[fd] = move(file);
     return fd;
   }
 
@@ -179,7 +173,7 @@ int POSIX::Dup(int oldfd) {
     return -1;
   }
   // Currently can only dup UDP sockets.
-  UDP *udp = dynamic_cast<UDP *>(files_[oldfd]);
+  UDP *udp = dynamic_cast<UDP *>(files_[oldfd].get());
   if (udp == NULL) {
     errno = EBADF;
     return -1;
@@ -260,7 +254,7 @@ ssize_t POSIX::Recv(int sockfd, void *buf, size_t len, int flags) {
     errno = EBADF;
     return -1;
   }
-  TCP *tcp = dynamic_cast<TCP *>(files_[sockfd]);
+  TCP *tcp = dynamic_cast<TCP *>(files_[sockfd].get());
   if (tcp == NULL) {
     errno = EBADF;
     return -1;
@@ -280,7 +274,7 @@ ssize_t POSIX::RecvMsg(int sockfd, struct msghdr *msg, int flags) {
     errno = EBADF;
     return -1;
   }
-  UDP *udp = dynamic_cast<UDP *>(files_[sockfd]);
+  UDP *udp = dynamic_cast<UDP *>(files_[sockfd].get());
   if (udp == NULL) {
     errno = EBADF;
     return -1;
@@ -315,7 +309,7 @@ ssize_t POSIX::Send(int sockfd, const void *buf, size_t len, int flags) {
   if (files_.count(sockfd) == 0) {
     return EBADF;
   }
-  TCP *tcp = dynamic_cast<TCP *>(files_[sockfd]);
+  TCP *tcp = dynamic_cast<TCP *>(files_[sockfd].get());
   if (tcp == NULL) {
     errno = EBADF;
     return -1;
@@ -335,7 +329,7 @@ ssize_t POSIX::SendTo(int sockfd, const void *buf, size_t len, int flags,
   if (files_.count(sockfd) == 0) {
     return EBADF;
   }
-  UDP *udp = dynamic_cast<UDP *>(files_[sockfd]);
+  UDP *udp = dynamic_cast<UDP *>(files_[sockfd].get());
   if (udp == NULL) {
     errno = EBADF;
     return -1;
@@ -358,7 +352,7 @@ int POSIX::FCntl(int fd, int cmd, va_list arg) {
   if (files_.count(fd) == 0) {
     return EBADF;
   }
-  File *file = files_[fd];
+  auto& file = files_[fd];
 
   if (cmd == F_SETFL) {
     bool blocking = true;
@@ -387,7 +381,7 @@ int POSIX::Connect(
   if (files_.count(sockfd) == 0) {
     return EBADF;
   }
-  TCP *tcp = dynamic_cast<TCP *>(files_[sockfd]);
+  TCP *tcp = dynamic_cast<TCP *>(files_[sockfd].get());
   if (tcp == NULL) {
     errno = EBADF;
     return -1;
@@ -404,7 +398,7 @@ int POSIX::GetSockOpt(int sockfd, int level, int optname,
   if (files_.count(sockfd) == 0) {
     return EBADF;
   }
-  TCP *tcp = dynamic_cast<TCP *>(files_[sockfd]);
+  TCP *tcp = dynamic_cast<TCP *>(files_[sockfd].get());
   if (tcp == NULL) {
     errno = EBADF;
     return -1;

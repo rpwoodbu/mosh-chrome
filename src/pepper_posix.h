@@ -23,7 +23,9 @@
 
 #include "pepper_posix_selector.h"
 
+#include <functional>
 #include <map>
+#include <memory>
 #include <string>
 #include <stdarg.h>
 #include <sys/select.h>
@@ -32,9 +34,6 @@
 
 #include "ppapi/c/ppb_net_address.h"
 #include "ppapi/cpp/instance_handle.h"
-
-using ::std::map;
-using ::std::string;
 
 // Implement this to plumb logging from Pepper functions to your app.
 void Log(const char *format, ...);
@@ -45,7 +44,10 @@ namespace PepperPOSIX {
 class File {
  public:
   File() : target_(NULL), blocking_(true) {}
-  virtual ~File() { delete target_; };
+  virtual ~File() {
+    Close();
+    delete target_; 
+  }
 
   virtual int Close() { return 0; }
   int fd() {
@@ -107,9 +109,14 @@ class POSIX {
   // will be called from PSelect().
   //
   // Set any of these to NULL if not used. Takes ownership of all.
-  POSIX(const pp::InstanceHandle &instance_handle,
-      Reader *std_in, Writer *std_out, Writer *std_err, Signal *signal);
-  ~POSIX();
+  POSIX(
+      const pp::InstanceHandle &instance_handle,
+      std::unique_ptr<Reader> std_in,
+      std::unique_ptr<Writer> std_out,
+      std::unique_ptr<Writer> std_err,
+      std::unique_ptr<Signal> signal);
+
+  ~POSIX() {};
 
   int Open(const char *pathname, int flags, mode_t mode);
 
@@ -144,7 +151,8 @@ class POSIX {
 
   // Register a filename and File factory to be used when that file is
   // opened.
-  void RegisterFile(string filename, File *(*factory)()) {
+  void RegisterFile(
+      std::string filename, std::function<std::unique_ptr<File> ()> factory) {
     factories_[filename] = factory;
   }
 
@@ -153,10 +161,10 @@ class POSIX {
   int NextFileDescriptor();
 
   // Map of file descriptors and the File objects they represent.
-  map<int, File *> files_;
+  std::map<int, std::unique_ptr<File>> files_;
   // Map of registered files and their File factories.
-  map<string, File *(*)()> factories_;
-  Signal *signal_;
+  std::map<std::string, std::function<std::unique_ptr<File> ()>> factories_;
+  std::unique_ptr<Signal> signal_;
   Selector selector_;
   const pp::InstanceHandle &instance_handle_;
 

@@ -27,8 +27,6 @@
 
 namespace PepperPOSIX {
 
-using std::vector;
-
 class Target; // This is declared fully below.
 
 // Selector implements select()-style functionality for callback-style I/O.
@@ -53,12 +51,13 @@ class Selector {
   // waits until the timeout period has passed. It calls
   // pthread_cond_timedwait() if there are no targets with data available 
   // when the method is called.
-  vector<Target*> Select(
-      const vector<Target*> &read_targets, const vector<Target*> &write_targets,
+  std::vector<Target*> Select(
+      const std::vector<Target*> &read_targets,
+      const std::vector<Target*> &write_targets,
       const struct timespec *timeout);
 
   // SelectAll is similar to Select, but waits for all registered targets.
-  vector<Target*> SelectAll(const struct timespec *timeout) {
+  std::vector<Target*> SelectAll(const struct timespec *timeout) {
     return Select(targets_, targets_, timeout);
   }
 
@@ -74,10 +73,10 @@ class Selector {
   void Deregister(const Target *target);
 
   // HasData returns a vector of Targets that have data ready to be read.
-  const vector<Target*> HasData(const vector<Target*> &read_targets,
-      const vector<Target*> &write_targets);
+  const std::vector<Target*> HasData(const std::vector<Target*> &read_targets,
+      const std::vector<Target*> &write_targets);
 
-  vector<Target*> targets_;
+  std::vector<Target*> targets_;
   pthread::Mutex notify_mutex_;
   pthread::Conditional notify_cv_;
 

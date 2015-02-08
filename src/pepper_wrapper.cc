@@ -271,23 +271,23 @@ char *gai_strerror(int errcode) {
 // There is a pseudo-overload that includes a third param |mode_t|.
 int open(const char *pathname, int flags, ...) {
   // TODO: For now, ignoring |mode_t| param.
-  return GetPOSIX()->Open(pathname, flags, 0);
+  return GetPOSIX().Open(pathname, flags, 0);
 }
 
 ssize_t read(int fd, void *buf, size_t count) {
-  return GetPOSIX()->Read(fd, buf, count);
+  return GetPOSIX().Read(fd, buf, count);
 }
 
 ssize_t write(int fd, const void *buf, size_t count) {
-  return GetPOSIX()->Write(fd, buf, count);
+  return GetPOSIX().Write(fd, buf, count);
 }
 
 int close(int fd) {
-  return GetPOSIX()->Close(fd);
+  return GetPOSIX().Close(fd);
 }
 
 int socket(int domain, int type, int protocol) {
-  return GetPOSIX()->Socket(domain, type, protocol);
+  return GetPOSIX().Socket(domain, type, protocol);
 }
 
 int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
@@ -305,7 +305,7 @@ int setsockopt(int sockfd, int level, int optname,
 // This is needed to return TCP connection status.
 int getsockopt(int sockfd, int level, int optname,
     void *optval, socklen_t *optlen) {
-  return GetPOSIX()->GetSockOpt(sockfd, level, optname, optval, optlen);
+  return GetPOSIX().GetSockOpt(sockfd, level, optname, optval, optlen);
 }
 
 // For some reason, after linking in ssh.cc, dup() gets brought in from libnacl
@@ -314,12 +314,12 @@ int getsockopt(int sockfd, int level, int optname,
 // "dup" to "__wrap_dup" instead. Unfortunately, Clang doesn't have that flag,
 // so instead this is awkwardly redirected in the magic assert.h.
 int __wrap_dup(int oldfd) {
-  return GetPOSIX()->Dup(oldfd);
+  return GetPOSIX().Dup(oldfd);
 }
 
 int pselect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
     const struct timespec *timeout, const sigset_t *sigmask) {
-  return GetPOSIX()->PSelect(
+  return GetPOSIX().PSelect(
      nfds, readfds, writefds, exceptfds, timeout, sigmask);
 }
 
@@ -341,32 +341,32 @@ int poll(struct pollfd *fds, nfds_t nfds, int timeout) {
 }
 
 ssize_t recv(int sockfd, void *buf, size_t len, int flags) {
-  return GetPOSIX()->Recv(sockfd, buf, len, flags);
+  return GetPOSIX().Recv(sockfd, buf, len, flags);
 }
 
 ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags) {
-  return GetPOSIX()->RecvMsg(sockfd, msg, flags);
+  return GetPOSIX().RecvMsg(sockfd, msg, flags);
 }
 
 ssize_t send(int sockfd, const void *buf, size_t len, int flags){
-  return GetPOSIX()->Send(sockfd, buf, len, flags);
+  return GetPOSIX().Send(sockfd, buf, len, flags);
 }
 
 ssize_t sendto(int sockfd, const void *buf, size_t len, int flags,
     const struct sockaddr *dest_addr, socklen_t addrlen) {
-  return GetPOSIX()->SendTo(sockfd, buf, len, flags, dest_addr, addrlen);
+  return GetPOSIX().SendTo(sockfd, buf, len, flags, dest_addr, addrlen);
 }
 
 int fcntl(int fd, int cmd, ...) {
   va_list argp;
   va_start(argp, cmd);
-  int result = GetPOSIX()->FCntl(fd, cmd, argp);
+  int result = GetPOSIX().FCntl(fd, cmd, argp);
   va_end(argp);
   return result;
 }
 
 int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
-  return GetPOSIX()->Connect(sockfd, addr, addrlen);
+  return GetPOSIX().Connect(sockfd, addr, addrlen);
 }
 
 } // extern "C"

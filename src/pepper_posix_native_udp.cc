@@ -30,6 +30,8 @@
 
 namespace PepperPOSIX {
 
+using std::vector;
+
 NativeUDP::NativeUDP(
     const pp::InstanceHandle &instance_handle) :
     instance_handle_(instance_handle), factory_(this) {

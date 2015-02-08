@@ -19,6 +19,8 @@
 
 namespace ssh {
 
+using std::string;
+
 KeyboardInteractive::KeyboardInteractive(ssh_session s) :
     s_(s), current_prompt_(0), num_prompts_(0), echo_answer_(false) {}
 

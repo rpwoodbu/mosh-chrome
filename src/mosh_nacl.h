@@ -24,6 +24,7 @@
 #include "pepper_wrapper.h"
 #include "ssh_login.h"
 
+#include <memory>
 #include <string>
 #include <pthread.h>
 
@@ -33,18 +34,18 @@
 #include "ppapi/cpp/var.h"
 #include "ppapi/utility/completion_callback_factory.h"
 
-using ::std::string;
+using std::string;
 
 class MoshClientInstance : public pp::Instance {
  public:
   explicit MoshClientInstance(PP_Instance instance);
-  virtual ~MoshClientInstance();
+  ~MoshClientInstance() override;
 
   // Instance initialization method. Called by the Pepper API.
-  virtual bool Init(uint32_t argc, const char *argn[], const char *argv[]);
+  bool Init(uint32_t argc, const char *argn[], const char *argv[]) override;
 
   // Handles messages from Javascript. Called by the Pepper API.
-  virtual void HandleMessage(const pp::Var &var);
+  void HandleMessage(const pp::Var &var) override;
 
   // Type of data to output to Javascript.
   enum OutputType {
@@ -61,7 +62,7 @@ class MoshClientInstance : public pp::Instance {
   void Output(OutputType t, const pp::Var &data);
 
   // Sends messages to the Javascript console log.
-  void Logv(OutputType t, const char *format, va_list argp);
+  void Logv(OutputType t, const std::string& format, va_list argp);
 
   // Sends messages to the Javascript console log.
   void Log(const char *format, ...);
@@ -70,10 +71,11 @@ class MoshClientInstance : public pp::Instance {
   void Error(const char *format, ...);
 
   // Pepper POSIX emulation.
-  PepperPOSIX::POSIX *posix_;
+  std::unique_ptr<PepperPOSIX::POSIX> posix_;
 
   // Window change "file"; must be visible to sigaction().
-  class WindowChange *window_change_;
+  // Class POSIX takes ownership of this, but keeping pointer for convenience.
+  class WindowChange* window_change_ = nullptr;
 
  private:
   // Launcher that can be a callback.
@@ -93,17 +95,18 @@ class MoshClientInstance : public pp::Instance {
   static void *SSHLoginThread(void *data);
 
   static int num_instances_; // This needs to be a singleton.
-  pthread_t thread_;
+  pthread_t thread_ = nullptr;
 
   // Non-const params for mosh_main().
-  char *addr_;
-  char *port_;
+  std::unique_ptr<char[]> addr_;
+  std::unique_ptr<char[]> port_;
 
-  bool ssh_mode_;
+  bool ssh_mode_ = false;
   SSHLogin ssh_login_;
 
-  pp::InstanceHandle instance_handle_;
-  class Keyboard *keyboard_;
+  pp::InstanceHandle instance_handle_ = this;
+  // Class POSIX takes ownership of this, but keeping pointer for convenience.
+  class Keyboard* keyboard_ = nullptr;
   pp::HostResolver resolver_;
   pp::CompletionCallbackFactory<MoshClientInstance> cc_factory_;
 
