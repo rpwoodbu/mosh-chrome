@@ -77,8 +77,8 @@ class TCP : public ReadWriter {
   pthread::Mutex buffer_lock_;
 
   // Disable copy and assignment.
-  TCP(const TCP &);
-  TCP &operator=(const TCP &);
+  TCP(const TCP &) = delete;
+  TCP &operator=(const TCP &) = delete;
 };
 
 // StubTCP is an instantiatable stubbed subclass of TCP for debugging.
@@ -92,8 +92,8 @@ class StubTCP : public TCP {
   int Connect(const PP_NetAddress_IPv4 &address) override;
  private:
   // Disable copy and assignment.
-  StubTCP(const StubTCP &);
-  StubTCP &operator=(const StubTCP &);
+  StubTCP(const StubTCP &) = delete;
+  StubTCP &operator=(const StubTCP &) = delete;
 };
 
 } // namespace PepperPOSIX

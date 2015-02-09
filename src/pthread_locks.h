@@ -41,8 +41,8 @@ class Mutex {
   int err_ = 0;
 
   // Disable copy and assignment.
-  Mutex(const Mutex &);
-  Mutex &operator=(const Mutex &);
+  Mutex(const Mutex &) = delete;
+  Mutex &operator=(const Mutex &) = delete;
 };
 
 // Use this class to aquire a Mutex and release it automatically via scoping.
@@ -55,8 +55,8 @@ class MutexLock {
   Mutex& m_;
 
   // Disable copy and assignment.
-  MutexLock(const MutexLock &);
-  MutexLock &operator=(const MutexLock &);
+  MutexLock(const MutexLock &) = delete;
+  MutexLock &operator=(const MutexLock &) = delete;
 };
 
 class Conditional {
@@ -84,8 +84,8 @@ class Conditional {
   int err_ = 0;
 
   // Disable copy and assignment.
-  Conditional(const Conditional &);
-  Conditional &operator=(const Conditional &);
+  Conditional(const Conditional &) = delete;
+  Conditional &operator=(const Conditional &) = delete;
 };
 
 } // namespace pthread

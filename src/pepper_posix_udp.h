@@ -44,7 +44,7 @@ struct MsgHdr : public ::msghdr {
       const char* const buf);
   ~MsgHdr();
 
-  // Disable copy and assign.
+  // Disable copy and assignment.
   MsgHdr() = delete;
   MsgHdr& operator=(const MsgHdr&) = delete;
 };
@@ -81,8 +81,8 @@ class UDP : public File {
   pthread::Mutex packets_lock_;
 
   // Disable copy and assignment.
-  UDP(const UDP &);
-  UDP &operator=(const UDP &);
+  UDP(const UDP &) = delete;
+  UDP &operator=(const UDP &) = delete;
 };
 
 // StubUDP is an instantiatable stubbed subclass of UDP for debugging.
@@ -98,8 +98,8 @@ class StubUDP : public UDP {
 
  private:
   // Disable copy and assignment.
-  StubUDP(const StubUDP &);
-  StubUDP &operator=(const StubUDP &);
+  StubUDP(const StubUDP &) = delete;
+  StubUDP &operator=(const StubUDP &) = delete;
 };
 
 } // namespace PepperPOSIX

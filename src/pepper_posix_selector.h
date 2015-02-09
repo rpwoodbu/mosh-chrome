@@ -88,8 +88,8 @@ class Selector {
   pthread::Conditional notify_cv_;
 
   // Disable copy and assignment.
-  Selector(const Selector&);
-  Selector &operator=(const Selector&);
+  Selector(const Selector&) = delete;
+  Selector &operator=(const Selector&) = delete;
 };
 
 // Target is used by an I/O "target" to communicate with a Selector instance
@@ -127,8 +127,8 @@ class Target {
   bool has_write_data_ = true;
 
   // Disable copy and assignment.
-  Target(const Target&);
-  Target &operator=(const Target&);
+  Target(const Target&) = delete;
+  Target &operator=(const Target&) = delete;
 };
 
 } // namespace PepperPosix

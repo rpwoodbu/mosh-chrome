@@ -98,8 +98,8 @@ class SSHLogin {
   std::unique_ptr<ssh::Session> session_;
 
   // Disable copy and assignment.
-  SSHLogin(const SSHLogin &);
-  SSHLogin &operator=(const SSHLogin &);
+  SSHLogin(const SSHLogin &) = delete;
+  SSHLogin &operator=(const SSHLogin &) = delete;
 };
 
 #endif // SSH_LOGIN_H

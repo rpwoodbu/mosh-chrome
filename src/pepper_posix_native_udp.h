@@ -58,8 +58,8 @@ class NativeUDP : public UDP {
   pp::CompletionCallbackFactory<NativeUDP> factory_;
 
   // Disable copy and assignment.
-  NativeUDP(const NativeUDP&);
-  NativeUDP &operator=(const NativeUDP&);
+  NativeUDP(const NativeUDP&) = delete;
+  NativeUDP &operator=(const NativeUDP&) = delete;
 };
 
 } // namespace PepperPOSIX

@@ -125,9 +125,9 @@ class KeyboardInteractive {
   int current_prompt_ = 0;
   bool echo_answer_ = false;
 
-  // Disable copy and assign.
-  KeyboardInteractive(KeyboardInteractive &);
-  KeyboardInteractive &operator=(KeyboardInteractive &);
+  // Disable copy and assignment.
+  KeyboardInteractive(KeyboardInteractive &) = delete;
+  KeyboardInteractive &operator=(KeyboardInteractive &) = delete;
 };
 
 // Represents an ssh session.
@@ -208,9 +208,9 @@ class Session : public ResultCode {
   std::vector<std::unique_ptr<Channel>> channels_;
   std::unique_ptr<KeyboardInteractive> keyboard_interactive_;
 
-  // Disable copy and assign.
-  Session(Session &);
-  Session &operator=(Session &);
+  // Disable copy and assignment.
+  Session(Session &) = delete;
+  Session &operator=(Session &) = delete;
 };
 
 // Represents a key.
@@ -238,9 +238,9 @@ class Key {
  private:
   ssh_key key_ = nullptr;
 
-  // Disable copy and assign.
-  Key(Key &);
-  Key &operator=(Key &);
+  // Disable copy and assignment.
+  Key(Key &) = delete;
+  Key &operator=(Key &) = delete;
 };
 
 // Represents an ssh channel. Do not instantiate this yourself; should be
@@ -273,9 +273,9 @@ class Channel : public ResultCode {
   // Whether a session has been opened.
   bool session_open_ = false;
 
-  // Disable copy and assign.
-  Channel(Channel &);
-  Channel &operator=(Channel &);
+  // Disable copy and assignment.
+  Channel(Channel &) = delete;
+  Channel &operator=(Channel &) = delete;
 };
 
 } // namespace ssh

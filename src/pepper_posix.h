@@ -63,8 +63,8 @@ class File {
   bool blocking_ = true;
 
   // Disable copy and assignment.
-  File(const File &);
-  File &operator=(const File &);
+  File(const File &) = delete;
+  File &operator=(const File &) = delete;
 };
 
 // Abstract class defining a file that is read-only.
@@ -165,8 +165,8 @@ class POSIX {
   const pp::InstanceHandle &instance_handle_;
 
   // Disable copy and assignment.
-  POSIX(const POSIX &);
-  POSIX &operator=(const POSIX &);
+  POSIX(const POSIX &) = delete;
+  POSIX &operator=(const POSIX &) = delete;
 };
 
 } // namespace PepperPOSIX

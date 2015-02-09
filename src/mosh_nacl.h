@@ -111,8 +111,8 @@ class MoshClientInstance : public pp::Instance {
   pp::CompletionCallbackFactory<MoshClientInstance> cc_factory_;
 
   // Disable copy and assignment.
-  MoshClientInstance(const MoshClientInstance&);
-  MoshClientInstance &operator=(const MoshClientInstance&);
+  MoshClientInstance(const MoshClientInstance&) = delete;
+  MoshClientInstance &operator=(const MoshClientInstance&) = delete;
 };
 
 #endif // MOSH_NACL_H

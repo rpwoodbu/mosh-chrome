@@ -61,8 +61,8 @@ class NativeTCP : public TCP {
   pp::NetAddress address_;
 
   // Disable copy and assignment.
-  NativeTCP(const NativeTCP&);
-  NativeTCP &operator=(const NativeTCP&);
+  NativeTCP(const NativeTCP&) = delete;
+  NativeTCP &operator=(const NativeTCP&) = delete;
 };
 
 } // namespace PepperPOSIX
