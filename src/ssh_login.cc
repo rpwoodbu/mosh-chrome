@@ -104,13 +104,11 @@ bool SSHLogin::Start() {
   }
 
   bool authenticated = false;
-  for (vector<ssh::AuthenticationType>::iterator i = auths->begin();
-      authenticated == false && i != auths->end();
-      ++i) {
+  for (const auto& auth : *auths) {
     printf("Trying authentication type %s\r\n",
-        ssh::GetAuthenticationTypeName(*i).c_str());
+        ssh::GetAuthenticationTypeName(auth).c_str());
 
-    switch(*i) {
+    switch(auth) {
       case ssh::kPassword:
         authenticated = DoPasswordAuth();
         break;
@@ -123,6 +121,10 @@ bool SSHLogin::Start() {
       default:
         // Should not get here.
         assert(false);
+    }
+
+    if (authenticated) {
+      break;
     }
   }
 
@@ -197,11 +199,9 @@ vector<ssh::AuthenticationType> *SSHLogin::GetAuthTypes() {
     return nullptr;
   }
 
-  for (vector<ssh::AuthenticationType>::iterator i = server_auths.begin();
-      i != server_auths.end();
-      ++i) {
-    printf(" - %s", ssh::GetAuthenticationTypeName(*i).c_str());
-    if (std::find(client_auths.begin(), client_auths.end(), *i) ==
+  for (const auto& auth : server_auths) {
+    printf(" - %s", ssh::GetAuthenticationTypeName(auth).c_str());
+    if (std::find(client_auths.begin(), client_auths.end(), auth) ==
         client_auths.end()) {
       printf(" (not supported by client)");
     }
@@ -213,12 +213,10 @@ vector<ssh::AuthenticationType> *SSHLogin::GetAuthTypes() {
   // again.
   vector<ssh::AuthenticationType> *supported_auths =
     new vector<ssh::AuthenticationType>;
-  for (vector<ssh::AuthenticationType>::iterator i = client_auths.begin();
-      i != client_auths.end();
-      ++i) {
-    if (std::find(server_auths.begin(), server_auths.end(), *i) !=
+  for (const auto& auth : client_auths) {
+    if (std::find(server_auths.begin(), server_auths.end(), auth) !=
         server_auths.end()) {
-      supported_auths->push_back(*i);
+      supported_auths->push_back(auth);
     }
   }
 

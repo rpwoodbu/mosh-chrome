@@ -48,10 +48,8 @@ using ::std::string;
 class BadInterning {
  public:
   ~BadInterning() {
-    for (map<string, char *>::iterator i = strings_.begin();
-        i != strings_.end();
-        ++i) {
-      delete[] i->second;
+    for (auto& s : strings_) {
+      delete[] s.second;
     }
   }
 

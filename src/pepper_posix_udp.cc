@@ -46,10 +46,8 @@ UDP::~UDP() {
   // There really shouldn't be another thread actively involved at destruction
   // time, but getting the lock nonetheless.
   pthread::MutexLock m(&packets_lock_);
-  for (std::deque<struct ::msghdr *>::iterator i = packets_.begin();
-      i != packets_.end();
-      ++i) {
-    DestroyMessage(*i);
+  for (auto* packet : packets_) {
+    DestroyMessage(packet);
   }
 }
 
