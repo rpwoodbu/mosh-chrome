@@ -35,9 +35,7 @@ NativeTCP::NativeTCP(const pp::InstanceHandle &instance_handle) :
     instance_handle_(instance_handle),
     factory_(this) {}
 
-NativeTCP::~NativeTCP() {
-  delete socket_;
-}
+NativeTCP::~NativeTCP() {}
 
 int NativeTCP::Bind(const PP_NetAddress_IPv4 &address) {
   pp::NetAddress net_address(instance_handle_, address);
@@ -147,8 +145,7 @@ void NativeTCP::Received(int32_t result) {
 // Close the socket.
 int NativeTCP::Close() {
   // Destroying socket_ is the same as closing it.
-  delete socket_;
-  socket_ = nullptr;
+  socket_.reset();
   return 0;
 }
 

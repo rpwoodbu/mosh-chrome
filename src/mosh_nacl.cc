@@ -55,7 +55,7 @@ class Keyboard : public PepperPOSIX::Reader {
   ssize_t Read(void *buf, size_t count) override {
     int num_read = 0;
 
-    pthread::MutexLock m(&keypresses_lock_);
+    pthread::MutexLock m(keypresses_lock_);
 
     while (keypresses_.size() > 0 && num_read < count) {
       ((char *)buf)[num_read] = keypresses_.front();
@@ -75,7 +75,7 @@ class Keyboard : public PepperPOSIX::Reader {
       return;
     }
     {
-      pthread::MutexLock m(&keypresses_lock_);
+      pthread::MutexLock m(keypresses_lock_);
       for (int i = 0; i < input.size(); ++i) {
         keypresses_.push_back(input[i]);
       }

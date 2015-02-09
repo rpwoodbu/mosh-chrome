@@ -27,40 +27,60 @@
 
 namespace PepperPOSIX {
 
+using std::unique_ptr;
 using std::vector;
 
-void DestroyMessage(struct ::msghdr *message) {
-  free(message->msg_name);
-  for (int i = 0; i < message->msg_iovlen; ++i) {
-    free(message->msg_iov[i].iov_base);
-    free(message->msg_iov + i);
-  }
-  assert(message->msg_control == nullptr); // This isn't being used.
+MsgHdr::MsgHdr(
+    const PP_NetAddress_IPv4& ipv4_addr, int32_t size, const char* const buf) {
+  memset(this, 0, sizeof(*this));
 
-  delete message;
+  struct sockaddr_in *addr =
+      (struct sockaddr_in *)malloc(sizeof(struct sockaddr_in));
+  addr->sin_family = AF_INET;
+  addr->sin_port = ipv4_addr.port;
+  uint32_t a = 0;
+  for (int i = 0; i < 4; ++i) {
+    a |= ipv4_addr.addr[i] << (8*i);
+  }
+  addr->sin_addr.s_addr = a;
+  msg_name = addr;
+  msg_namelen = sizeof(*addr);
+
+  msg_iov = (struct iovec *)malloc(sizeof(struct iovec));
+  msg_iovlen = 1;
+  msg_iov->iov_base = malloc(size);
+  msg_iov->iov_len = size;
+  memcpy(msg_iov->iov_base, buf, msg_iov->iov_len);
 }
 
-UDP::UDP() { }
+MsgHdr::~MsgHdr() {
+  free(msg_name);
+  for (int i = 0; i < msg_iovlen; ++i) {
+    free(msg_iov[i].iov_base);
+    free(msg_iov + i);
+  }
+  assert(msg_control == nullptr); // This isn't being used.
+}
+
+UDP::UDP() {}
 
 UDP::~UDP() {
   // There really shouldn't be another thread actively involved at destruction
   // time, but getting the lock nonetheless.
-  pthread::MutexLock m(&packets_lock_);
-  for (auto* packet : packets_) {
-    DestroyMessage(packet);
-  }
+  pthread::MutexLock m(packets_lock_);
+  packets_.clear();
 }
 
 ssize_t UDP::Receive(struct ::msghdr *message, int flags) {
-  struct ::msghdr *latest = nullptr;
+  unique_ptr<MsgHdr> latest;
 
   {
-    pthread::MutexLock m(&packets_lock_);
+    pthread::MutexLock m(packets_lock_);
     if (packets_.size() == 0) {
       errno = EWOULDBLOCK;
       return -1;
     }
-    latest = packets_.front();
+    latest = move(packets_.front());
     packets_.pop_front();
     target_->UpdateRead(packets_.size() > 0);
   }
@@ -84,14 +104,13 @@ ssize_t UDP::Receive(struct ::msghdr *message, int flags) {
 
   // TODO: Ignoring flags, msg_flags, and msg_control for now.
 
-  DestroyMessage(latest);
   return size;
 }
 
-void UDP::AddPacket(struct ::msghdr *message) {
+void UDP::AddPacket(unique_ptr<MsgHdr> message) {
   {
-    pthread::MutexLock m(&packets_lock_);
-    packets_.push_back(message);
+    pthread::MutexLock m(packets_lock_);
+    packets_.push_back(move(message));
   }
   target_->UpdateRead(true);
 }

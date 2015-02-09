@@ -48,11 +48,11 @@ class Mutex {
 // Use this class to aquire a Mutex and release it automatically via scoping.
 class MutexLock {
  public:
-  explicit MutexLock(Mutex *m) : m_(m) { m_->Lock(); }
-  ~MutexLock() { m_->Unlock(); }
+  explicit MutexLock(Mutex& m) : m_(m) { m_.Lock(); }
+  ~MutexLock() { m_.Unlock(); }
 
  private:
-  Mutex *m_ = nullptr;
+  Mutex& m_;
 
   // Disable copy and assignment.
   MutexLock(const MutexLock &);

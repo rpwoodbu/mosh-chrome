@@ -26,6 +26,7 @@
 #include "pthread_locks.h"
 
 #include <deque>
+#include <memory>
 #include <vector>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -34,6 +35,19 @@
 #include "ppapi/c/ppb_net_address.h"
 
 namespace PepperPOSIX {
+
+// Wrapper over struct msghdr, which ensures proper destruction.
+struct MsgHdr : public ::msghdr {
+  MsgHdr(
+      const PP_NetAddress_IPv4& ipv4_addr,
+      int32_t size,
+      const char* const buf);
+  ~MsgHdr();
+
+  // Disable copy and assign.
+  MsgHdr() = delete;
+  MsgHdr& operator=(const MsgHdr&) = delete;
+};
 
 // UDP implements the basic POSIX emulation logic for UDP communication. It is
 // not fully implemented. An implementation should fully implement Bind() and
@@ -60,10 +74,10 @@ class UDP : public File {
   // AddPacket is used by the subclass to add a packet to the incoming queue.
   // This method can be called from another thread than the one used to call
   // the other methods. Takes ownership of *message and its associated buffers.
-  void AddPacket(struct ::msghdr *message);
+  void AddPacket(std::unique_ptr<MsgHdr> message);
  
  private:
-  std::deque<struct ::msghdr *> packets_; // Guard with packets_lock_.
+  std::deque<std::unique_ptr<MsgHdr>> packets_; // Guard with packets_lock_.
   pthread::Mutex packets_lock_;
 
   // Disable copy and assignment.

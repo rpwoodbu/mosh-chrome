@@ -17,6 +17,8 @@
 
 #include "pepper_wrapper.h"
 
+#include "make_unique.h"
+
 #include <arpa/inet.h>
 #include <assert.h>
 #include <errno.h>
@@ -35,10 +37,12 @@
 #include <time.h>
 #include <unistd.h>
 #include <map>
+#include <memory>
 #include <string>
 
-using ::std::map;
-using ::std::string;
+using std::map;
+using std::string;
+using std::unique_ptr;
 
 // Literal strings are "const char *", but many of these old functions want to
 // return "char *". To avoid compiler warnings, we generate non-const strings
@@ -47,25 +51,19 @@ using ::std::string;
 // lifecycle of the backing memory.
 class BadInterning {
  public:
-  ~BadInterning() {
-    for (auto& s : strings_) {
-      delete[] s.second;
-    }
-  }
-
-  char *Get(const string &str) {
+  char* Get(const string &str) {
     if (strings_.count(str) == 0) {
       int size = str.size();
-      char *buf = new char[size+1];
+      auto buf = new char[size+1];
       str.copy(buf, size);
       buf[size] = '\0';
-      strings_[str] = buf;
+      strings_[str] = make_unique(buf);
     }
-    return strings_[str];
+    return strings_[str].get();
   }
 
  private:
-  map<string, char *> strings_;
+  map<string, unique_ptr<char>> strings_;
 };
 
 BadInterning strings;

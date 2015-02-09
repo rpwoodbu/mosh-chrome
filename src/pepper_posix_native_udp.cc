@@ -17,6 +17,9 @@
 
 #include "pepper_posix_native_udp.h"
 
+#include "make_unique.h"
+
+#include <memory>
 #include <errno.h>
 #include <netinet/in.h>
 #include <stdio.h>
@@ -36,9 +39,7 @@ NativeUDP::NativeUDP(const pp::InstanceHandle &instance_handle) :
     socket_(new pp::UDPSocket(instance_handle)),
     instance_handle_(instance_handle), factory_(this) {}
 
-NativeUDP::~NativeUDP() {
-  delete socket_;
-}
+NativeUDP::~NativeUDP() {}
 
 int NativeUDP::Bind(const PP_NetAddress_IPv4 &address) {
   pp::NetAddress net_address(instance_handle_, address);
@@ -115,30 +116,7 @@ void NativeUDP::Received(int32_t result, const pp::NetAddress &address) {
     Log("NativeUDP::Received(): Failed to convert address.");
     return;
   }
-
-  struct msghdr *message = (struct msghdr *)malloc(sizeof(struct msghdr));
-  memset(message, 0, sizeof(*message));
-
-  struct sockaddr_in *addr =
-      (struct sockaddr_in *)malloc(sizeof(struct sockaddr_in));
-  addr->sin_family = AF_INET;
-  addr->sin_port = ipv4_addr.port;
-  uint32_t a = 0;
-  for (int i = 0; i < 4; ++i) {
-    a |= ipv4_addr.addr[i] << (8*i);
-  }
-  addr->sin_addr.s_addr = a;
-  message->msg_name = addr;
-  message->msg_namelen = sizeof(*addr);
-
-  message->msg_iov = (struct iovec *)malloc(sizeof(struct iovec));
-  message->msg_iovlen = 1;
-  message->msg_iov->iov_base = malloc(result);
-  message->msg_iov->iov_len = result;
-  memcpy(
-      message->msg_iov->iov_base, receive_buffer_, message->msg_iov->iov_len);
-
-  AddPacket(message); // Takes ownership.
+  AddPacket(make_unique(new MsgHdr(ipv4_addr, result, receive_buffer_)));
 
   // Await another packet.
   StartReceive(0);
@@ -147,8 +125,7 @@ void NativeUDP::Received(int32_t result, const pp::NetAddress &address) {
 // Close the socket.
 int NativeUDP::Close() {
   // Destroying socket_ is the same as closing it.
-  delete socket_;
-  socket_ = nullptr;
+  socket_.reset();
   return 0;
 }
 

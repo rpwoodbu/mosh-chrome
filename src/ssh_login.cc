@@ -17,9 +17,15 @@
 
 #include "ssh_login.h"
 
+#include "make_unique.h"
 #include "mosh_nacl.h"
 
+#include <memory>
+#include <string>
+#include <vector>
+
 using std::string;
+using std::unique_ptr;
 using std::vector;
 
 const int INPUT_SIZE = 256;
@@ -29,9 +35,7 @@ const string kCommandDefault(
 
 SSHLogin::SSHLogin() {}
 
-SSHLogin::~SSHLogin() {
-  delete session_;
-}
+SSHLogin::~SSHLogin() {}
 
 void SSHLogin::GetKeyboardLine(char *buf, size_t len, bool echo) {
   int i = 0;
@@ -84,8 +88,7 @@ bool SSHLogin::AskYesNo(const string &prompt) {
 bool SSHLogin::Start() {
   setenv("HOME", "dummy", 1); // To satisfy libssh.
 
-  delete session_;
-  session_ = new ssh::Session(addr_, atoi(port_.c_str()), user_);
+  session_.reset(new ssh::Session(addr_, atoi(port_.c_str()), user_));
   session_->SetOption(SSH_OPTIONS_TIMEOUT, 30); // Extend connection timeout to 30s.
 
   if (session_->Connect() == false) {
@@ -98,13 +101,13 @@ bool SSHLogin::Start() {
     return false;
   }
 
-  vector<ssh::AuthenticationType> *auths = GetAuthTypes();
-  if (auths == nullptr) {
+  const auto auths_ptr = GetAuthTypes();
+  if (auths_ptr == nullptr) {
     return false;
   }
 
   bool authenticated = false;
-  for (const auto& auth : *auths) {
+  for (const auto& auth : *auths_ptr) {
     printf("Trying authentication type %s\r\n",
         ssh::GetAuthenticationTypeName(auth).c_str());
 
@@ -127,9 +130,6 @@ bool SSHLogin::Start() {
       break;
     }
   }
-
-  delete auths;
-  auths = nullptr;
 
   // For safety, clear the sensitive data.
   key_.clear();
@@ -182,7 +182,7 @@ bool SSHLogin::CheckFingerprint() {
   return false;
 }
 
-vector<ssh::AuthenticationType> *SSHLogin::GetAuthTypes() {
+unique_ptr<vector<ssh::AuthenticationType>> SSHLogin::GetAuthTypes() {
   // Place the list of supported authentications types here, in the order
   // they should be tried.
   vector<ssh::AuthenticationType> client_auths;
@@ -211,8 +211,7 @@ vector<ssh::AuthenticationType> *SSHLogin::GetAuthTypes() {
   // In order to maintain the order of client_auths, but still display
   // server_auths that are unsupported (above), we have to loop through these
   // again.
-  vector<ssh::AuthenticationType> *supported_auths =
-    new vector<ssh::AuthenticationType>;
+  auto supported_auths = make_unique(new vector<ssh::AuthenticationType>);
   for (const auto& auth : client_auths) {
     if (std::find(server_auths.begin(), server_auths.end(), auth) !=
         server_auths.end()) {

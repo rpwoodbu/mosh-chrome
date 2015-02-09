@@ -19,6 +19,7 @@
 #define SSH_LOGIN_H
 
 #include <stddef.h>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -73,9 +74,8 @@ class SSHLogin {
   bool CheckFingerprint();
 
   // Returns the intersection of authentication types that both the client and
-  // the server support. Returns nullptr on error. Ownership is transferred to
-  // the caller.
-  std::vector<ssh::AuthenticationType> *GetAuthTypes();
+  // the server support. Returns nullptr on error.
+  std::unique_ptr<std::vector<ssh::AuthenticationType>> GetAuthTypes();
 
   // Ask a yes/no question to the user, and return the answer as a bool.
   // Prefers to return false if input is not parseable.
@@ -95,7 +95,7 @@ class SSHLogin {
   std::string mosh_key_;
   std::string mosh_addr_;
   pp::VarDictionary known_hosts_;
-  ssh::Session *session_ = nullptr;
+  std::unique_ptr<ssh::Session> session_;
 
   // Disable copy and assignment.
   SSHLogin(const SSHLogin &);

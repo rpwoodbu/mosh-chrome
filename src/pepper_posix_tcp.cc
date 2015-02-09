@@ -42,7 +42,7 @@ ssize_t TCP::Receive(void *buf, size_t count, int flags) {
     return -1;
   }
 
-  pthread::MutexLock m(&buffer_lock_);
+  pthread::MutexLock m(buffer_lock_);
   if (buffer_.size() == 0) {
     Log("TCP::Receive(): EWOULDBLOCK");
     errno = EWOULDBLOCK;
@@ -83,7 +83,7 @@ void TCP::AddData(const void *buf, size_t count) {
   const char *cbuf = (const char *)buf;
 
   {
-    pthread::MutexLock m(&buffer_lock_);
+    pthread::MutexLock m(buffer_lock_);
     for (; count > 0; --count) {
       buffer_.push_back(*cbuf);
       ++cbuf;

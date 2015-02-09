@@ -24,6 +24,8 @@
 #include "ppapi/cpp/tcp_socket.h"
 #include "ppapi/utility/completion_callback_factory.h"
 
+#include <memory>
+
 const int TCP_RECEIVE_BUFFER_SIZE = 64*1024; // 64 kB, a decent window size.
 
 namespace PepperPOSIX {
@@ -52,7 +54,7 @@ class NativeTCP : public TCP {
   void StartReceive();
   void Received(int32_t result);
 
-  pp::TCPSocket *socket_ = nullptr;
+  std::unique_ptr<pp::TCPSocket> socket_;
   const pp::InstanceHandle &instance_handle_;
   char receive_buffer_[TCP_RECEIVE_BUFFER_SIZE];
   pp::CompletionCallbackFactory<NativeTCP> factory_;
