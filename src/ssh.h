@@ -24,6 +24,8 @@
 #define SSH_H
 
 #include <libssh/libssh.h>
+
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -80,7 +82,7 @@ class KeyboardInteractive {
     kFailed, // Authentication failed.
   };
 
-  explicit KeyboardInteractive(ssh_session s);
+  explicit KeyboardInteractive(ssh_session& s);
 
   // Returns the current status of keyboard-interactive auth.
   Status GetStatus();
@@ -118,7 +120,7 @@ class KeyboardInteractive {
   bool Answer(const char *answer);
 
  private:
-  ssh_session s_;
+  ssh_session& s_;
   int num_prompts_ = 0;
   int current_prompt_ = 0;
   bool echo_answer_ = false;
@@ -154,7 +156,7 @@ class Session : public ResultCode {
 
   // Returns the public key as a Key. Ownership is retained, thus is valid only
   // for the lifetime of Session. Analog to ssh_get_publickey().
-  Key *GetPublicKey();
+  Key& GetPublicKey();
 
   // Get a list of authentication types available. On error, or if the server
   // is stubborn, the list will be empty. Check GetLastError().
@@ -175,14 +177,14 @@ class Session : public ResultCode {
   // retains ownership of this object, and it is only valid for the lifetime of
   // Session. If you've already gotten a KeyboardInteractive, the old one is
   // unusable after this method is called.
-  KeyboardInteractive *AuthUsingKeyboardInteractive();
+  KeyboardInteractive& AuthUsingKeyboardInteractive();
 
   // Auth using a private key. See class Key for how to prepare this object.
   bool AuthUsingKey(const Key &key);
 
   // Gets a new channel. Ownership is retained, thus is valid only for the
   // lifetime of Session. Analog to ssh_channel_new().
-  Channel *NewChannel();
+  Channel& NewChannel();
 
   // Analog to ssh_options_set(), but easier to use as it is overloaded to
   // handle the various input types.
@@ -200,11 +202,11 @@ class Session : public ResultCode {
   }
 
  private:
-  ssh_session s_;
+  ssh_session s_ = nullptr;
   bool connected_ = false;
-  Key *key_ = nullptr;
-  ::std::vector<Channel *> channels_;
-  KeyboardInteractive *keyboard_interactive_ = nullptr;
+  std::unique_ptr<Key> key_;
+  std::vector<std::unique_ptr<Channel>> channels_;
+  std::unique_ptr<KeyboardInteractive> keyboard_interactive_;
 
   // Disable copy and assign.
   Session(Session &);
@@ -228,7 +230,7 @@ class Key {
   // Get the public version of the private key. Only works if a private key is
   // loaded into the current object. Ownership is transferred to the caller.
   // Returns nullptr on error.
-  Key *GetPublicKey();
+  std::unique_ptr<Key> GetPublicKey();
 
   // Get key as MD5 hash. Will return an empty string on error.
   std::string MD5();
@@ -267,9 +269,9 @@ class Channel : public ResultCode {
   // ssh_channel_close().
   bool Close();
 
-  ssh_channel c_;
+  ssh_channel c_ = nullptr;
   // Whether a session has been opened.
-  bool session_open_;
+  bool session_open_ = false;
 
   // Disable copy and assign.
   Channel(Channel &);

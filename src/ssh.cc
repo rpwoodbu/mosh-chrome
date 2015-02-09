@@ -17,11 +17,14 @@
 
 #include "ssh.h"
 
+#include "make_unique.h"
+
 namespace ssh {
 
 using std::string;
+using std::unique_ptr;
 
-KeyboardInteractive::KeyboardInteractive(ssh_session s) : s_(s) {}
+KeyboardInteractive::KeyboardInteractive(ssh_session& s) : s_(s) {}
 
 KeyboardInteractive::Status KeyboardInteractive::GetStatus() {
   while (true) {
@@ -96,26 +99,19 @@ bool Session::Connect() {
 void Session::Disconnect() {
   if (connected_) {
     connected_ = false;
-    delete key_;
-    key_ = nullptr;
-    delete keyboard_interactive_;
-    keyboard_interactive_ = nullptr;
-    for (::std::vector<Channel *>::iterator it = channels_.begin();
-        it != channels_.end();
-        ++it) {
-      delete *it;
-    }
+    key_.reset();
+    keyboard_interactive_.reset();
     channels_.clear();
     ssh_disconnect(s_);
   }
 }
 
-Key *Session::GetPublicKey() {
+Key& Session::GetPublicKey() {
   if (connected_ && key_ == nullptr) {
-    key_ = new Key();
+    key_.reset(new Key());
     ssh_get_publickey(s_, &key_->key_);
   }
-  return key_;
+  return *key_;
 }
 
 ::std::vector<AuthenticationType> Session::GetAuthenticationTypes() {
@@ -161,10 +157,9 @@ string GetAuthenticationTypeName(AuthenticationType type) {
   return "Unknown";
 }
 
-KeyboardInteractive *Session::AuthUsingKeyboardInteractive() {
-  delete keyboard_interactive_;
-  keyboard_interactive_ = new KeyboardInteractive(s_);
-  return keyboard_interactive_;
+KeyboardInteractive& Session::AuthUsingKeyboardInteractive() {
+  keyboard_interactive_.reset(new KeyboardInteractive(s_));
+  return *keyboard_interactive_;
 }
 
 bool Session::AuthUsingKey(const Key &key) {
@@ -172,10 +167,11 @@ bool Session::AuthUsingKey(const Key &key) {
   return ParseCode(result, SSH_AUTH_SUCCESS);
 }
 
-Channel *Session::NewChannel() {
-  Channel *c = new Channel(ssh_channel_new(s_));
-  channels_.push_back(c);
-  return c;
+Channel& Session::NewChannel() {
+  auto c = make_unique(new Channel(ssh_channel_new(s_)));
+  auto& ref = *c;
+  channels_.push_back(move(c));
+  return ref;
 }
 
 Key::Key() {}
@@ -199,7 +195,7 @@ bool Key::ImportPrivateKey(const string &key, const char *passphrase) {
   return true;
 }
 
-Key *Key::GetPublicKey() {
+unique_ptr<Key> Key::GetPublicKey() {
   if (key_ == nullptr) {
     return nullptr;
   }
@@ -208,7 +204,7 @@ Key *Key::GetPublicKey() {
   if (result != SSH_OK) {
     return nullptr;
   }
-  Key *key = new Key();
+  auto key = make_unique(new Key());
   key->key_ = pubkey;
   return key;
 }
@@ -224,15 +220,13 @@ string Key::MD5() {
   if (result != 0 ) {
     return string();
   }
-  char *hash_hex = ssh_get_hexa(hash_buf, hash_len);
-  string hash(hash_hex);
-  delete hash_hex;
+  unique_ptr<char[]> hash_hex(ssh_get_hexa(hash_buf, hash_len));
+  string hash(hash_hex.get());
   ssh_clean_pubkey_hash(&hash_buf);
   return hash;
 }
 
-Channel::Channel(ssh_channel c) :
-    c_(c), session_open_(false) { }
+Channel::Channel(ssh_channel c) : c_(c) {}
 
 Channel::~Channel() {
   Close();

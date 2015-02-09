@@ -147,7 +147,7 @@ bool SSHLogin::Start() {
 
 bool SSHLogin::CheckFingerprint() {
   const string server_name = addr_ + ":" + port_;
-  const string server_fp = session_->GetPublicKey()->MD5();
+  const string server_fp = session_->GetPublicKey().MD5();
 
   printf("Fingerprint of remote ssh host (MD5):\r\n  %s\r\n",
       server_fp.c_str());
@@ -251,22 +251,22 @@ bool SSHLogin::DoPasswordAuth() {
 }
 
 bool SSHLogin::DoInteractiveAuth() {
-  ssh::KeyboardInteractive *kbd = session_->AuthUsingKeyboardInteractive();
+  ssh::KeyboardInteractive& kbd = session_->AuthUsingKeyboardInteractive();
 
   for (int tries = RETRIES; tries > 0; --tries) {
-    ssh::KeyboardInteractive::Status status = kbd->GetStatus();
+    ssh::KeyboardInteractive::Status status = kbd.GetStatus();
     while (status == ssh::KeyboardInteractive::kPending) {
-      if (kbd->GetName().size() > 0) {
-        printf("%s\r\n", kbd->GetName().c_str());
+      if (kbd.GetName().size() > 0) {
+        printf("%s\r\n", kbd.GetName().c_str());
       }
-      if (kbd->GetInstruction().size() > 0) {
-        printf("%s\r\n", kbd->GetInstruction().c_str());
+      if (kbd.GetInstruction().size() > 0) {
+        printf("%s\r\n", kbd.GetInstruction().c_str());
       }
       bool done = false;
       while (!done) {
         char input[INPUT_SIZE];
-        printf("%s", kbd->GetNextPrompt().c_str());
-        GetKeyboardLine(input, sizeof(input), kbd->IsAnswerEchoed());
+        printf("%s", kbd.GetNextPrompt().c_str());
+        GetKeyboardLine(input, sizeof(input), kbd.IsAnswerEchoed());
         printf("\r\n");
         if (strlen(input) == 0) {
           // User provided no input; skip this authentication type.
@@ -274,11 +274,11 @@ bool SSHLogin::DoInteractiveAuth() {
           tries = 0;
           break;
         }
-        done = kbd->Answer(input);
+        done = kbd.Answer(input);
         // For safety, zero the sensitive input ASAP.
         memset(input, 0, sizeof(input));
       }
-      status = kbd->GetStatus();
+      status = kbd.GetStatus();
     }
     const char *error = nullptr;
     switch (status) {
@@ -342,18 +342,18 @@ bool SSHLogin::DoPublicKeyAuth() {
 }
 
 bool SSHLogin::DoConversation() {
-  ssh::Channel *c = session_->NewChannel();
+  ssh::Channel& c = session_->NewChannel();
   const string *command = &kCommandDefault;
   if (command_.size() > 0) {
     command = &command_;
   }
-  if (c->Execute(*command) == false) {
+  if (c.Execute(*command) == false) {
     fprintf(stderr, "Failed to execute mosh-server: %s\r\n",
         session_->GetLastError().c_str());
     return false;
   }
   string buf;
-  if (c->Read(&buf, nullptr) == false) {
+  if (c.Read(&buf, nullptr) == false) {
     fprintf(stderr, "Error reading from remote ssh server: %s\r\n",
         session_->GetLastError().c_str());
     return false;
