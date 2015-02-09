@@ -44,10 +44,7 @@ namespace PepperPOSIX {
 class File {
  public:
   File() {}
-  virtual ~File() {
-    Close();
-    delete target_; 
-  }
+  virtual ~File() { Close(); }
 
   virtual int Close() { return 0; }
   int fd() {
@@ -60,7 +57,7 @@ class File {
   virtual const bool IsBlocking() { return blocking_; }
   virtual void SetBlocking(bool mode) { blocking_ = mode; }
 
-  Target *target_ = nullptr;
+  std::unique_ptr<Target> target_;
 
  private:
   bool blocking_ = true;

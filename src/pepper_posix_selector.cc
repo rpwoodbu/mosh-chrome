@@ -17,13 +17,17 @@
 
 #include "pepper_posix_selector.h"
 
+#include "make_unique.h"
+
 #include <algorithm>
+#include <memory>
 #include <assert.h>
 #include <errno.h>
 #include <unistd.h>
 
 namespace PepperPOSIX {
 
+using std::unique_ptr;
 using std::vector;
 
 Selector::Selector() { }
@@ -34,18 +38,21 @@ Selector::~Selector() {
   assert(targets_.size() == 0);
 }
 
-Target *Selector::NewTarget(int id) {
-  Target *t = new Target(this, id);
+unique_ptr<Target> Selector::NewTarget(int id) {
+  Target *t = new Target(*this, id);
   targets_.push_back(t);
-  return t;
+  return make_unique(t);
 }
 
-void Selector::Deregister(const Target *target) {
-  vector<Target*>::iterator t = std::find(
-      targets_.begin(), targets_.end(), target);
+void Selector::Deregister(const Target& target) {
+  for (auto iter = targets_.begin(); iter != targets_.end(); ++iter) {
+    if (**iter == target) {
+      targets_.erase(iter);
+      return;
+    }
+  }
   // It is a logical error to deregister a target that is not registered.
-  assert(*t == target);
-  targets_.erase(t);
+  assert(false);
 }
 
 void Selector::Notify() {
@@ -54,7 +61,8 @@ void Selector::Notify() {
 }
 
 vector<Target*> Selector::Select(
-    const vector<Target*> &read_targets, const vector<Target*> &write_targets,
+    const vector<Target*>& read_targets,
+    const vector<Target*>& write_targets,
     const struct timespec *timeout) {
   struct timespec abstime;
   if (timeout != nullptr) {
@@ -69,7 +77,7 @@ vector<Target*> Selector::Select(
   pthread::MutexLock m(&notify_mutex_);
 
   // Check if any data is available.
-  vector<Target*> result = HasData(read_targets, write_targets);
+  auto result = HasData(read_targets, write_targets);
   if (result.size() > 0) {
     // Data available now; return immediately.
     return result;
@@ -118,23 +126,21 @@ vector<Target*> Selector::HasData(
     const vector<Target*> &read_targets,
     const vector<Target*> &write_targets) const {
   vector<Target*> result;
-  for (vector<Target*>::const_iterator t = read_targets.begin();
-      t != read_targets.end(); ++t) {
-    if ((*t)->has_read_data()) {
-      result.push_back(*t);
+  for (auto* target : read_targets) {
+    if (target->has_read_data()) {
+      result.push_back(target);
     }
   }
-  for (vector<Target*>::const_iterator t = write_targets.begin();
-      t != write_targets.end(); ++t) {
-    if ((*t)->has_write_data()) {
-      result.push_back(*t);
+  for (auto* target : write_targets) {
+    if (target->has_write_data()) {
+      result.push_back(target);
     }
   }
   return result;
 }
 
 Target::~Target() {
-  selector_->Deregister(this);
+  selector_.Deregister(*this);
 }
 
 void Target::UpdateRead(bool has_data) {
@@ -146,7 +152,7 @@ void Target::UpdateRead(bool has_data) {
   has_read_data_ = has_data;
   if (has_data == true) {
     // Only notify if we now have data.
-    selector_->Notify();
+    selector_.Notify();
   }
 }
 
@@ -159,7 +165,7 @@ void Target::UpdateWrite(bool has_data) {
   has_write_data_ = has_data;
   if (has_data == true) {
     // Only notify if we now have data.
-    selector_->Notify();
+    selector_.Notify();
   }
 }
 

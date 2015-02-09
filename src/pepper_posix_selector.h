@@ -21,6 +21,7 @@
 #ifndef PEPPER_POSIX_SELECTOR_HPP
 #define PEPPER_POSIX_SELECTOR_HPP
 
+#include <memory>
 #include <vector>
 
 #include "pthread_locks.h"
@@ -45,15 +46,20 @@ class Selector {
   // to it for the life of the Target. It is an error to delete Selector until
   // all Targets are deleted. id is an opaque identifier for the user to
   // distinguish one Target from another.
-  Target *NewTarget(int id);
+  std::unique_ptr<Target> NewTarget(int id);
 
   // Select returns a subset of targets for which data is available, or 
   // waits until the timeout period has passed. It calls
   // pthread_cond_timedwait() if there are no targets with data available 
   // when the method is called.
+  //
+  // Vectors of pointers were chosen for simplicity, even though ownership
+  // looks ambiguous. The alternative would have been
+  // std::vector<std::reference_wrapper<Target>>, which is messy at best.
+  // Select() does not take or convey ownership.
   std::vector<Target*> Select(
-      const std::vector<Target*> &read_targets,
-      const std::vector<Target*> &write_targets,
+      const std::vector<Target*>& read_targets,
+      const std::vector<Target*>& write_targets,
       const struct timespec *timeout);
 
   // SelectAll is similar to Select, but waits for all registered targets.
@@ -70,13 +76,14 @@ class Selector {
 
   // Deregister is to be called only from the class Target when it is 
   // being destroyed and must deregister with Selector.
-  void Deregister(const Target *target);
+  void Deregister(const Target& target);
 
   // HasData returns a vector of Targets that have data ready to be read.
-  std::vector<Target*> HasData(const std::vector<Target*> &read_targets,
-      const std::vector<Target*> &write_targets) const;
+  std::vector<Target*> HasData(
+      const std::vector<Target*>& read_targets,
+      const std::vector<Target*>& write_targets) const;
 
-  std::vector<Target*> targets_;
+  std::vector<Target*> targets_; // Does not own Targets!
   pthread::Mutex notify_mutex_;
   pthread::Conditional notify_cv_;
 
@@ -91,7 +98,7 @@ class Selector {
 class Target {
  public:
   // We default has_write_data_ to true, as many targets never block on writes.
-  Target(class Selector *s, int id) : selector_(s), id_(id) {}
+  Target(class Selector& s, int id) : selector_(s), id_(id) {}
   ~Target();
 
   // UpdateRead updates Target whether there is pending data available in the
@@ -111,9 +118,10 @@ class Target {
   bool has_read_data() const { return has_read_data_; }
   bool has_write_data() const { return has_write_data_; }
   int id() const { return id_; }
+  bool operator==(const Target& rh) { return id() == rh.id(); }
 
  private:
-  class Selector *selector_ = nullptr;
+  class Selector &selector_;
   int id_ = -1;
   bool has_read_data_ = false;
   bool has_write_data_ = true;
