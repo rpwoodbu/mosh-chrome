@@ -29,6 +29,7 @@ namespace PepperPOSIX {
 
 using std::unique_ptr;
 using std::vector;
+using util::make_unique;
 
 Selector::Selector() { }
 
@@ -39,9 +40,9 @@ Selector::~Selector() {
 }
 
 unique_ptr<Target> Selector::NewTarget(int id) {
-  Target *t = new Target(*this, id);
-  targets_.push_back(t);
-  return make_unique(t);
+  auto t = make_unique<Target>(*this, id);
+  targets_.push_back(t.get());
+  return t;
 }
 
 void Selector::Deregister(const Target& target) {

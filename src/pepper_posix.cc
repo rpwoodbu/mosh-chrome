@@ -22,6 +22,8 @@
 #include "pepper_posix_native_udp.h"
 #include "pepper_posix_native_tcp.h"
 
+#include "make_unique.h"
+
 #include <memory>
 #include <errno.h>
 #include <fcntl.h>
@@ -35,6 +37,7 @@ using std::move;
 using std::string;
 using std::unique_ptr;
 using std::vector;
+using util::make_unique;
 
 const int SIGNAL_FD = -1;
 
@@ -148,9 +151,9 @@ int POSIX::Socket(int domain, int type, int protocol) {
 
   unique_ptr<File> file;
   if (type == SOCK_DGRAM && (protocol == 0 || protocol == IPPROTO_UDP)) {
-    file.reset(new NativeUDP(instance_handle_));
+    file = make_unique<NativeUDP>(instance_handle_);
   } else if (type == SOCK_STREAM && (protocol == 0 || protocol == IPPROTO_TCP)) {
-    file.reset(new NativeTCP(instance_handle_));
+    file = make_unique<NativeTCP>(instance_handle_);
   }
 
   if (file != nullptr) {

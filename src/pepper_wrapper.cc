@@ -41,8 +41,10 @@
 #include <string>
 
 using std::map;
+using std::move;
 using std::string;
 using std::unique_ptr;
+using util::make_unique;
 
 // Literal strings are "const char *", but many of these old functions want to
 // return "char *". To avoid compiler warnings, we generate non-const strings
@@ -54,16 +56,16 @@ class BadInterning {
   char* Get(const string &str) {
     if (strings_.count(str) == 0) {
       int size = str.size();
-      auto buf = new char[size+1];
-      str.copy(buf, size);
-      buf[size] = '\0';
-      strings_[str] = make_unique(buf);
+      auto buf = make_unique<char[]>(size+1);
+      str.copy(buf.get(), size);
+      buf.get()[size] = '\0';
+      strings_[str] = move(buf);
     }
     return strings_[str].get();
   }
 
  private:
-  map<string, unique_ptr<char>> strings_;
+  map<string, unique_ptr<char[]>> strings_;
 };
 
 BadInterning strings;

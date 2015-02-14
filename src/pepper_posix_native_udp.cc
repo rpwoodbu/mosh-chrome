@@ -34,6 +34,7 @@
 namespace PepperPOSIX {
 
 using std::vector;
+using util::make_unique;
 
 NativeUDP::NativeUDP(const pp::InstanceHandle &instance_handle) :
     socket_(new pp::UDPSocket(instance_handle)),
@@ -116,7 +117,7 @@ void NativeUDP::Received(int32_t result, const pp::NetAddress &address) {
     Log("NativeUDP::Received(): Failed to convert address.");
     return;
   }
-  AddPacket(make_unique(new MsgHdr(ipv4_addr, result, receive_buffer_)));
+  AddPacket(make_unique<MsgHdr>(ipv4_addr, result, receive_buffer_));
 
   // Await another packet.
   StartReceive(0);

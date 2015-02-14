@@ -38,9 +38,11 @@
 #include "irt.h"
 #include "ppapi/cpp/module.h"
 
-using ::std::function;
-using ::std::unique_ptr;
-using ::std::vector;
+using std::function;
+using std::move;
+using std::unique_ptr;
+using std::vector;
+using util::make_unique;
 
 // Forward declaration of mosh_main(), as it has no header file.
 int mosh_main(int argc, char *argv[]);
@@ -164,7 +166,7 @@ class DevURandom : public PepperPOSIX::Reader {
 
 // DevURandom factory for registration with PepperPOSIX::POSIX.
 unique_ptr<PepperPOSIX::File> DevURandomFactory() {
-  return make_unique(new DevURandom());
+  return make_unique<DevURandom>();
 }
 
 MoshClientInstance::MoshClientInstance(PP_Instance instance) :
@@ -289,7 +291,7 @@ bool MoshClientInstance::Init(
           cc_factory_.NewCallback(&MoshClientInstance::Launch));
       got_addr = true;
     } else if (name == "port" && port_ == nullptr) {
-      port_.reset(new char[len]);
+      port_ = make_unique<char[]>(len);
       strncpy(port_.get(), argv[i], len);
     } else if (name == "mode") {
       if (string(argv[i]) == "ssh") {
@@ -320,14 +322,16 @@ bool MoshClientInstance::Init(
   // |window_change_|, as we need to access their specialized methods. |posix_|
   // owns them, but we own |posix_|, so it is all good so long as these "files"
   // are not closed.
-  keyboard_ = new Keyboard();
-  window_change_ = new WindowChange();
-  posix_.reset(new PepperPOSIX::POSIX(
+  auto keyboard = make_unique<Keyboard>();
+  auto window_change = make_unique<WindowChange>();
+  keyboard_ = keyboard.get();
+  window_change_ = window_change.get();
+  posix_ = make_unique<PepperPOSIX::POSIX>(
      instance_handle_,
-     make_unique(keyboard_),
-     make_unique(new Terminal(*this)),
-     make_unique(new ErrorLog(*this)),
-     make_unique(window_change_)));
+     move(keyboard),
+     make_unique<Terminal>(*this),
+     make_unique<ErrorLog>(*this),
+     move(window_change));
   posix_->RegisterFile("/dev/urandom", DevURandomFactory);
 
   // Mosh will launch via the resolution callback (see above).
@@ -348,7 +352,7 @@ void MoshClientInstance::Launch(int32_t result) {
   pp::NetAddress address = resolver_.GetNetAddress(0);
   string addr_str = address.DescribeAsString(false).AsString();
   int addr_len = addr_str.size() + 1;
-  addr_.reset(new char[addr_len]);
+  addr_ = make_unique<char[]>(addr_len);
   strncpy(addr_.get(), addr_str.c_str(), addr_len);
 
   if (ssh_mode_) {
@@ -379,9 +383,9 @@ void *MoshClientInstance::MoshThread(void *data) {
   }
 
   // Some hoops to avoid a compiler warning.
-  const char *binary_name = "mosh-client";
-  auto argv0 = make_unique(new char[sizeof(*binary_name)]);
-  memcpy(argv0.get(), binary_name, sizeof(*argv0));
+  const char binary_name[] = "mosh-client";
+  auto argv0 = make_unique<char[]>(sizeof(binary_name));
+  memcpy(argv0.get(), binary_name, sizeof(binary_name));
 
   char *argv[] = { argv0.get(), thiz->addr_.get(), thiz->port_.get() };
   thiz->Log("Mosh(): Calling mosh_main");
@@ -412,11 +416,11 @@ void *MoshClientInstance::SSHLoginThread(void *data) {
   }
 
   // Extract Mosh params.
-  thiz->port_.reset(new char[6]);
+  thiz->port_ = make_unique<char[]>(6);
   memset(thiz->port_.get(), 0, 6);
   thiz->ssh_login_.mosh_port().copy(thiz->port_.get(), 5);
   size_t addr_len = thiz->ssh_login_.mosh_addr().size();
-  thiz->addr_.reset(new char[addr_len+1]);
+  thiz->addr_ = make_unique<char[]>(addr_len+1);
   memset(thiz->addr_.get(), 0, addr_len+1);
   thiz->ssh_login_.mosh_addr().copy(thiz->addr_.get(), addr_len);
   setenv("MOSH_KEY", thiz->ssh_login_.mosh_key().c_str(), 1);

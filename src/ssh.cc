@@ -23,6 +23,7 @@ namespace ssh {
 
 using std::string;
 using std::unique_ptr;
+using util::make_unique;
 
 KeyboardInteractive::KeyboardInteractive(ssh_session& s) : s_(s) {}
 
@@ -108,7 +109,7 @@ void Session::Disconnect() {
 
 Key& Session::GetPublicKey() {
   if (connected_ && key_ == nullptr) {
-    key_.reset(new Key());
+    key_ = make_unique<Key>();
     ssh_get_publickey(s_, &key_->key_);
   }
   return *key_;
@@ -158,7 +159,7 @@ string GetAuthenticationTypeName(AuthenticationType type) {
 }
 
 KeyboardInteractive& Session::AuthUsingKeyboardInteractive() {
-  keyboard_interactive_.reset(new KeyboardInteractive(s_));
+  keyboard_interactive_ = make_unique<KeyboardInteractive>(s_);
   return *keyboard_interactive_;
 }
 
@@ -168,7 +169,7 @@ bool Session::AuthUsingKey(const Key &key) {
 }
 
 Channel& Session::NewChannel() {
-  auto c = make_unique(new Channel(ssh_channel_new(s_)));
+  auto c = make_unique<Channel>(ssh_channel_new(s_));
   auto& ref = *c;
   channels_.push_back(move(c));
   return ref;
@@ -204,7 +205,7 @@ unique_ptr<Key> Key::GetPublicKey() {
   if (result != SSH_OK) {
     return nullptr;
   }
-  auto key = make_unique(new Key());
+  auto key = make_unique<Key>();
   key->key_ = pubkey;
   return key;
 }
