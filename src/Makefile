@@ -76,6 +76,10 @@ OSNAME:=$(shell python $(NACL_SDK_ROOT)/tools/getos.py)
 TC_PATH:=$(abspath $(NACL_SDK_ROOT)/toolchain/$(OSNAME)_pnacl)
 CXX:=$(TC_PATH)/bin/pnacl-clang++
 OBJCOPY:=$(TC_PATH)/../$(OSNAME)_x86_newlib/bin/i686-nacl-objcopy
+ENVSUBST:=envsubst
+NAME:=Mosh
+DESCRIPTION:=Mosh (mobile shell) for Chrome
+RELEASE:=false
 
 # Project Build flags
 # TODO: Remove --pnacl-exceptions once exceptions are fully supported by PNaCl.
@@ -89,9 +93,9 @@ NEWLIB_CXXFLAGS:=$(CXXFLAGS) -DUSE_NEWLIB $(COMPAT_INC)
 all: $(PROJECT).zip
 
 # Convenience target for skipping the .zip file.
-nmf: $(PROJECT).nmf
+nozip: $(PROJECT).nmf $(OUTDIR)/manifest.json
 
-$(PROJECT).zip : $(PROJECT).nmf
+$(PROJECT).zip: $(PROJECT).nmf $(OUTDIR)/manifest.json
 	cd $(OUTDIR) && zip -r ../$(PROJECT).zip .
 
 # Define PNaCl compile and link rules for C++ sources
@@ -99,17 +103,40 @@ OBJS:=$(patsubst %.cc,%.o,$(CXX_SOURCES))
 $(OBJS) : %.o : %.cc $(CXX_HEADERS)
 	$(CXX) -o $@ -c $< $(NEWLIB_CXXFLAGS)
 
-../build/mosh/src/frontend/mosh-client-nacl.o : ../build/mosh/src/frontend/mosh-client.o
+../build/mosh/src/frontend/mosh-client-nacl.o: ../build/mosh/src/frontend/mosh-client.o
 	$(OBJCOPY) --redefine-sym main=mosh_main $< $@
 
-$(PROJECT).pexe : $(OBJS) $(OBJECTS)
+$(PROJECT).pexe: $(OBJS) $(OBJECTS)
 	$(CXX) -o $@ $^ $(LIBS) $(NEWLIB_CXXFLAGS) $(LDFLAGS) $(LIBDIRS)
 	$(TC_PATH)/bin/pnacl-finalize $@
 
 # Create NaCl Manifest
-$(PROJECT).nmf : $(PROJECT).pexe
+$(PROJECT).nmf: $(PROJECT).pexe
 	$(NACL_SDK_ROOT)/tools/create_nmf.py $^ -o $@ -s $(OUTDIR)
 
+# Generate manifest.json based on dev or release mode.
+$(OUTDIR)/manifest.json: build_number.txt
+	export NAME="$(NAME)"; \
+	export DESCRIPTION="$(DESCRIPTION)"; \
+	export BUILD_NUM=$$(cat $^); \
+	if [ "$(RELEASE)" = "false" ]; then \
+	  NAME="$${NAME} (dev)"; \
+		DESCRIPTION="$${DESCRIPTION} (dev track)"; \
+	fi; \
+	$(ENVSUBST) '$$NAME $$DESCRIPTION $$BUILD_NUM' < manifest.json.template > $@
+
+# Increment build number.
+build_number.txt: FORCE
+	if [ ! -f $@ ]; then \
+		echo "0" > $@; \
+	else \
+		echo $$(($$(cat $@) + 1)) > $@; \
+	fi
+
+.PHONY: FORCE
+FORCE:
+
+# Purposefully do not clean up build_number.txt.
 clean:
 	rm -rf *.o $(PROJECT).zip $(PROJECT)*.nexe $(PROJECT).pexe \
-	$(PROJECT).nmf $(OUTDIR)/lib* $(OUTDIR)/hterm
+	$(PROJECT).nmf $(OUTDIR)/lib* $(OUTDIR)/hterm $(OUTDIR)/manifest.json

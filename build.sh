@@ -2,7 +2,8 @@
 
 # Build the Native Client port of the Mosh client for running in the Chrome
 # browser. If you have already built once and are doing active development on
-# the Native Client port, invoke with the parameter "fast".
+# the Native Client port, invoke with the parameter "fast". To do a release build,
+# set the environment variable RELEASE to "true".
 
 # Copyright 2013, 2014, 2015 Richard Woodbury
 #
@@ -49,6 +50,11 @@ FAST=""
 if [[ $# -gt 0 ]]; then
   FAST="$1"
   shift 1
+fi
+
+if [[ "${FAST}" == "fast" && -v RELEASE ]]; then
+  echo "Refusing to do a fast release build." 1>&2
+  exit 1
 fi
 
 if [[ ! -d "build" ]]; then
@@ -217,7 +223,7 @@ pushd src > /dev/null
 # Copy hterm dist files into app directory.
 mkdir -p app/hterm
 cp -f ../deps/libapps/hterm/dist/js/* app/hterm
-make -j${JOBS} all
+make -e -j${JOBS} all
 popd > /dev/null # src
 
 echo "Done."
