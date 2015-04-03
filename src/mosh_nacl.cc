@@ -299,8 +299,10 @@ bool MoshClientInstance::Init(
       }
     } else if (name == "user") {
       ssh_login_.set_user(argv[i]);
-    } else if (name == "command") {
-      ssh_login_.set_command(argv[i]);
+    } else if (name == "remote-command") {
+      ssh_login_.set_remote_command(argv[i]);
+    } else if (name == "server-command") {
+      ssh_login_.set_server_command(argv[i]);
     }
   }
 

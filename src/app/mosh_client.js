@@ -52,13 +52,60 @@ window.onload = function() {
   manualModeButton.onchange = updateMode;
   var sshKeyLink = document.querySelector('#ssh-key');
   sshKeyLink.onclick = onSshKeyClick;
-  loadFields();
   var form = document.querySelector('#args');
   form.onsubmit = function() { return false; };
-  updateMode();
+
+  migrateSettings(function() {
+    loadFields();
+    updateMode();
+  });
 };
 
-var kSyncFieldNames = [ 'addr', 'ssh-port', 'mosh-port', 'user', 'command' ];
+// Mapping of old chrome.storage.local keys to their new key names.
+var kLocalKeysToMigrate = {
+  'field_command': 'field_server-command',
+}
+
+// Migrates settings from one form to another, to keep a tidy shop while
+// avoiding losing old data. Calls callback when done (fields will not be ready
+// to read until this callback).
+function migrateSettings(callback) {
+  var count = 0;
+
+  for (var oldKey in kLocalKeysToMigrate) {
+    chrome.storage.local.get(oldKey, function(o) {
+      if (o[oldKey] !== undefined) {
+        var newKey = kLocalKeysToMigrate[oldKey];
+        console.log("Migrating " + oldKey + " to " + newKey);
+        var newObject = {};
+        newObject[newKey] = o[oldKey];
+        count++;
+        chrome.storage.local.set(newObject, function() {
+          // Call the callback once all keys are migrated.
+          count--;
+          if (count == 0) {
+            callback();
+          }
+        });
+        chrome.storage.local.remove(oldKey);
+      }
+    });
+  }
+
+  if (count == 0) {
+    // There were no migrations; call the callback here.
+    callback();
+  }
+}
+
+var kSyncFieldNames = [
+  'addr',
+  'ssh-port',
+  'mosh-port',
+  'user',
+  'remote-command',
+  'server-command',
+];
 
 function loadFields() {
   var form = document.querySelector('#args');
@@ -104,7 +151,8 @@ function onConnectClick(e) {
   }
   args['user'] = form['user'].value;
   args['key'] = form['key'].value;
-  args['command'] = form['command'].value;
+  args['remote-command'] = form['remote-command'].value;
+  args['server-command'] = form['server-command'].value;
   for (var i = 0; i < form['mode'].length; ++i) {
     if (form['mode'][i].checked) {
       args['mode'] = form['mode'][i].value;
@@ -149,7 +197,8 @@ function updateMode(e) {
   var sshPortRow = document.querySelector('#ssh-port-row');
   var moshPortRow = document.querySelector('#mosh-port-row');
   var keyRow = document.querySelector('#key-row');
-  var commandRow = document.querySelector('#command-row');
+  var remoteCommandRow = document.querySelector('#remote-command-row');
+  var serverCommandRow = document.querySelector('#server-command-row');
 
   if (sshModeButton.checked) {
     if (sshPortField.value === "") {
@@ -159,7 +208,8 @@ function updateMode(e) {
     sshPortRow.hidden = false;
     moshPortRow.hidden = true;
     keyRow.hidden = true;
-    commandRow.hidden = false;
+    remoteCommandRow.hidden = false;
+    serverCommandRow.hidden = false;
   } else {
     if (moshPortField.value === "") {
       moshPortField.value = kMoshDefaultPort;
@@ -168,7 +218,8 @@ function updateMode(e) {
     sshPortRow.hidden = true;
     moshPortRow.hidden = false;
     keyRow.hidden = false;
-    commandRow.hidden = true;
+    remoteCommandRow.hidden = true;
+    serverCommandRow.hidden = true;
   }
 }
 

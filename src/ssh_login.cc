@@ -31,7 +31,7 @@ using util::make_unique;
 
 const int INPUT_SIZE = 256;
 const int RETRIES = 3;
-const string kCommandDefault(
+const string kServerCommandDefault(
     "mosh-server new -s -c 256 -l LANG=en_US.UTF-8");
 
 SSHLogin::SSHLogin() {}
@@ -340,12 +340,20 @@ bool SSHLogin::DoPublicKeyAuth() {
 }
 
 bool SSHLogin::DoConversation() {
-  ssh::Channel& c = session_->NewChannel();
-  const string *command = &kCommandDefault;
-  if (command_.size() > 0) {
-    command = &command_;
+  string command;
+
+  if (server_command().size() > 0) {
+    command = server_command();
+  } else {
+    command = kServerCommandDefault;
   }
-  if (c.Execute(*command) == false) {
+
+  if (remote_command().size() > 0) {
+    command += " -- " + remote_command();
+  }
+
+  ssh::Channel& c = session_->NewChannel();
+  if (c.Execute(command) == false) {
     fprintf(stderr, "Failed to execute mosh-server: %s\r\n",
         session_->GetLastError().c_str());
     return false;
