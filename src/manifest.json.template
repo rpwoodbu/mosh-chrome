@@ -21,7 +21,8 @@
     "clipboardWrite",
     "contextMenus",
     "notifications",
-    "storage"
+    "storage",
+    "app.window.fullscreen.overrideEsc"
   ],
   "icons": {
     "128": "laptop_terminal.png"
