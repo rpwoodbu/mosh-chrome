@@ -254,6 +254,17 @@ int POSIX::PSelect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfd
   return result;
 }
 
+int POSIX::Select(int nfds, fd_set *readfds, fd_set *writefds,
+    fd_set *exceptfds, struct timeval *timeout) {
+  if (timeout != nullptr) {
+    struct timespec ts;
+    ts.tv_sec = timeout->tv_sec;
+    ts.tv_nsec = timeout->tv_usec * 1000;
+    return PSelect(nfds, readfds, writefds, exceptfds, &ts, nullptr);
+  }
+  return PSelect(nfds, readfds, writefds, exceptfds, nullptr, nullptr);
+}
+
 int POSIX::Poll(struct pollfd *fds, nfds_t nfds, int timeout) {
   // Poll() is used infrequently, so just wrap PSelect(). This is an imperfect
   // implementation, but suffices.

@@ -323,13 +323,7 @@ int pselect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 
 int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
     struct timeval *timeout) {
-  if (timeout != nullptr) {
-    struct timespec ts;
-    ts.tv_sec = timeout->tv_sec;
-    ts.tv_nsec = timeout->tv_usec * 1000;
-    return pselect(nfds, readfds, writefds, exceptfds, &ts, nullptr);
-  }
-  return pselect(nfds, readfds, writefds, exceptfds, nullptr, nullptr);
+  return GetPOSIX().Select(nfds, readfds, writefds, exceptfds, timeout);
 }
 
 int poll(struct pollfd *fds, nfds_t nfds, int timeout) {
