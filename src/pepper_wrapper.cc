@@ -333,9 +333,7 @@ int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 }
 
 int poll(struct pollfd *fds, nfds_t nfds, int timeout) {
-  Log("poll(_, %d, %d): Not implemented.", nfds, timeout);
-  errno = EINVAL;
-  return -1;
+  return GetPOSIX().Poll(fds, nfds, timeout);
 }
 
 ssize_t recv(int sockfd, void *buf, size_t len, int flags) {

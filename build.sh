@@ -30,14 +30,14 @@ fi
 NACL_SDK_ZIP="nacl_sdk.zip"
 NACL_SDK_URL="http://storage.googleapis.com/nativeclient-mirror/nacl/nacl_sdk/${NACL_SDK_ZIP}"
 NACL_SDK_DIR="nacl_sdk"
-NACL_SDK_VERSION="pepper_39"
+NACL_SDK_VERSION="pepper_43"
 
 DEPOT_TOOLS_URL="https://chromium.googlesource.com/chromium/tools/depot_tools.git"
 DEPOT_TOOLS_DIR="depot_tools"
 
 NACL_PORTS_URL="https://chromium.googlesource.com/external/naclports.git"
 NACL_PORTS_DIR="naclports"
-NACL_PORTS_REV=0c496b3
+NACL_PORTS_REV=4112c10
 
 PROTOBUF_VERSION="2.6.0"
 PROTOBUF_DIR="protobuf-${PROTOBUF_VERSION}"
@@ -138,6 +138,7 @@ make clean
 popd > /dev/null
 
 export NACL_ARCH="pnacl"
+export TOOLCHAIN="pnacl"
 
 echo "Building packages in NaCl Ports..."
 pushd "${NACL_PORTS}/src" > /dev/null

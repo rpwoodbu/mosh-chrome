@@ -254,6 +254,61 @@ int POSIX::PSelect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfd
   return result;
 }
 
+int POSIX::Poll(struct pollfd *fds, nfds_t nfds, int timeout) {
+  // Poll() is used infrequently, so just wrap PSelect(). This is an imperfect
+  // implementation, but suffices.
+  fd_set readfds, writefds, exceptfds;
+  int pselect_nfds = 0;
+
+  FD_ZERO(&readfds);
+  FD_ZERO(&writefds);
+  FD_ZERO(&exceptfds);
+  for (int i = 0; i < nfds; ++i) {
+    const auto& fd = fds[i].fd;
+    const auto& events = fds[i].events;
+
+    if (events & (POLLIN | POLLPRI)) {
+      FD_SET(fd, &readfds);
+    }
+    if (events & POLLOUT) {
+      FD_SET(fd, &writefds);
+    }
+    if (events & (POLLERR | POLLHUP | POLLNVAL)) {
+      FD_SET(fd, &exceptfds);
+    }
+
+    if (pselect_nfds <= fd) {
+      pselect_nfds = fd + 1;
+    }
+  }
+
+  struct timespec ts;
+  // |timeout| is in milliseconds.
+  ts.tv_sec = timeout / 1000;
+  ts.tv_nsec = (timeout % 1000) * 1000000;
+
+  int result = PSelect(
+      pselect_nfds, &readfds, &writefds, &exceptfds, &ts, nullptr);
+
+  for (int i = 0; i < nfds; ++i) {
+    const auto& fd = fds[i].fd;
+    auto& revents = fds[i].revents;
+
+    // Cheating: Just setting every potentially related bit.
+    if (FD_ISSET(fd, &readfds)) {
+      revents |= POLLIN | POLLPRI;
+    }
+    if (FD_ISSET(fd, &writefds)) {
+      revents |= POLLOUT;
+    }
+    if (FD_ISSET(fd, &exceptfds)) {
+      revents |= POLLERR | POLLHUP | POLLNVAL;
+    }
+  }
+
+  return result;
+}
+
 ssize_t POSIX::Recv(int sockfd, void *buf, size_t len, int flags) {
   if (files_.count(sockfd) == 0) {
     errno = EBADF;

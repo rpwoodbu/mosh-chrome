@@ -27,6 +27,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <poll.h>
 #include <stdarg.h>
 #include <sys/select.h>
 #include <sys/socket.h>
@@ -128,6 +129,8 @@ class POSIX {
 
   int PSelect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
       const struct timespec *timeout, const sigset_t *sigmask);
+
+  int Poll(struct pollfd *fds, nfds_t nfds, int timeout);
 
   ssize_t Recv(int sockfd, void *buf, size_t len, int flags);
 
