@@ -83,8 +83,14 @@ RELEASE:=false
 
 # Project Build flags
 # TODO: Remove --pnacl-exceptions once exceptions are fully supported by PNaCl.
-override CXXFLAGS+=-pthread $(WARNINGS) -I$(NACL_SDK_ROOT)/include -fno-builtin \
-	--pnacl-exceptions=sjlj -O2 -std=gnu++11
+# NB: --pnacl-exceptions=sjlj seems to upset the debugger to the point of being
+# useless. So when debugging, remove that options. This will cause all
+# exceptions to abort(), unfortunately.
+override CXXFLAGS+=-pthread $(WARNINGS) -I$(NACL_SDK_ROOT)/include \
+	-fno-builtin -std=gnu++11 \
+	--pnacl-exceptions=sjlj -O2
+  # When debugging, replace the line above with the line below:
+  # -g3 -fno-omit-frame-pointer
 
 COMPAT_INC:=-I${TC_PATH}/ARCH-nacl/usr/include/glibc-compat
 NEWLIB_CXXFLAGS:=$(CXXFLAGS) -DUSE_NEWLIB $(COMPAT_INC)
@@ -106,12 +112,14 @@ $(OBJS) : %.o : %.cc $(CXX_HEADERS)
 ../build/mosh/src/frontend/mosh-client-nacl.o: ../build/mosh/src/frontend/mosh-client.o
 	$(OBJCOPY) --redefine-sym main=mosh_main $< $@
 
-$(PROJECT).pexe: $(OBJS) $(OBJECTS)
+$(PROJECT).bc: $(OBJS) $(OBJECTS)
 	$(CXX) -o $@ $^ $(LIBS) $(NEWLIB_CXXFLAGS) $(LDFLAGS) $(LIBDIRS)
-	$(TC_PATH)/bin/pnacl-finalize $@
+
+$(PROJECT).pexe: $(PROJECT).bc
+	$(TC_PATH)/bin/pnacl-finalize -o $@ $<
 
 # Create NaCl Manifest
-$(PROJECT).nmf: $(PROJECT).pexe
+$(PROJECT).nmf: $(PROJECT).pexe $(PROJECT).bc
 	$(NACL_SDK_ROOT)/tools/create_nmf.py $^ -o $@ -s $(OUTDIR)
 
 # Generate manifest.json based on dev or release mode.
@@ -138,5 +146,5 @@ FORCE:
 
 # Purposefully do not clean up build_number.txt.
 clean:
-	rm -rf *.o $(PROJECT).zip $(PROJECT)*.nexe $(PROJECT).pexe \
+	rm -rf *.o $(PROJECT).zip $(PROJECT)*.nexe $(PROJECT).pexe $(PROJECT).bc \
 	$(PROJECT).nmf $(OUTDIR)/lib* $(OUTDIR)/hterm $(OUTDIR)/manifest.json
