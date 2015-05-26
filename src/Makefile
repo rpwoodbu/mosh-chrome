@@ -14,7 +14,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 OUTDIR:=app
-PROJECT:=$(OUTDIR)/mosh_client
+NAME:=mosh_client
+PROJECT:=$(OUTDIR)/$(NAME)
 CXX_SOURCES:=\
 	mosh_nacl.cc \
 	pepper_posix.cc \
@@ -77,7 +78,7 @@ TC_PATH:=$(abspath $(NACL_SDK_ROOT)/toolchain/$(OSNAME)_pnacl)
 CXX:=$(TC_PATH)/bin/pnacl-clang++
 OBJCOPY:=$(TC_PATH)/../$(OSNAME)_x86_newlib/bin/i686-nacl-objcopy
 ENVSUBST:=envsubst
-NAME:=Mosh
+APP_NAME:=Mosh
 DESCRIPTION:=Mosh (mobile shell) for Chrome
 RELEASE:=false
 
@@ -112,19 +113,31 @@ $(OBJS) : %.o : %.cc $(CXX_HEADERS)
 ../build/mosh/src/frontend/mosh-client-nacl.o: ../build/mosh/src/frontend/mosh-client.o
 	$(OBJCOPY) --redefine-sym main=mosh_main $< $@
 
-$(PROJECT).bc: $(OBJS) $(OBJECTS)
+$(NAME).bc: $(OBJS) $(OBJECTS)
 	$(CXX) -o $@ $^ $(LIBS) $(NEWLIB_CXXFLAGS) $(LDFLAGS) $(LIBDIRS)
 
-$(PROJECT).pexe: $(PROJECT).bc
+$(NAME).pexe: $(NAME).bc
 	$(TC_PATH)/bin/pnacl-finalize -o $@ $<
 
+$(PROJECT)_x86_64.nexe: $(NAME).pexe
+	$(TC_PATH)/bin/pnacl-translate -arch x86-64 -o $@ $<
+
+$(PROJECT)_i686.nexe: $(NAME).pexe
+	$(TC_PATH)/bin/pnacl-translate -arch i686 -o $@ $<
+
+# ARM translation seems broken; see Issue #90. Setting -threads=seq at least
+# prevents the file size from varying, and _may_ reduce the number of incidents
+# of broken nexes.
+$(PROJECT)_armv7.nexe: $(NAME).pexe
+	$(TC_PATH)/bin/pnacl-translate -arch armv7 -threads=seq -o $@ $<
+
 # Create NaCl Manifest
-$(PROJECT).nmf: $(PROJECT).pexe $(PROJECT).bc
+$(PROJECT).nmf: $(PROJECT)_x86_64.nexe $(PROJECT)_i686.nexe $(PROJECT)_armv7.nexe
 	$(NACL_SDK_ROOT)/tools/create_nmf.py $^ -o $@ -s $(OUTDIR)
 
 # Generate manifest.json based on dev or release mode.
 $(OUTDIR)/manifest.json: build_number.txt
-	export NAME="$(NAME)"; \
+	export NAME="$(APP_NAME)"; \
 	export DESCRIPTION="$(DESCRIPTION)"; \
 	export BUILD_NUM=$$(cat $^); \
 	if [ "$(RELEASE)" = "false" ]; then \
@@ -147,4 +160,5 @@ FORCE:
 # Purposefully do not clean up build_number.txt.
 clean:
 	rm -rf *.o $(PROJECT).zip $(PROJECT)*.nexe $(PROJECT).pexe $(PROJECT).bc \
-	$(PROJECT).nmf $(OUTDIR)/lib* $(OUTDIR)/hterm $(OUTDIR)/manifest.json
+	$(PROJECT).nmf $(OUTDIR)/lib* $(OUTDIR)/hterm $(OUTDIR)/manifest.json \
+	*.bc *.pexe

@@ -1,2 +1,4 @@
 *.o
 build_number.txt
+*.bc
+*.pexe

@@ -103,7 +103,7 @@ mosh.CommandInstance.prototype.run = function() {
       'width: 0;' +
       'height: 0;');
   this.moshNaCl_.setAttribute('src', 'mosh_client.nmf');
-  this.moshNaCl_.setAttribute('type', 'application/x-pnacl');
+  this.moshNaCl_.setAttribute('type', 'application/x-nacl');
   for (var k in this.argv_.argString) {
     this.moshNaCl_.setAttribute(k, this.argv_.argString[k]);
   }
