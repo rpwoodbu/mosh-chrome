@@ -110,9 +110,6 @@ OBJS:=$(patsubst %.cc,%.o,$(CXX_SOURCES))
 $(OBJS) : %.o : %.cc $(CXX_HEADERS)
 	$(CXX) -o $@ -c $< $(NEWLIB_CXXFLAGS)
 
-../build/mosh/src/frontend/mosh-client-nacl.o: ../build/mosh/src/frontend/mosh-client.o
-	$(OBJCOPY) --redefine-sym main=mosh_main $< $@
-
 $(NAME).bc: $(OBJS) $(OBJECTS)
 	$(CXX) -o $@ $^ $(LIBS) $(NEWLIB_CXXFLAGS) $(LDFLAGS) $(LIBDIRS)
 
