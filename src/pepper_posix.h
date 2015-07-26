@@ -35,6 +35,7 @@
 
 #include "ppapi/c/ppb_net_address.h"
 #include "ppapi/cpp/instance_handle.h"
+#include "ppapi/cpp/net_address.h"
 
 // Implement this to plumb logging from Pepper functions to your app.
 void Log(const char *format, ...);
@@ -161,6 +162,10 @@ class POSIX {
  private:
   // Returns the next available file descriptor.
   int NextFileDescriptor();
+
+  // Makes a pp::NetAddress from a sockaddr.
+  pp::NetAddress MakeAddress(
+    const struct sockaddr *addr, socklen_t addrlen) const;
 
   // Map of file descriptors and the File objects they represent.
   std::map<int, std::unique_ptr<File>> files_;

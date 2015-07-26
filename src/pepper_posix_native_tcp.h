@@ -37,10 +37,10 @@ class NativeTCP : public TCP {
   ~NativeTCP() override;
 
   // Bind replaces bind().
-  int Bind(const PP_NetAddress_IPv4 &address) override;
+  int Bind(const pp::NetAddress &address) override;
 
   // Connect replaces connect().
-  int Connect(const PP_NetAddress_IPv4 &address) override;
+  int Connect(const pp::NetAddress &address) override;
 
   // Send replaces send().
   ssize_t Send(const void *buf, size_t count, int flags) override;

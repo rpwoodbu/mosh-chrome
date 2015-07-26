@@ -32,20 +32,21 @@
 #include <sys/types.h>
 #include <sys/uio.h>
 
-#include "ppapi/c/ppb_net_address.h"
+#include "ppapi/cpp/net_address.h"
 
 namespace PepperPOSIX {
 
 // Wrapper over struct msghdr, which ensures proper destruction.
 struct MsgHdr : public ::msghdr {
+  MsgHdr() = delete;
   MsgHdr(
-      const PP_NetAddress_IPv4& ipv4_addr,
+      const pp::NetAddress& addr,
       int32_t size,
       const char* const buf);
   ~MsgHdr();
 
   // Disable copy and assignment.
-  MsgHdr() = delete;
+  MsgHdr(const MsgHdr&) = delete;
   MsgHdr& operator=(const MsgHdr&) = delete;
 };
 
@@ -63,12 +64,11 @@ class UDP : public File {
   ssize_t Receive(struct ::msghdr *message, int flags);
 
   // Bind replaces bind().
-  virtual int Bind(const PP_NetAddress_IPv4 &address) = 0;
+  virtual int Bind(const pp::NetAddress &address) = 0;
 
   // Send replaces sendto(). Usage is similar, but tweaked for C++.
   virtual ssize_t Send(
-    const std::vector<char> &buf, int flags,
-    const PP_NetAddress_IPv4 &address) = 0;
+    const std::vector<char> &buf, int flags, const pp::NetAddress &address) = 0;
 
  protected:
   // AddPacket is used by the subclass to add a packet to the incoming queue.
@@ -89,12 +89,12 @@ class UDP : public File {
 class StubUDP : public UDP {
  public:
   // Bind replaces bind().
-  int Bind(const PP_NetAddress_IPv4 &address) override;
+  int Bind(const pp::NetAddress &address) override;
 
   // Send replaces sendto. Usage is similar, but tweaked for C++.
   ssize_t Send(
     const std::vector<char> &buf, int flags,
-    const PP_NetAddress_IPv4 &address) override;
+    const pp::NetAddress &address) override;
 
  private:
   // Disable copy and assignment.

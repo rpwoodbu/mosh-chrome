@@ -144,7 +144,7 @@ int POSIX::NextFileDescriptor() {
 }
 
 int POSIX::Socket(int domain, int type, int protocol) {
-  if (domain != AF_INET) {
+  if (domain != AF_INET && domain != AF_INET6) {
     errno = EINVAL;
     return -1;
   }
@@ -156,19 +156,19 @@ int POSIX::Socket(int domain, int type, int protocol) {
     file = make_unique<NativeTCP>(instance_handle_);
   }
 
-  if (file != nullptr) {
-    int fd = NextFileDescriptor();
-    file->target_ = selector_.NewTarget(fd);
-    if (type == SOCK_STREAM) {
-      // TCP should not be writable at first.
-      file->target_->UpdateWrite(false);
-    }
-    files_[fd] = move(file);
-    return fd;
+  if (file == nullptr) {
+    errno = EINVAL;
+    return -1;
   }
 
-  errno = EINVAL;
-  return -1;
+  int fd = NextFileDescriptor();
+  file->target_ = selector_.NewTarget(fd);
+  if (type == SOCK_STREAM) {
+    // TCP should not be writable at first.
+    file->target_->UpdateWrite(false);
+  }
+  files_[fd] = move(file);
+  return fd;
 }
 
 int POSIX::Dup(int oldfd) {
@@ -183,6 +183,7 @@ int POSIX::Dup(int oldfd) {
     return -1;
   }
 
+  // NB: This socket implementation doesn't do anything with |domain|.
   return Socket(AF_INET, SOCK_DGRAM, 0);
 }
 
@@ -360,20 +361,41 @@ ssize_t POSIX::RecvMsg(int sockfd, struct msghdr *msg, int flags) {
   return udp->Receive(msg, flags);
 }
 
-// Make a PP_NetAddress_IPv4 from sockaddr.
-void MakeAddress(const struct sockaddr *addr, socklen_t addrlen,
-    PP_NetAddress_IPv4 *pp_addr) {
-  // TODO: Make an IPv6 version, but since mosh doesn't support it now, this
-  // will do.
-  assert(addr->sa_family == AF_INET);
-  assert(addrlen >= 4);
-  const struct sockaddr_in *in_addr = (struct sockaddr_in*)addr;
-  uint32_t a = in_addr->sin_addr.s_addr;
-  for (int i = 0; i < 4; ++i) {
-    pp_addr->addr[i] = a & 0xff;
-    a >>= 8;
+pp::NetAddress POSIX::MakeAddress(
+    const struct sockaddr *addr, socklen_t addrlen) const {
+  switch (addr->sa_family) {
+   case AF_INET:
+     {
+       assert(addrlen >= sizeof(sockaddr_in));
+       PP_NetAddress_IPv4 pp_addr;
+       const struct sockaddr_in *in_addr = (struct sockaddr_in*)addr;
+       uint32_t a = in_addr->sin_addr.s_addr;
+       for (int i = 0; i < 4; ++i) {
+         pp_addr.addr[i] = a & 0xff;
+         a >>= 8;
+       }
+       pp_addr.port = in_addr->sin_port;
+       return pp::NetAddress(instance_handle_, pp_addr);
+     }
+
+   case AF_INET6:
+     {
+       assert(addrlen >= sizeof(sockaddr_in6));
+       PP_NetAddress_IPv6 pp_addr;
+       const struct sockaddr_in6 *in6_addr = (struct sockaddr_in6*)addr;
+       memcpy(pp_addr.addr, in6_addr->sin6_addr.s6_addr, sizeof(pp_addr.addr));
+       pp_addr.port = in6_addr->sin6_port;
+       return pp::NetAddress(instance_handle_, pp_addr);
+     }
+
+   default:
+     // Unsupported address family.
+     assert(false);
+     break;
   }
-  pp_addr->port = in_addr->sin_port;
+
+  // Should not get here.
+  return pp::NetAddress();
 }
 
 ssize_t POSIX::Send(int sockfd, const void *buf, size_t len, int flags) {
@@ -413,10 +435,7 @@ ssize_t POSIX::SendTo(int sockfd, const void *buf, size_t len, int flags,
   }
 
   vector<char> buffer((const char*)buf, (const char*)buf+len);
-  PP_NetAddress_IPv4 addr;
-  MakeAddress(dest_addr, addrlen, &addr);
-
-  return udp->Send(buffer, flags, addr);
+  return udp->Send(move(buffer), flags, MakeAddress(dest_addr, addrlen));
 }
 
 int POSIX::FCntl(int fd, int cmd, va_list arg) {
@@ -457,11 +476,7 @@ int POSIX::Connect(
     errno = EBADF;
     return -1;
   }
-
-  PP_NetAddress_IPv4 pp_addr;
-  MakeAddress(addr, addrlen, &pp_addr);
-
-  return tcp->Connect(pp_addr);
+  return tcp->Connect(MakeAddress(addr, addrlen));
 }
 
 int POSIX::GetSockOpt(int sockfd, int level, int optname,

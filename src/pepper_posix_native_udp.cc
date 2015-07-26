@@ -42,16 +42,15 @@ NativeUDP::NativeUDP(const pp::InstanceHandle &instance_handle) :
 
 NativeUDP::~NativeUDP() {}
 
-int NativeUDP::Bind(const PP_NetAddress_IPv4 &address) {
-  pp::NetAddress net_address(instance_handle_, address);
-  pp::Var string_address = net_address.DescribeAsString(true);
+int NativeUDP::Bind(const pp::NetAddress &address) {
+  pp::Var string_address = address.DescribeAsString(true);
   if (string_address.is_undefined()) {
     Log("NativeUDP::Bind() Address is bogus.");
     // TODO: Return something appropriate.
     return false;
   }
 
-  int32_t result = socket_->Bind(net_address, pp::CompletionCallback());
+  int32_t result = socket_->Bind(address, pp::CompletionCallback());
   if (result == PP_OK) {
     bound_ = true;
     pp::Module::Get()->core()->CallOnMainThread(
@@ -63,20 +62,19 @@ int NativeUDP::Bind(const PP_NetAddress_IPv4 &address) {
 
 ssize_t NativeUDP::Send(
     const vector<char> &buf, int flags,
-    const PP_NetAddress_IPv4 &address) {
+    const pp::NetAddress &address) {
   if (!bound_) {
-    PP_NetAddress_IPv4 any_address;
+    PP_NetAddress_IPv6 any_address;
     memset(&any_address, 0, sizeof(any_address));
-    int result = Bind(any_address);
+    int result = Bind(pp::NetAddress(instance_handle_, any_address));
     if (result != 0) {
       Log("NativeUDP::Send(): Bind failed with %d", result);
       return 0;
     }
   }
 
-  pp::NetAddress net_address(instance_handle_, address);
   int32_t result = socket_->SendTo(
-      buf.data(), buf.size(), net_address, pp::CompletionCallback());
+      buf.data(), buf.size(), address, pp::CompletionCallback());
   if (result < 0) {
     switch (result) {
       case PP_ERROR_ADDRESS_UNREACHABLE:
@@ -110,15 +108,7 @@ void NativeUDP::Received(int32_t result, const pp::NetAddress &address) {
     Log("NativeUDP::Received(%d, ...): Negative result; bailing.", result);
     return;
   }
-
-  PP_NetAddress_IPv4 ipv4_addr;
-  if (!address.DescribeAsIPv4Address(&ipv4_addr)) {
-    // TODO: Implement IPv6 support, once mosh itself supports it.
-    Log("NativeUDP::Received(): Failed to convert address.");
-    return;
-  }
-  AddPacket(make_unique<MsgHdr>(ipv4_addr, result, receive_buffer_));
-
+  AddPacket(make_unique<MsgHdr>(address, result, receive_buffer_));
   // Await another packet.
   StartReceive(0);
 }

@@ -31,20 +31,48 @@ using std::unique_ptr;
 using std::vector;
 
 MsgHdr::MsgHdr(
-    const PP_NetAddress_IPv4& ipv4_addr, int32_t size, const char* const buf) {
+    const pp::NetAddress& addr, int32_t size, const char* const buf) {
   memset(this, 0, sizeof(*this));
 
-  struct sockaddr_in *addr =
-      (struct sockaddr_in *)malloc(sizeof(struct sockaddr_in));
-  addr->sin_family = AF_INET;
-  addr->sin_port = ipv4_addr.port;
-  uint32_t a = 0;
-  for (int i = 0; i < 4; ++i) {
-    a |= ipv4_addr.addr[i] << (8*i);
+  switch (addr.GetFamily()) {
+   case PP_NETADDRESS_FAMILY_IPV4:
+     {
+       PP_NetAddress_IPv4 ipv4_addr;
+       assert(addr.DescribeAsIPv4Address(&ipv4_addr));
+       struct sockaddr_in *saddr =
+         (struct sockaddr_in *)malloc(sizeof(struct sockaddr_in));
+       saddr->sin_family = AF_INET;
+       saddr->sin_port = ipv4_addr.port;
+       uint32_t a = 0;
+       for (int i = 0; i < 4; ++i) {
+         a |= ipv4_addr.addr[i] << (8*i);
+       }
+       saddr->sin_addr.s_addr = a;
+       msg_name = saddr;
+       msg_namelen = sizeof(*saddr);
+     }
+    break;
+
+   case PP_NETADDRESS_FAMILY_IPV6:
+    {
+      PP_NetAddress_IPv6 ipv6_addr;
+      assert(addr.DescribeAsIPv6Address(&ipv6_addr));
+      struct sockaddr_in6 *saddr =
+        (struct sockaddr_in6 *)malloc(sizeof(struct sockaddr_in6));
+      saddr->sin6_family = AF_INET6;
+      saddr->sin6_port = ipv6_addr.port;
+      memcpy(saddr->sin6_addr.s6_addr, ipv6_addr.addr,
+          sizeof(saddr->sin6_addr.s6_addr));
+      msg_name = saddr;
+      msg_namelen = sizeof(*saddr);
+    }
+    break;
+
+   default:
+    // Unsupported address family.
+    assert(false);
+    break;
   }
-  addr->sin_addr.s_addr = a;
-  msg_name = addr;
-  msg_namelen = sizeof(*addr);
 
   msg_iov = (struct iovec *)malloc(sizeof(struct iovec));
   msg_iovlen = 1;
@@ -116,14 +144,14 @@ void UDP::AddPacket(unique_ptr<MsgHdr> message) {
 }
 
 ssize_t StubUDP::Send(
-    const vector<char> &buf, int flags, const PP_NetAddress_IPv4 &addr) {
+    const vector<char> &buf, int flags, const pp::NetAddress &addr) {
   Log("StubUDP::Send(): size=%d", buf.size());
   Log("StubUDP::Send(): Pretending we received something.");
   AddPacket(nullptr);
   return buf.size();
 }
 
-int StubUDP::Bind(const PP_NetAddress_IPv4 &address) {
+int StubUDP::Bind(const pp::NetAddress &address) {
   Log("StubBind()");
   return 0;
 }

@@ -212,33 +212,44 @@ int fileno(FILE *stream) {
 // Fake getaddrinfo(), as we expect it will always be an IP address and numeric
 // port.
 int getaddrinfo(const char *node, const char *service,
-    const struct addrinfo *hints,
-    struct addrinfo **res) {
+    const struct addrinfo *hints, struct addrinfo **res) {
   if (hints->ai_flags & AI_CANONNAME) {
     Log("getaddrinfo(): AI_CANONNAME not implemented.");
     return EAI_FAIL;
   }
 
-  // Parse node (aka hostname) as dotted-quad IPv4 address.
-  int part[4];
-  sscanf(node, "%3d.%3d.%3d.%3d", &part[0], &part[1], &part[2], &part[3]);
-  uint32_t ip_addr = 0;
-  for (int i = 0; i < 4; ++i) {
-    ip_addr |= part[i] << (8*i);
-  }
+  struct sockaddr *addr;
+  size_t addr_size;
+  uint32_t ip4_addr;
+  unsigned char ip6_addr[16];
 
-  // TODO: Handle IPv6 when Mosh does.
-  struct sockaddr_in *addr = new sockaddr_in;
-  addr->sin_family = AF_INET;
-  addr->sin_port = 0;
-  addr->sin_addr.s_addr = ip_addr;
-  addr->sin_port = htons(atoi(service));
+  if (inet_pton(AF_INET, node, &ip4_addr) == 1) {
+    struct sockaddr_in *addr_in = new sockaddr_in;
+    memset(addr_in, 0, sizeof(*addr_in));
+    addr_in->sin_family = AF_INET;
+    addr_in->sin_addr.s_addr = ip4_addr;
+    addr_in->sin_port = htons(atoi(service));
+    addr = (struct sockaddr *)addr_in;
+    addr_size = sizeof(*addr_in);
+  } else if (inet_pton(AF_INET6, node, &ip6_addr) == 1) {
+    struct sockaddr_in6 *addr_in = new sockaddr_in6;
+    memset(addr_in, 0, sizeof(*addr_in));
+    addr_in->sin6_family = AF_INET6;
+    memcpy(addr_in->sin6_addr.s6_addr, ip6_addr,
+        sizeof(addr_in->sin6_addr.s6_addr));
+    addr_in->sin6_port = htons(atoi(service));
+    addr = (struct sockaddr *)addr_in;
+    addr_size = sizeof(*addr_in);
+  } else {
+    Log("getaddrinfo(): Cannot parse address.");
+    return EAI_FAIL;
+  }
 
   struct addrinfo *ai = new struct addrinfo;
   memset(ai, 0, sizeof(*ai));
-  ai->ai_family = AF_INET;
-  ai->ai_addrlen = sizeof(*addr);
-  ai->ai_addr = (struct sockaddr *)addr;
+  ai->ai_addr = addr;
+  ai->ai_addrlen = addr_size;
+  ai->ai_family = addr->sa_family;
   if (hints != nullptr) {
     ai->ai_protocol = hints->ai_protocol;
     ai->ai_socktype = hints->ai_socktype;

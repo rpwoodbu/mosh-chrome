@@ -93,12 +93,12 @@ void TCP::AddData(const void *buf, size_t count) {
   target_->UpdateRead(true);
 }
 
-int StubTCP::Bind(const PP_NetAddress_IPv4 &address) {
+int StubTCP::Bind(const pp::NetAddress &address) {
   Log("StubBind()");
   return 0;
 }
 
-int StubTCP::Connect(const PP_NetAddress_IPv4 &address) {
+int StubTCP::Connect(const pp::NetAddress &address) {
   Log("StubConnect()");
   return 0;
 }

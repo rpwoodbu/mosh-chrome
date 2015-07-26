@@ -37,12 +37,12 @@ class NativeUDP : public UDP {
   ~NativeUDP() override;
 
   // Bind replaces bind().
-  int Bind(const PP_NetAddress_IPv4 &address) override;
+  int Bind(const pp::NetAddress &address) override;
 
   // Send replaces sendto. Usage is similar, but tweaked for C++.
   ssize_t Send(
       const std::vector<char> &buf, int flags,
-      const PP_NetAddress_IPv4 &address) override;
+      const pp::NetAddress &address) override;
 
   // Close replaces close().
   int Close() override;

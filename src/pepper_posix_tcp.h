@@ -31,7 +31,7 @@
 #include <sys/types.h>
 #include <sys/uio.h>
 
-#include "ppapi/c/ppb_net_address.h"
+#include "ppapi/cpp/net_address.h"
 
 namespace PepperPOSIX {
 
@@ -58,10 +58,10 @@ class TCP : public ReadWriter {
   virtual ssize_t Send(const void *buf, size_t count, int flags) = 0;
 
   // Bind replaces bind().
-  virtual int Bind(const PP_NetAddress_IPv4 &address) = 0;
+  virtual int Bind(const pp::NetAddress &address) = 0;
 
   // Connect replaces connect().
-  virtual int Connect(const PP_NetAddress_IPv4 &address) = 0;
+  virtual int Connect(const pp::NetAddress &address) = 0;
 
   // Connection status, errno-style.
   int connection_errno_ = 0;
@@ -88,8 +88,8 @@ class StubTCP : public TCP {
   ~StubTCP() override {};
 
   ssize_t Send(const void *buf, size_t count, int flags) override;
-  int Bind(const PP_NetAddress_IPv4 &address) override;
-  int Connect(const PP_NetAddress_IPv4 &address) override;
+  int Bind(const pp::NetAddress &address) override;
+  int Connect(const pp::NetAddress &address) override;
  private:
   // Disable copy and assignment.
   StubTCP(const StubTCP &) = delete;
