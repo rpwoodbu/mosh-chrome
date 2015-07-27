@@ -352,8 +352,14 @@ bool MoshClientInstance::Init(
 }
 
 void MoshClientInstance::Launch(int32_t result) {
+  if (result == PP_ERROR_NAME_NOT_RESOLVED) {
+    Error("Could not resolve the hostname. "
+        "Check the spelling and the address family.");
+    Output(TYPE_EXIT, "");
+    return;
+  }
   if (result != PP_OK) {
-    Error("Resolution failed: %d", result);
+    Error("Name resolution failed with unexpected error code: %d", result);
     Output(TYPE_EXIT, "");
     return;
   }
