@@ -44,6 +44,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             <td>Hostname or IP address:</td>
             <td><input id="addr" type="text" disabled></td>
           </tr>
+          <tr>
+            <td>Address family:</td>
+            <td>
+              <select id="family" disabled>
+                <option value="IPv4" selected>IPv4</option>
+                <option value="IPv6">IPv6</option>
+              </select>
+            </td>
+          </tr>
           <tr id="key-row" hidden="true">
             <td>MOSH_KEY</td>
             <td><input id="key" type="password"></td>

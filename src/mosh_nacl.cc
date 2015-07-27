@@ -276,23 +276,21 @@ void MoshClientInstance::Error(const char *format, ...) {
 
 bool MoshClientInstance::Init(
     uint32_t argc, const char *argn[], const char *argv[]) {
-  bool got_addr = false;
-  const char *secret;
+  const char *secret = nullptr;
+  string addr;
+  string family;
   for (int i = 0; i < argc; ++i) {
     string name = argn[i];
     int len = strlen(argv[i]) + 1;
     if (name == "key") {
       secret = argv[i];
     } else if (name == "addr" && addr_ == nullptr) {
-      // TODO: Support IPv6 when Mosh does.
-      const PP_HostResolver_Hint hint = {PP_NETADDRESS_FAMILY_IPV4, 0};
-      // Mosh will launch via this callback when the resolution completes.
-      resolver_.Resolve(argv[i], 0, hint,
-          cc_factory_.NewCallback(&MoshClientInstance::Launch));
-      got_addr = true;
+      addr = argv[i];
     } else if (name == "port" && port_ == nullptr) {
       port_ = make_unique<char[]>(len);
       strncpy(port_.get(), argv[i], len);
+    } else if (name == "family") {
+      family = argv[i];
     } else if (name == "mode") {
       if (string(argv[i]) == "ssh") {
         ssh_mode_ = true;
@@ -306,7 +304,7 @@ bool MoshClientInstance::Init(
     }
   }
 
-  if (got_addr == false || port_ == nullptr) {
+  if (addr.size() == 0 || port_ == nullptr) {
     Log("Must supply addr and port attributes.");
     return false;
   }
@@ -319,6 +317,19 @@ bool MoshClientInstance::Init(
   } else {
     setenv("MOSH_KEY", secret, 1);
   }
+
+  PP_HostResolver_Hint hint;
+  if (family == "IPv4") {
+    hint = {PP_NETADDRESS_FAMILY_IPV4, 0};
+  } else if (family == "IPv6") {
+    hint = {PP_NETADDRESS_FAMILY_IPV6, 0};
+  } else {
+    Log("Must supply family attribute (IPv4 or IPv6).");
+    return false;
+  }
+  // Mosh will launch via this callback when the resolution completes.
+  resolver_.Resolve(addr.c_str(), 0, hint,
+    cc_factory_.NewCallback(&MoshClientInstance::Launch));
 
   // Setup communications. We keep pointers to |keyboard_| and
   // |window_change_|, as we need to access their specialized methods. |posix_|

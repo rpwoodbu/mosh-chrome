@@ -102,6 +102,7 @@ var kSyncFieldNames = [
   'addr',
   'ssh-port',
   'mosh-port',
+  'family',
   'user',
   'remote-command',
   'server-command',
@@ -149,6 +150,7 @@ function onConnectClick(e) {
   } else {
     args['port'] = form['mosh-port'].value;
   }
+  args['family'] = form['family'].value;
   args['user'] = form['user'].value;
   args['key'] = form['key'].value;
   args['remote-command'] = form['remote-command'].value;
