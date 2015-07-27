@@ -152,6 +152,7 @@ bool SSHLogin::CheckFingerprint() {
   const string server_name = addr_ + ":" + port_;
   const string server_fp = session_->GetPublicKey().MD5();
 
+  printf("Remote ssh host address:\r\n  %s\r\n", server_name.c_str());
   printf("Fingerprint of remote ssh host (MD5):\r\n  %s\r\n",
       server_fp.c_str());
 
@@ -167,7 +168,7 @@ bool SSHLogin::CheckFingerprint() {
     if (stored_fp == server_fp) {
       return true;
     }
-    printf("WARNING!!! Server fingerprint differs! "
+    printf("WARNING!!! Server fingerprint differs for this host! "
         "Possible man-in-the-middle attack.\r\n"
         "Stored fingerprint (MD5):\r\n  %s\r\n", stored_fp.c_str());
     bool result = AskYesNo("Connect anyway, and store new fingerprint?");
