@@ -149,7 +149,12 @@ bool SSHLogin::Start() {
 }
 
 bool SSHLogin::CheckFingerprint() {
-  const string server_name = addr_ + ":" + port_;
+  string server_name;
+  if (addr_.find(':') == string::npos) {
+    server_name = addr_ + ":" + port_;
+  } else {
+    server_name = "[" + addr_ + "]:" + port_;
+  }
   const string server_fp = session_->GetPublicKey().MD5();
 
   printf("Remote ssh host address:\r\n  %s\r\n", server_name.c_str());
