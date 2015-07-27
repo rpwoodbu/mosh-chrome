@@ -329,7 +329,9 @@ nassh.PreferencesEditor.prototype.syncPage = function() {
           onchange = null;
           break;
       }
-      input.type = typeMap[type];
+      if (type != 'object') {
+        input.type = typeMap[type];
+      }
     }
 
     input.name = 'settings';
