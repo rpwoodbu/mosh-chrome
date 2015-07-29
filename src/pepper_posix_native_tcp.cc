@@ -32,7 +32,6 @@ namespace PepperPOSIX {
 
 NativeTCP::NativeTCP(const pp::InstanceHandle &instance_handle) :
     socket_(new pp::TCPSocket(instance_handle)),
-    instance_handle_(instance_handle),
     factory_(this) {}
 
 NativeTCP::~NativeTCP() {}

@@ -70,11 +70,11 @@ ssize_t NativeUDP::Send(
     if (family == PP_NETADDRESS_FAMILY_IPV4) {
       PP_NetAddress_IPv4 any_v4_address;
       memset(&any_v4_address, 0, sizeof(any_v4_address));
-      int result = Bind(pp::NetAddress(instance_handle_, any_v4_address));
+      result = Bind(pp::NetAddress(instance_handle_, any_v4_address));
     } else if (family == PP_NETADDRESS_FAMILY_IPV6) {
       PP_NetAddress_IPv6 any_v6_address;
       memset(&any_v6_address, 0, sizeof(any_v6_address));
-      int result = Bind(pp::NetAddress(instance_handle_, any_v6_address));
+      result = Bind(pp::NetAddress(instance_handle_, any_v6_address));
     } else {
       Log("NativeUDP::Send(): Unknown address family: %d", family);
       return 0;

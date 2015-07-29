@@ -87,7 +87,7 @@ RELEASE:=false
 # NB: --pnacl-exceptions=sjlj seems to upset the debugger to the point of being
 # useless. So when debugging, remove that options. This will cause all
 # exceptions to abort(), unfortunately.
-override CXXFLAGS+=-pthread $(WARNINGS) -I$(NACL_SDK_ROOT)/include \
+override CXXFLAGS+=-pthread -Wall -Werror -I$(NACL_SDK_ROOT)/include \
 	-fno-builtin -std=gnu++11 \
 	--pnacl-exceptions=sjlj -O2
   # When debugging, replace the line above with the line below:

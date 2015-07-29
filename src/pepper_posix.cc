@@ -44,7 +44,7 @@ const int SIGNAL_FD = -1;
 POSIX::POSIX(const pp::InstanceHandle &instance_handle,
     unique_ptr<Reader> std_in, unique_ptr<Writer> std_out,
     unique_ptr<Writer> std_err, unique_ptr<Signal> signal)
-    : instance_handle_(instance_handle), signal_(move(signal)) {
+    : signal_(move(signal)), instance_handle_(instance_handle) {
   if (std_in != nullptr) {
     std_in->target_ = selector_.NewTarget(STDIN_FILENO);
   }

@@ -55,7 +55,6 @@ class NativeTCP : public TCP {
   void Received(int32_t result);
 
   std::unique_ptr<pp::TCPSocket> socket_;
-  const pp::InstanceHandle &instance_handle_;
   char receive_buffer_[TCP_RECEIVE_BUFFER_SIZE];
   pp::CompletionCallbackFactory<NativeTCP> factory_;
   pp::NetAddress address_;
