@@ -55,6 +55,7 @@ class MoshClientInstance : public pp::Instance {
     TYPE_GET_SSH_KEY,
     TYPE_GET_KNOWN_HOSTS,
     TYPE_SET_KNOWN_HOSTS,
+    TYPE_SSH_AGENT,
     TYPE_EXIT,
   };
 
@@ -69,6 +70,12 @@ class MoshClientInstance : public pp::Instance {
 
   // Sends error messages to the Javascript console log and terminal.
   void Error(const char *format, ...);
+
+  // Set the SSH agent socket for use by HandleMessage() to deliver agent data.
+  // Should be set to nullptr once the socket is closed.
+  void set_ssh_agent_socket(class UnixSocketStreamImpl* socket) {
+    ssh_agent_socket_ = socket;
+  }
 
   // Pepper POSIX emulation.
   std::unique_ptr<PepperPOSIX::POSIX> posix_;
@@ -103,6 +110,7 @@ class MoshClientInstance : public pp::Instance {
 
   bool ssh_mode_ = false;
   SSHLogin ssh_login_;
+  class UnixSocketStreamImpl* ssh_agent_socket_ = nullptr;
 
   pp::InstanceHandle instance_handle_ = this;
   // Class POSIX takes ownership of this, but keeping pointer for convenience.

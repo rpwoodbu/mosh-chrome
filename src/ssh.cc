@@ -75,7 +75,7 @@ bool KeyboardInteractive::Answer(const char *answer) {
 }
 
 Session::Session(const string &host, int port, const string &user) :
-    s_(ssh_new()) {
+    s_(ssh_new()), user_(user) {
   SetOption(SSH_OPTIONS_HOST, host);
   SetOption(SSH_OPTIONS_PORT, port);
   SetOption(SSH_OPTIONS_USER, user);
@@ -165,6 +165,11 @@ KeyboardInteractive& Session::AuthUsingKeyboardInteractive() {
 
 bool Session::AuthUsingKey(const Key &key) {
   int result = ssh_userauth_publickey(s_, nullptr, key.key_);
+  return ParseCode(result, SSH_AUTH_SUCCESS);
+}
+
+bool Session::AuthUsingAgent() {
+  int result = ssh_userauth_agent(s_, user_.c_str());
   return ParseCode(result, SSH_AUTH_SUCCESS);
 }
 

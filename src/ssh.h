@@ -182,6 +182,9 @@ class Session : public ResultCode {
   // Auth using a private key. See class Key for how to prepare this object.
   bool AuthUsingKey(const Key &key);
 
+  // Auth using an SSH agent (set environment variable SSH_AUTH_SOCK).
+  bool AuthUsingAgent();
+
   // Gets a new channel. Ownership is retained, thus is valid only for the
   // lifetime of Session. Analog to ssh_channel_new().
   Channel& NewChannel();
@@ -204,6 +207,7 @@ class Session : public ResultCode {
  private:
   ssh_session s_ = nullptr;
   bool connected_ = false;
+  std::string user_;
   std::unique_ptr<Key> key_;
   std::vector<std::unique_ptr<Channel>> channels_;
   std::unique_ptr<KeyboardInteractive> keyboard_interactive_;

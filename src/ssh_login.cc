@@ -91,6 +91,8 @@ bool SSHLogin::Start() {
 
   session_ = make_unique<ssh::Session>(addr_, atoi(port_.c_str()), user_);
   session_->SetOption(SSH_OPTIONS_TIMEOUT, 30); // Extend connection timeout to 30s.
+  // Uncomment below for lots of debugging output.
+  //session_->SetOption(SSH_OPTIONS_LOG_VERBOSITY, 30);
 
   if (session_->Connect() == false) {
     fprintf(stderr, "Could not connect via ssh: %s\r\n",
@@ -306,6 +308,11 @@ bool SSHLogin::DoInteractiveAuth() {
 }
 
 bool SSHLogin::DoPublicKeyAuth() {
+  // First try to authenticate with an SSH agent, if desired.
+  if (use_agent_ && session_->AuthUsingAgent()) {
+    return true;
+  }
+
   for (int tries = RETRIES; tries > 0; --tries) {
     if (key_.size() == 0) {
       printf("No ssh key found.\r\n");

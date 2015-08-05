@@ -98,7 +98,6 @@ class Signal : public File {
   virtual void Handle() = 0;
 };
 
-
 // POSIX implements the top-level POSIX file functionality, allowing easy
 // binding to "unistd.h" functions. As such, the methods bear a great
 // resemblance to those functions.
@@ -161,6 +160,13 @@ class POSIX {
     factories_[filename] = factory;
   }
 
+  // Register a File factory to be called every time a Unix domain socket of
+  // type SOCK_STREAM is created by calling Socket().
+  void RegisterUnixSocketStream(
+      std::function<std::unique_ptr<File> ()> factory) {
+    unix_socket_stream_factory_ = factory;
+  }
+
  private:
   // Returns the next available file descriptor.
   int NextFileDescriptor();
@@ -173,6 +179,8 @@ class POSIX {
   std::map<int, std::unique_ptr<File>> files_;
   // Map of registered files and their File factories.
   std::map<std::string, std::function<std::unique_ptr<File> ()>> factories_;
+  // Factory function for creating Unix domain sockets of type SOCK_STREAM.
+  std::function<std::unique_ptr<File> ()> unix_socket_stream_factory_;
   std::unique_ptr<Signal> signal_;
   Selector selector_;
   const pp::InstanceHandle &instance_handle_;

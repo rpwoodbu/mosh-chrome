@@ -21,6 +21,7 @@
 #include "pepper_posix.h"
 #include "pepper_posix_native_udp.h"
 #include "pepper_posix_native_tcp.h"
+#include "pepper_posix_tcp.h"
 
 #include "make_unique.h"
 
@@ -29,6 +30,8 @@
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <stdio.h>
+#include <sys/socket.h>
+#include <sys/un.h>
 #include <unistd.h>
 
 namespace PepperPOSIX {
@@ -144,16 +147,23 @@ int POSIX::NextFileDescriptor() {
 }
 
 int POSIX::Socket(int domain, int type, int protocol) {
-  if (domain != AF_INET && domain != AF_INET6) {
-    errno = EINVAL;
-    return -1;
-  }
-
   unique_ptr<File> file;
-  if (type == SOCK_DGRAM && (protocol == 0 || protocol == IPPROTO_UDP)) {
-    file = make_unique<NativeUDP>(instance_handle_);
-  } else if (type == SOCK_STREAM && (protocol == 0 || protocol == IPPROTO_TCP)) {
-    file = make_unique<NativeTCP>(instance_handle_);
+
+  if (domain == AF_UNIX && protocol == 0) {
+    if (type == SOCK_STREAM && unix_socket_stream_factory_) {
+      file = unix_socket_stream_factory_();
+    }
+  } else {
+    if (domain != AF_INET && domain != AF_INET6) {
+      errno = EINVAL;
+      return -1;
+    }
+    if (type == SOCK_DGRAM && (protocol == 0 || protocol == IPPROTO_UDP)) {
+      file = make_unique<NativeUDP>(instance_handle_);
+    } else if (
+        type == SOCK_STREAM && (protocol == 0 || protocol == IPPROTO_TCP)) {
+      file = make_unique<NativeTCP>(instance_handle_);
+    }
   }
 
   if (file == nullptr) {
@@ -164,7 +174,7 @@ int POSIX::Socket(int domain, int type, int protocol) {
   int fd = NextFileDescriptor();
   file->target_ = selector_.NewTarget(fd);
   if (type == SOCK_STREAM) {
-    // TCP should not be writable at first.
+    // SOCK_STREAM should not be writable at first.
     file->target_->UpdateWrite(false);
   }
   files_[fd] = move(file);
@@ -459,6 +469,14 @@ int POSIX::FCntl(int fd, int cmd, va_list arg) {
     return 0;
   }
 
+  if (cmd == F_SETFD) {
+    long long_arg = va_arg(arg, long);
+    if (long_arg && FD_CLOEXEC) {
+      // We don't support exec() anyway, so just ignore this.
+      return 0;
+    }
+  }
+
   // Anything we don't explicitly handle or ignore is considered an error, to
   // avoid any potential confusion.
   Log("POSIX::FCntl(): Unsupported cmd/arg");
@@ -471,12 +489,25 @@ int POSIX::Connect(
   if (files_.count(sockfd) == 0) {
     return EBADF;
   }
-  TCP *tcp = dynamic_cast<TCP *>(files_[sockfd].get());
-  if (tcp == nullptr) {
-    errno = EBADF;
-    return -1;
+  File *file = files_[sockfd].get();
+
+  TCP *tcp = dynamic_cast<TCP *>(file);
+  if (tcp != nullptr) {
+    return tcp->Connect(MakeAddress(addr, addrlen));
   }
-  return tcp->Connect(MakeAddress(addr, addrlen));
+
+  UnixSocketStream *unix_socket = dynamic_cast<UnixSocketStream *>(file);
+  if (unix_socket != nullptr) {
+    const struct sockaddr_un* addr_un = (const struct sockaddr_un*)addr;
+    if (addr_un->sun_family != AF_UNIX) {
+      errno = EBADF;
+      return -1;
+    }
+    return unix_socket->Connect(string(addr_un->sun_path));
+  }
+
+  errno = EBADF;
+  return -1;
 }
 
 int POSIX::GetSockOpt(int sockfd, int level, int optname,

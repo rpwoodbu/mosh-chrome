@@ -37,6 +37,9 @@ class SSHLogin {
   // Begin the SSH login session. Returns true iff SSH Login succeeded.
   bool Start();
 
+  bool use_agent() const { return use_agent_; }
+  void set_use_agent(bool use_agent) { use_agent_ = use_agent; }
+
   std::string addr() const { return addr_; }
   void set_addr(const std::string &addr) { addr_ = addr; }
 
@@ -91,6 +94,7 @@ class SSHLogin {
   bool DoPublicKeyAuth();
   bool DoConversation();
 
+  bool use_agent_ = false;
   std::string addr_;
   std::string port_;
   std::string user_;

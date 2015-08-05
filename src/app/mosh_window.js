@@ -76,6 +76,13 @@ mosh.CommandInstance = function(argv) {
 
   // Whether the NaCl module is running.
   this.running_ = false;
+
+  // Port to an SSH agent.
+  this.agentPort_ = null;
+
+  // App ID of an SSH agent.
+  // TODO: Make this a user setting.
+  this.agentAppID_ = 'beknehfpfkghjoafdifaflglpjkojoco';
 };
 
 mosh.CommandInstance.prototype.run = function() {
@@ -119,6 +126,47 @@ mosh.CommandInstance.prototype.run = function() {
   this.moshNaCl_.addEventListener('crash', this.onCrash_.bind(this));
   this.moshNaCl_.addEventListener('progress', this.onProgress_.bind(this));
 
+  this.discoverAgentThenInsertMosh();
+};
+
+mosh.CommandInstance.prototype.discoverAgentThenInsertMosh = function() {
+  this.agentPort_ = chrome.runtime.connect(this.agentAppID_);
+  if (this.agentPort_ === null) {
+    this.moshNaCl_.setAttribute('use-agent', false);
+    this.insertMosh();
+    return;
+  }
+
+  var probeOnMessage = function(message) {
+    // We got a response; there is an agent.
+    this.agentPort_.onMessage.removeListener(probeOnMessage);
+
+    this.agentPort_.onMessage.addListener(function(message) {
+      if (message['type'] !== 'auth-agent@openssh.com') {
+        console.error('Got unexpected message from SSH agent:');
+        console.error(message);
+        return;
+      }
+      this.moshNaCl_.postMessage({'ssh_agent': message['data']});
+    }.bind(this));
+
+    this.moshNaCl_.setAttribute('use-agent', true);
+    this.insertMosh();
+  }.bind(this);
+
+  this.agentPort_.onMessage.addListener(probeOnMessage);
+
+  this.agentPort_.onDisconnect.addListener(function() {
+    this.moshNaCl_.setAttribute('use-agent', false);
+    this.insertMosh();
+  }.bind(this));
+
+  // To probe for an agent, post an empty message just to get a response or a
+  // disconnection.
+  this.agentPort_.postMessage({'type':'auth-agent@openssh.com','data':[0]});
+};
+
+mosh.CommandInstance.prototype.insertMosh = function() {
   this.io.print("Loading NaCl module (takes a while the first time" +
       " after an update).\r\n");
   document.body.insertBefore(this.moshNaCl_, document.body.firstChild);
@@ -172,6 +220,8 @@ mosh.CommandInstance.prototype.onMessage_ = function(e) {
     var j = JSON.stringify(param);
     param = JSON.parse(j);
     chrome.storage.sync.set(param);
+  } else if (type == 'ssh-agent') {
+    this.sendToAgent_(data);
   } else if (type == 'exit') {
     this.exit_('Mosh has exited.');
   } else {
@@ -227,3 +277,12 @@ mosh.CommandInstance.prototype.exit_ = function(output) {
   this.io.print('Press "x" to close the window.\r\n');
   this.running_ = false;
 };
+
+// Send data to an SSH agent.
+mosh.CommandInstance.prototype.sendToAgent_ = function(data) {
+  var message = {
+    'type': 'auth-agent@openssh.com',
+    'data': data
+  };
+  this.agentPort_.postMessage(message);
+}

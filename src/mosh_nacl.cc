@@ -20,11 +20,13 @@
 
 #include "make_unique.h"
 #include "mosh_nacl.h"
+#include "pepper_posix_tcp.h"
 #include "pthread_locks.h"
 
 #include <algorithm>
 #include <deque>
 #include <functional>
+#include <map>
 #include <vector>
 #include <errno.h>
 #include <signal.h>
@@ -38,7 +40,11 @@
 #include "irt.h"
 #include "ppapi/cpp/module.h"
 
+using std::back_inserter;
+using std::copy;
+using std::deque;
 using std::function;
+using std::map;
 using std::move;
 using std::unique_ptr;
 using std::vector;
@@ -54,6 +60,9 @@ static class MoshClientInstance *instance = nullptr;
 // plumbing is in the MoshClientInstance::HandleMessage().
 class Keyboard : public PepperPOSIX::Reader {
  public:
+  Keyboard() = default;
+  ~Keyboard() override = default;
+
   ssize_t Read(void *buf, size_t count) override {
     int num_read = 0;
 
@@ -87,7 +96,7 @@ class Keyboard : public PepperPOSIX::Reader {
 
  private:
   // Queue of keyboard keypresses.
-  std::deque<char> keypresses_; // Guard with keypresses_lock_.
+  deque<char> keypresses_; // Guard with keypresses_lock_.
   pthread::Mutex keypresses_lock_;
 };
 
@@ -95,6 +104,7 @@ class Keyboard : public PepperPOSIX::Reader {
 class Terminal : public PepperPOSIX::Writer {
  public:
   Terminal(MoshClientInstance& instance) : instance_(instance) {}
+  ~Terminal() override = default;
 
   // This has to be defined below MoshClientInstance due to dependence on it.
   ssize_t Write(const void *buf, size_t count) override;
@@ -107,6 +117,7 @@ class Terminal : public PepperPOSIX::Writer {
 class ErrorLog : public PepperPOSIX::Writer {
  public:
   ErrorLog(MoshClientInstance& instance) : instance_(instance) {}
+  ~ErrorLog() override = default;
 
   // This has to be defined below MoshClientInstance due to dependence on it.
   ssize_t Write(const void *buf, size_t count) override;
@@ -119,6 +130,9 @@ class ErrorLog : public PepperPOSIX::Writer {
 // is in MoshClientInstance::HandleMessage();
 class WindowChange : public PepperPOSIX::Signal {
  public:
+  WindowChange() = default;
+  ~WindowChange() override = default;
+
   // Update geometry and send SIGWINCH.
   void Update(int width, int height) {
     if (sigwinch_handler_ != nullptr) {
@@ -153,6 +167,7 @@ class DevURandom : public PepperPOSIX::Reader {
   DevURandom() {
     nacl_interface_query(NACL_IRT_RANDOM_v0_1, &random_, sizeof(random_));
   }
+  ~DevURandom() override = default;
 
   ssize_t Read(void *buf, size_t count) override {
     size_t bytes_read = 0;
@@ -164,10 +179,164 @@ class DevURandom : public PepperPOSIX::Reader {
   struct nacl_irt_random random_;
 };
 
-// DevURandom factory for registration with PepperPOSIX::POSIX.
-unique_ptr<PepperPOSIX::File> DevURandomFactory() {
-  return make_unique<DevURandom>();
-}
+// Packetizer for SSH agent communications.
+class SSHAgentPacketizer {
+ public:
+  SSHAgentPacketizer() = default;
+  SSHAgentPacketizer(const SSHAgentPacketizer&) = delete;
+  SSHAgentPacketizer& operator=(const SSHAgentPacketizer&) = delete;
+
+  // Add data to the packetizer buffer.
+  void AddData(string data) {
+    copy(data.begin(), data.end(), back_inserter(buf_));
+  }
+
+  // Checks to see if ConsumePacket() will return a full packet.
+  bool IsPacketAvailable() const {
+    return buf_.size() >= GetSize() + kHeaderSize_;
+  }
+
+  // Returns one full packet, or an empty vector if one is not available.
+  pp::VarArray ConsumePacket() {
+    pp::VarArray result;
+
+    if (!IsPacketAvailable()) {
+      return result; // Empty string (RVO).
+    }
+
+    const auto size = GetSize();
+    for (int i = 0; i < size; ++i) {
+      result.Set(i, pp::Var(buf_.at(i + kHeaderSize_)));
+    }
+    buf_.erase(buf_.begin(), buf_.begin() + kHeaderSize_ + size);
+    return result;
+  }
+
+  // Generate a packet with size header from a pp::VarArray.
+  static vector<uint8_t> PacketFromArray(const pp::VarArray& data) {
+    vector<uint8_t> v_data;
+    uint32_t size = data.GetLength();
+    v_data.reserve(size + kHeaderSize_);
+
+    v_data.push_back((size >> 24) & 0xff);
+    v_data.push_back((size >> 16) & 0xff);
+    v_data.push_back((size >> 8) & 0xff);
+    v_data.push_back(size & 0xff);
+
+    for (int i = 0; i < size; ++i) {
+      v_data.push_back(static_cast<uint8_t>(data.Get(i).AsInt()));
+    }
+    return v_data;
+  }
+
+ private:
+  // Get the size header value from the buffered packet. Returns zero if the
+  // buffer does not contain enough data for the size header.
+  uint32_t GetSize() const {
+    if (buf_.size() < kHeaderSize_) {
+      return 0;
+    }
+
+    return (static_cast<uint32_t>(buf_[0]) << 24) +
+           (static_cast<uint32_t>(buf_[1]) << 16) +
+           (static_cast<uint32_t>(buf_[2]) << 8) +
+           (static_cast<uint32_t>(buf_[3]));
+  }
+
+  static const int kHeaderSize_ = 4;
+  deque<uint8_t> buf_;
+};
+
+// Implements virtual Unix domain sockets, which is used to connect libssh to
+// an ssh-agent.
+class UnixSocketStreamImpl : public PepperPOSIX::UnixSocketStream {
+ public:
+  UnixSocketStreamImpl() = default;
+  UnixSocketStreamImpl(MoshClientInstance& instance) : instance_(instance) {}
+  ~UnixSocketStreamImpl() override {
+    if (file_type_ == FileType::SSH_AUTH_SOCK) {
+      instance_.set_ssh_agent_socket(nullptr);
+    }
+  }
+
+  ssize_t Send(const void *buf, size_t count, int flags) override {
+    switch (file_type_) {
+     case FileType::UNSET:
+      Log("UnixSocketStreamImpl::Send(): "
+          "Attempted to send to unconnected socket.");
+      errno = ENOTCONN;
+      return -1;
+
+     case FileType::SSH_AUTH_SOCK:
+      {
+        const char* bytes = static_cast<const char*>(buf);
+        agent_packetizer_.AddData(string(bytes, count));
+        if (agent_packetizer_.IsPacketAvailable()) {
+          auto packet = agent_packetizer_.ConsumePacket();
+          instance_.Output(MoshClientInstance::TYPE_SSH_AGENT, packet);
+        }
+        return count;
+      }
+
+     default:
+      ; // Fallthrough.
+    };
+
+    Log("UnixSocketStreamImpl::Send(): Unhandled file type.");
+    errno = EBADF;
+    return -1;
+  }
+
+  int Connect(const string& path) override {
+    if (file_type_ != FileType::UNSET) {
+      Log("UnixSocketStreamImpl::Connect(): Already connected.");
+      errno = EISCONN;
+      return -1;
+    }
+    if (names_to_file_types_.count(path) == 0) {
+      Log("UnixSocketStreamImpl::Connect(): Filename %s unsupported.",
+          path.c_str());
+      errno = EACCES;
+      return -1;
+    }
+    // As a cheap hack to support blocking mode, valid calls to Connect()
+    // always "succeed". The connection will already be established in
+    // JavaScript, or agent support will be disabled.
+    file_type_ = names_to_file_types_.at(path);
+    if (file_type_ == FileType::SSH_AUTH_SOCK) {
+      instance_.set_ssh_agent_socket(this);
+    }
+    target_->UpdateWrite(true);
+    return 0;
+  }
+
+  int Bind(const string& path) override {
+    // Not implemented.
+    errno = EACCES;
+    return -1;
+  }
+
+  void HandleInput(const pp::VarArray& data) {
+    vector<uint8_t> v_data = SSHAgentPacketizer::PacketFromArray(data);
+    AddData(v_data.data(), v_data.size());
+  }
+
+ private:
+  enum class FileType {
+    UNSET,
+    SSH_AUTH_SOCK,
+  };
+
+  static const map<string, FileType> names_to_file_types_;
+  FileType file_type_ = FileType::UNSET;
+  SSHAgentPacketizer agent_packetizer_;
+  MoshClientInstance& instance_;
+};
+
+const map<string, UnixSocketStreamImpl::FileType>
+    UnixSocketStreamImpl::names_to_file_types_ = {
+  { "agent", UnixSocketStreamImpl::FileType::SSH_AUTH_SOCK },
+};
 
 MoshClientInstance::MoshClientInstance(PP_Instance instance) :
     pp::Instance(instance), resolver_(instance_handle_), cc_factory_(this) {
@@ -213,6 +382,10 @@ void MoshClientInstance::HandleMessage(const pp::Var &var) {
     // called, which precipitated Output(TYPE_GET_KNOWN_HOSTS, ""), so now we
     // are ready to do the SSH login.
     LaunchSSHLogin();
+  } else if (dict.HasKey("ssh_agent")) {
+    if (ssh_agent_socket_ != nullptr) {
+      ssh_agent_socket_->HandleInput(pp::VarArray(dict.Get("ssh_agent")));
+    }
   } else {
     Log("HandleMessage(): Got a message of an unexpected type.");
   }
@@ -238,6 +411,9 @@ void MoshClientInstance::Output(OutputType t, const pp::Var &data) {
     break;
    case TYPE_SET_KNOWN_HOSTS:
     type = "sync_set_known_hosts";
+    break;
+   case TYPE_SSH_AGENT:
+    type = "ssh-agent";
     break;
    case TYPE_EXIT:
     type = "exit";
@@ -301,6 +477,8 @@ bool MoshClientInstance::Init(
       ssh_login_.set_remote_command(argv[i]);
     } else if (name == "server-command") {
       ssh_login_.set_server_command(argv[i]);
+    } else if (name == "use-agent") {
+      ssh_login_.set_use_agent(string(argv[i]) == "true");
     }
   }
 
@@ -345,7 +523,12 @@ bool MoshClientInstance::Init(
      make_unique<Terminal>(*this),
      make_unique<ErrorLog>(*this),
      move(window_change));
-  posix_->RegisterFile("/dev/urandom", DevURandomFactory);
+  posix_->RegisterFile("/dev/urandom", []() {
+      return make_unique<DevURandom>();
+  });
+  posix_->RegisterUnixSocketStream([this]() {
+      return make_unique<UnixSocketStreamImpl>(*this);
+  });
 
   // Mosh will launch via the resolution callback (see above).
   return true;
@@ -418,6 +601,7 @@ void *MoshClientInstance::MoshThread(void *data) {
 void MoshClientInstance::LaunchSSHLogin() {
   ssh_login_.set_addr(string(addr_.get()));
   ssh_login_.set_port(string(port_.get()));
+  setenv("SSH_AUTH_SOCK", "agent", 1); // Connects to UnixSocketStreamImpl.
 
   int thread_err = pthread_create(&thread_, nullptr, SSHLoginThread, this);
   if (thread_err != 0) {

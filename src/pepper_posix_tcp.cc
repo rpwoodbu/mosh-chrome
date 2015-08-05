@@ -24,18 +24,18 @@
 
 namespace PepperPOSIX {
 
-TCP::TCP() { }
+Stream::Stream() { }
 
-TCP::~TCP() { }
+Stream::~Stream() { }
 
-ssize_t TCP::Receive(void *buf, size_t count, int flags) {
+ssize_t Stream::Receive(void *buf, size_t count, int flags) {
   bool peek = false;
   if (flags & MSG_PEEK) {
     peek = true;
     flags &= ~MSG_PEEK;
   }
   if (flags != 0) {
-    Log("TCP::Receive(): Unsupported flag: 0x%x", flags);
+    Log("Stream::Receive(): Unsupported flag: 0x%x", flags);
   }
   if (connection_errno_ != 0) {
     errno = ECONNABORTED;
@@ -44,7 +44,7 @@ ssize_t TCP::Receive(void *buf, size_t count, int flags) {
 
   pthread::MutexLock m(buffer_lock_);
   if (buffer_.size() == 0) {
-    Log("TCP::Receive(): EWOULDBLOCK");
+    Log("Stream::Receive(): EWOULDBLOCK");
     errno = EWOULDBLOCK;
     return -1;
   }
@@ -71,15 +71,15 @@ ssize_t TCP::Receive(void *buf, size_t count, int flags) {
   return read_count;
 }
 
-ssize_t TCP::Read(void *buf, size_t count) {
+ssize_t Stream::Read(void *buf, size_t count) {
   return Receive(buf, count, 0);
 }
 
-ssize_t TCP::Write(const void *buf, size_t count) {
+ssize_t Stream::Write(const void *buf, size_t count) {
   return Send(buf, count, 0);
 }
 
-void TCP::AddData(const void *buf, size_t count) {
+void Stream::AddData(const void *buf, size_t count) {
   const char *cbuf = (const char *)buf;
 
   {
