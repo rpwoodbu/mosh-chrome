@@ -44,6 +44,10 @@ PROTOBUF_DIR="protobuf-${PROTOBUF_VERSION}"
 PROTOBUF_TAR="${PROTOBUF_DIR}.tar.bz2"
 PROTOBUF_URL="https://github.com/google/protobuf/releases/download/v${PROTOBUF_VERSION}/${PROTOBUF_TAR}"
 
+LIBSSH_DIR="libssh-0.7.1"
+LIBSSH_TAR="${LIBSSH_DIR}.tar.xz"
+LIBSSH_URL="https://red.libssh.org/attachments/download/154/${LIBSSH_TAR}"
+
 INCLUDE_OVERRIDE="$(pwd)/src/include"
 
 FAST=""
@@ -131,6 +135,18 @@ export LD_LIBRARY_PATH="${PROTO_PATH}/.libs"
 export protobuf_CFLAGS=" "
 export protobuf_LIBS=" "
 
+# Get and patch (but not build) libssh.
+if [[ ! -d "build/${LIBSSH_DIR}" ]]; then
+  pushd "build" > /dev/null
+  if [[ ! -f "${LIBSSH_TAR}" ]]; then
+    wget "${LIBSSH_URL}"
+  fi
+  tar -xJf "${LIBSSH_TAR}"
+  cd "${LIBSSH_DIR}"
+  patch -p1 < ../../src/libssh.patch
+  popd > /dev/null
+fi
+
 #export NACL_GLIBC="1"
 
 pushd src > /dev/null
@@ -142,7 +158,7 @@ export TOOLCHAIN="pnacl"
 
 echo "Building packages in NaCl Ports..."
 pushd "${NACL_PORTS}/src" > /dev/null
-make ncurses zlib openssl protobuf libssh
+make ncurses zlib openssl protobuf
 popd > /dev/null
 
 echo "Updating submodules..."
@@ -171,6 +187,19 @@ glibc_compat="${NACL_PREFIX}/include/glibc-compat"
 include_flags="-I${glibc_compat} -I${NACL_SDK_ROOT}/include/pnacl -I${NACL_SDK_ROOT}/include"
 export CFLAGS="${CFLAGS} ${include_flags}"
 export CXXFLAGS="${CXXFLAGS} ${include_flags}"
+
+libssh="build/${LIBSSH_DIR}/build/src/libssh.a"
+if [[ ! -f "${libssh}" ]]; then
+  echo "Building libssh..."
+  pushd "build/${LIBSSH_DIR}" > /dev/null
+  rm -Rf "build"
+  mkdir "build"
+  cd "build"
+  cmake -DPNACL=ON -DWITH_ZLIB=OFF -DWITH_STATIC_LIB=ON -DWITH_SHARED_LIB=OFF -DWITH_EXAMPLES=OFF -DHAVE_GETADDRINFO=ON ..
+  make
+  popd > /dev/null
+  ${RANLIB} "${libssh}"
+fi
 
 if [[ ${FAST} != "fast" ]]; then
   #
