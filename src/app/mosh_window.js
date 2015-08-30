@@ -78,10 +78,6 @@ mosh.CommandInstance = function(argv) {
   this.running_ = false;
 };
 
-mosh.CommandInstance.run = function(argv) {
-  return new nassh.CommandInstance(argv);
-};
-
 mosh.CommandInstance.prototype.run = function() {
   // Useful for console debugging.
   window.mosh_client_ = this;
