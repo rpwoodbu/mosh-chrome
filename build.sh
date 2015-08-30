@@ -143,7 +143,10 @@ if [[ ! -d "build/${LIBSSH_DIR}" ]]; then
   fi
   tar -xJf "${LIBSSH_TAR}"
   cd "${LIBSSH_DIR}"
+  # Apply patch for NACL.
   patch -p1 < ../../src/libssh.patch
+  # Apply patch for SSH certs.
+  patch -p1 < ../../src/libssh-cert.patch
   popd > /dev/null
 fi
 
