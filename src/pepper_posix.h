@@ -59,6 +59,8 @@ class File {
   virtual const bool IsBlocking() { return blocking_; }
   virtual void SetBlocking(bool mode) { blocking_ = mode; }
 
+ protected:
+  friend class POSIX;
   std::unique_ptr<Target> target_;
 
  private:
