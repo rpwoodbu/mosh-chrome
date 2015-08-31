@@ -30,25 +30,29 @@ KeyboardInteractive::KeyboardInteractive(ssh_session& s) : s_(s) {}
 KeyboardInteractive::Status KeyboardInteractive::GetStatus() {
   while (true) {
     int result = ssh_userauth_kbdint(s_, nullptr, nullptr);
-    if (result == SSH_AUTH_SUCCESS) {
-      return kAuthenticated;
+    switch (result) {
+      case SSH_AUTH_SUCCESS:
+        return kAuthenticated;
+      case SSH_AUTH_PARTIAL:
+        return kPartialAuthentication;
+      case SSH_AUTH_DENIED:
+        return kFailed;
+
+      case SSH_AUTH_INFO:
+        current_prompt_ = 0;
+        num_prompts_ = ssh_userauth_kbdint_getnprompts(s_);
+        if (num_prompts_ == 0) {
+          // According to the libssh docs, empty question sets can happen
+          // sometimes. Keep calling ssh_userauth_kbdint().
+          continue;
+        }
+        return kPending;
+
+      default:
+        // We only want to loop back under special situations, so if we got an
+        // unexpected response, there's nothing left to do.
+        break;
     }
-    if (result == SSH_AUTH_PARTIAL) {
-      return kPartialAuthentication;
-    }
-    if (result == SSH_AUTH_INFO) {
-      current_prompt_ = 0;
-      num_prompts_ = ssh_userauth_kbdint_getnprompts(s_);
-      if (num_prompts_ == 0) {
-        // According to the libssh docs, empty question sets can happen
-        // sometimes. Keep calling ssh_userauth_kbdint().
-        continue;
-      }
-      return kPending;
-    }
-    // We only want to loop back under special situations, so if we got to the
-    // bottom, we've done all we can do.
-    break;
   }
 
   return kFailed;
