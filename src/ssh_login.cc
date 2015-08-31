@@ -256,22 +256,36 @@ bool SSHLogin::DoPasswordAuth() {
   return false;
 }
 
+// Formats a string for output. Particularly, adds '\r' after '\n'.
+string FormatForOutput(const string& in) {
+  string out;
+  for (char c : in) {
+    if (c == '\n') {
+      out.append(1, '\r');
+    }
+    out.append(1, c);
+  }
+  return out;
+}
+
 bool SSHLogin::DoInteractiveAuth() {
   ssh::KeyboardInteractive& kbd = session_->AuthUsingKeyboardInteractive();
 
+  bool displayed_instruction = false;
   for (int tries = RETRIES; tries > 0; --tries) {
     ssh::KeyboardInteractive::Status status = kbd.GetStatus();
+    if (kbd.GetInstruction().size() > 0 && !displayed_instruction) {
+      printf("%s\r\n", FormatForOutput(kbd.GetInstruction()).c_str());
+      displayed_instruction = true;  // Don't repeat this when retrying.
+    }
     while (status == ssh::KeyboardInteractive::kPending) {
       if (kbd.GetName().size() > 0) {
         printf("%s\r\n", kbd.GetName().c_str());
       }
-      if (kbd.GetInstruction().size() > 0) {
-        printf("%s\r\n", kbd.GetInstruction().c_str());
-      }
       bool done = false;
       while (!done) {
         char input[INPUT_SIZE];
-        printf("%s", kbd.GetNextPrompt().c_str());
+        printf("%s", FormatForOutput(kbd.GetNextPrompt()).c_str());
         GetKeyboardLine(input, sizeof(input), kbd.IsAnswerEchoed());
         printf("\r\n");
         if (strlen(input) == 0) {

@@ -95,9 +95,7 @@ class KeyboardInteractive {
 
   // Returns the "instruction" string from the server. Must have called
   // GetStatus() first.
-  std::string GetInstruction() {
-    return std::string(ssh_userauth_kbdint_getinstruction(s_));
-  }
+  std::string GetInstruction() const { return instruction_; }
 
   // Returns the next prompt from the server.
   std::string GetNextPrompt();
@@ -124,6 +122,7 @@ class KeyboardInteractive {
   int num_prompts_ = 0;
   int current_prompt_ = 0;
   bool echo_answer_ = false;
+  std::string instruction_;
 
   // Disable copy and assignment.
   KeyboardInteractive(KeyboardInteractive &) = delete;

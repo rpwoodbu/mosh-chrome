@@ -39,6 +39,7 @@ KeyboardInteractive::Status KeyboardInteractive::GetStatus() {
         return kFailed;
 
       case SSH_AUTH_INFO:
+        instruction_ = string(ssh_userauth_kbdint_getinstruction(s_));
         current_prompt_ = 0;
         num_prompts_ = ssh_userauth_kbdint_getnprompts(s_);
         if (num_prompts_ == 0) {
