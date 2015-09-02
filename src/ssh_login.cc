@@ -157,11 +157,12 @@ bool SSHLogin::CheckFingerprint() {
   } else {
     server_name = "[" + addr_ + "]:" + port_;
   }
-  const string server_fp = session_->GetPublicKey().MD5();
+  const ssh::Key& host_key = session_->GetPublicKey();
+  const string server_fp = host_key.MD5();
 
   printf("Remote ssh host address:\r\n  %s\r\n", server_name.c_str());
-  printf("Fingerprint of remote ssh host (MD5):\r\n  %s\r\n",
-      server_fp.c_str());
+  printf("%s key fingerprint of remote ssh host (MD5):\r\n  %s\r\n",
+      host_key.GetKeyType().AsString().c_str(), server_fp.c_str());
 
   const pp::Var stored_fp_var = known_hosts_.Get(server_name);
   if (stored_fp_var.is_undefined()) {

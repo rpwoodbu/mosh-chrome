@@ -216,6 +216,42 @@ class Session : public ResultCode {
   Session &operator=(Session &) = delete;
 };
 
+// Represents a type of ssh key. This is a simple value type.
+class KeyType {
+ public:
+  enum KeyTypeEnum {
+    UNKNOWN=0,
+    DSS,
+    RSA,
+    RSA1,
+    ECDSA,
+    ED25519,
+    DSS_CERT00,
+    RSA_CERT00,
+    DSS_CERT01,
+    RSA_CERT01,
+    ECDSA_SHA2_NISTP256_CERT01,
+    ECDSA_SHA2_NISTP384_CERT01,
+    ECDSA_SHA2_NISTP521_CERT01,
+  };
+
+  KeyType() = default;
+  KeyType(const KeyType&) = default;
+  KeyType& operator=(const KeyType&) = default;
+  ~KeyType() = default;
+
+  KeyType(KeyTypeEnum type);
+
+  // Get a human-readable string representation of the key type.
+  std::string AsString() const;
+
+ private:
+  friend class Key;
+  KeyType(ssh_keytypes_e type) : type_(type) {}
+
+  ssh_keytypes_e type_ = SSH_KEYTYPE_UNKNOWN;
+};
+
 // Represents a key.
 class Key {
  friend class Session;
@@ -233,10 +269,13 @@ class Key {
   // Get the public version of the private key. Only works if a private key is
   // loaded into the current object. Ownership is transferred to the caller.
   // Returns nullptr on error.
-  std::unique_ptr<Key> GetPublicKey();
+  std::unique_ptr<Key> GetPublicKey() const;
 
   // Get key as MD5 hash. Will return an empty string on error.
-  std::string MD5();
+  std::string MD5() const;
+
+  // Get the key type of this key.
+  KeyType GetKeyType() const;
 
  private:
   ssh_key key_ = nullptr;

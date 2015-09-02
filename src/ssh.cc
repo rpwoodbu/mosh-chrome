@@ -185,6 +185,56 @@ Channel& Session::NewChannel() {
   return ref;
 }
 
+KeyType::KeyType(KeyTypeEnum type) {
+  switch (type) {
+    case DSS:
+      type_ = SSH_KEYTYPE_DSS;
+      break;
+    case RSA:
+      type_ = SSH_KEYTYPE_RSA;
+      break;
+    case RSA1:
+      type_ = SSH_KEYTYPE_RSA1;
+      break;
+    case ECDSA:
+      type_ = SSH_KEYTYPE_ECDSA;
+      break;
+    case ED25519:
+      type_ = SSH_KEYTYPE_ED25519;
+      break;
+    case DSS_CERT00:
+      type_ = SSH_KEYTYPE_DSS_CERT00;
+      break;
+    case RSA_CERT00:
+      type_ = SSH_KEYTYPE_RSA_CERT00;
+      break;
+    case DSS_CERT01:
+      type_ = SSH_KEYTYPE_DSS_CERT01;
+      break;
+    case RSA_CERT01:
+      type_ = SSH_KEYTYPE_RSA_CERT01;
+      break;
+    case ECDSA_SHA2_NISTP256_CERT01:
+      type_ = SSH_KEYTYPE_ECDSA_SHA2_NISTP256_CERT01;
+      break;
+    case ECDSA_SHA2_NISTP384_CERT01:
+      type_ = SSH_KEYTYPE_ECDSA_SHA2_NISTP384_CERT01;
+      break;
+    case ECDSA_SHA2_NISTP521_CERT01:
+      type_ = SSH_KEYTYPE_ECDSA_SHA2_NISTP521_CERT01;
+      break;
+
+    case UNKNOWN:  // Fallthrough.
+    default:
+      type_ = SSH_KEYTYPE_UNKNOWN;
+      break;
+  }
+}
+
+string KeyType::AsString() const {
+  return string(ssh_key_type_to_char(type_));
+}
+
 Key::Key() {}
 
 Key::~Key() {
@@ -206,7 +256,7 @@ bool Key::ImportPrivateKey(const string &key, const char *passphrase) {
   return true;
 }
 
-unique_ptr<Key> Key::GetPublicKey() {
+unique_ptr<Key> Key::GetPublicKey() const {
   if (key_ == nullptr) {
     return nullptr;
   }
@@ -220,7 +270,7 @@ unique_ptr<Key> Key::GetPublicKey() {
   return key;
 }
 
-string Key::MD5() {
+string Key::MD5() const {
   if (key_ == nullptr) {
     return string();
   }
@@ -235,6 +285,10 @@ string Key::MD5() {
   string hash(hash_hex.get());
   ssh_clean_pubkey_hash(&hash_buf);
   return hash;
+}
+
+KeyType Key::GetKeyType() const {
+  return KeyType(ssh_key_type(key_));
 }
 
 Channel::Channel(ssh_channel c) : c_(c) {}
