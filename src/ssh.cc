@@ -179,7 +179,8 @@ bool Session::AuthUsingAgent() {
 }
 
 Channel& Session::NewChannel() {
-  auto c = make_unique<Channel>(ssh_channel_new(s_));
+  // Can't use make_unique<>() because of private ctor.
+  auto c = unique_ptr<Channel>(new Channel(ssh_channel_new(s_)));
   auto& ref = *c;
   channels_.push_back(move(c));
   return ref;

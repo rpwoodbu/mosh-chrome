@@ -82,7 +82,11 @@ class KeyboardInteractive {
     kFailed, // Authentication failed.
   };
 
+  KeyboardInteractive() = delete;
   explicit KeyboardInteractive(ssh_session& s);
+  KeyboardInteractive(const KeyboardInteractive&) = delete;
+  KeyboardInteractive& operator=(const KeyboardInteractive&) = delete;
+  ~KeyboardInteractive() = default;
 
   // Returns the current status of keyboard-interactive auth.
   Status GetStatus();
@@ -123,16 +127,15 @@ class KeyboardInteractive {
   int current_prompt_ = 0;
   bool echo_answer_ = false;
   std::string instruction_;
-
-  // Disable copy and assignment.
-  KeyboardInteractive(KeyboardInteractive &) = delete;
-  KeyboardInteractive &operator=(KeyboardInteractive &) = delete;
 };
 
 // Represents an ssh session.
 class Session : public ResultCode {
  public:
+  Session() = delete;
   Session(const std::string &host, int port, const std::string &user);
+  Session(const Session&) = delete;
+  Session& operator=(const Session&) = delete;
   ~Session();
 
   // Gets the human-readable error string from the last call. Analog to
@@ -210,10 +213,6 @@ class Session : public ResultCode {
   std::unique_ptr<Key> key_;
   std::vector<std::unique_ptr<Channel>> channels_;
   std::unique_ptr<KeyboardInteractive> keyboard_interactive_;
-
-  // Disable copy and assignment.
-  Session(Session &) = delete;
-  Session &operator=(Session &) = delete;
 };
 
 // Represents a type of ssh key. This is a simple value type.
@@ -258,6 +257,10 @@ class Key {
 
  public:
   Key();
+  Key(const Key&) = delete;
+  Key& operator=(const Key&) = delete;
+  Key(Key&&) = default;
+  Key& operator=(Key&&) = default;
   ~Key();
 
   // Import a base64 formatted private key. If no passphrase is required, pass
@@ -279,18 +282,16 @@ class Key {
 
  private:
   ssh_key key_ = nullptr;
-
-  // Disable copy and assignment.
-  Key(Key &) = delete;
-  Key &operator=(Key &) = delete;
 };
 
-// Represents an ssh channel. Do not instantiate this yourself; should be
-// obtained via Session::NewChannel().
+// Represents an ssh channel.
 class Channel : public ResultCode {
  public:
-  // Do not call this constructor; use Session::NewChannel().
-  explicit Channel(ssh_channel c);
+  friend class Session;
+
+  Channel() = delete;
+  Channel(const Channel&) = delete;
+  Channel& operator=(const Channel&) = delete;
   ~Channel();
 
   // Execute the command. Analog to ssh_channel_request_exec().
@@ -301,6 +302,8 @@ class Channel : public ResultCode {
   bool Read(std::string *out, std::string *err);
 
  private:
+  explicit Channel(ssh_channel c);
+
   // Opens a session. This is private because it is handled automatically, and
   // should never need to be called by the user.  Analog to
   // ssh_channel_open_session(), but that shouldn't matter to you.
@@ -314,10 +317,6 @@ class Channel : public ResultCode {
   ssh_channel c_ = nullptr;
   // Whether a session has been opened.
   bool session_open_ = false;
-
-  // Disable copy and assignment.
-  Channel(Channel &) = delete;
-  Channel &operator=(Channel &) = delete;
 };
 
 } // namespace ssh
