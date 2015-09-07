@@ -84,6 +84,15 @@ Session::Session(const string &host, int port, const string &user) :
   SetOption(SSH_OPTIONS_HOST, host);
   SetOption(SSH_OPTIONS_PORT, port);
   SetOption(SSH_OPTIONS_USER, user);
+
+  // libssh 0.7.1 seems to be unable to verify ed25519 host keys, and causes
+  // the connection to hosts with such a key to fail. This works around the
+  // issue by removing ed25519 from the list of host keys libssh will prefer.
+  // This list is from libssh's HOSTKEYS (kex.c), with ssh-ed25519 removed.
+  //
+  // TODO: Eliminate this workaround once ed25519 host key verification is fixed.
+  SetOption(SSH_OPTIONS_HOSTKEYS,
+      "ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,ssh-rsa,ssh-dss");
 }
 
 Session::~Session() {
