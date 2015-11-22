@@ -140,6 +140,7 @@ mosh.CommandInstance.prototype.discoverAgentThenInsertMosh = function() {
   var probeOnMessage = function(message) {
     // We got a response; there is an agent.
     this.agentPort_.onMessage.removeListener(probeOnMessage);
+    this.agentPort_.onDisconnect.removeListener(onDisconnect);
 
     this.agentPort_.onMessage.addListener(function(message) {
       if (message['type'] !== 'auth-agent@openssh.com') {
@@ -156,10 +157,14 @@ mosh.CommandInstance.prototype.discoverAgentThenInsertMosh = function() {
 
   this.agentPort_.onMessage.addListener(probeOnMessage);
 
-  this.agentPort_.onDisconnect.addListener(function() {
+  var onDisconnect = function() {
+    this.agentPort_.onMessage.removeListener(probeOnMessage);
+    this.agentPort_.onDisconnect.removeListener(onDisconnect);
     this.moshNaCl_.setAttribute('use-agent', false);
     this.insertMosh();
-  }.bind(this));
+  }.bind(this);
+
+  this.agentPort_.onDisconnect.addListener(onDisconnect);
 
   // To probe for an agent, post an empty message just to get a response or a
   // disconnection.
