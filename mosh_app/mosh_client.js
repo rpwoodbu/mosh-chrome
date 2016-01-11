@@ -108,6 +108,7 @@ var kSyncFieldNames = [
   'user',
   'remote-command',
   'server-command',
+  'mosh-escape-key',
 ];
 
 function loadFields() {
@@ -157,6 +158,7 @@ function onConnectClick(e) {
   args['key'] = form['key'].value;
   args['remote-command'] = form['remote-command'].value;
   args['server-command'] = form['server-command'].value;
+  args['mosh-escape-key'] = form['mosh-escape-key'].value;
   for (var i = 0; i < form['mode'].length; ++i) {
     if (form['mode'][i].checked) {
       args['mode'] = form['mode'][i].value;
@@ -203,6 +205,7 @@ function updateMode(e) {
   var keyRow = document.querySelector('#key-row');
   var remoteCommandRow = document.querySelector('#remote-command-row');
   var serverCommandRow = document.querySelector('#server-command-row');
+  var moshEscapeKeyRow = document.querySelector('#mosh-escape-key-row');
 
   if (sshModeButton.checked) {
     if (sshPortField.value === "") {
@@ -214,6 +217,7 @@ function updateMode(e) {
     keyRow.hidden = true;
     remoteCommandRow.hidden = false;
     serverCommandRow.hidden = false;
+    moshEscapeKeyRow.hidden = false;
   } else {
     if (moshPortField.value === "") {
       moshPortField.value = kMoshDefaultPort;
@@ -224,6 +228,7 @@ function updateMode(e) {
     keyRow.hidden = false;
     remoteCommandRow.hidden = true;
     serverCommandRow.hidden = true;
+    moshEscapeKeyRow.hidden = false;
   }
 }
 
