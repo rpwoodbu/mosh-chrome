@@ -57,6 +57,30 @@ window.onload = function() {
   var form = document.querySelector('#args');
   form.onsubmit = function() { return false; };
 
+  // Add drop-down menu for MOSH_ESCAPE_KEY, listing all ASCII characters from
+  // 0x01 to 0x7F, as well an initial entry "default" to not pass
+  // MOSH_ESCAPE_KEY at all.
+  form['mosh-escape-key'].add(new Option("default", "", true));
+  for (var c = 0x01; c <= 0x7F; ++c) {
+    // For c < 0x20 and c == 0x7F, see
+    // https://en.wikipedia.org/wiki/C0_and_C1_control_codes#C0_.28ASCII_and_derivatives.29
+    var keyName;
+    if (c < 0x20) {
+      keyName = "Ctrl+" + String.fromCharCode(0x40 + c);
+    } else if (c == 0x20) {
+      keyName = "SPACE";
+    } else if (c < 0x7F) {
+      keyName = String.fromCharCode(c);
+    } else {
+      keyName = "Ctrl+?";
+    }
+    form['mosh-escape-key'].add(new Option(
+        keyName,
+        // Value element of <option> element must be HTML-encoded.
+        "&#x" + c.toString(16),
+        false));
+  }
+
   migrateSettings(function() {
     loadFields();
     updateMode();
@@ -108,6 +132,7 @@ var kSyncFieldNames = [
   'user',
   'remote-command',
   'server-command',
+  'mosh-escape-key',
 ];
 
 function loadFields() {
@@ -140,6 +165,12 @@ function saveFields() {
   });
 }
 
+function decodeHtml(html) {
+    var txt = document.createElement("textarea");
+    txt.innerHTML = html;
+    return txt.value;
+}
+
 function onConnectClick(e) {
   saveFields();
   var args = {}
@@ -157,6 +188,10 @@ function onConnectClick(e) {
   args['key'] = form['key'].value;
   args['remote-command'] = form['remote-command'].value;
   args['server-command'] = form['server-command'].value;
+  var decodedMoshEscapeKey = decodeHtml(form['mosh-escape-key'].value);
+  if (decodedMoshEscapeKey !== "") {
+    args['mosh-escape-key'] = decodedMoshEscapeKey;
+  }
   for (var i = 0; i < form['mode'].length; ++i) {
     if (form['mode'][i].checked) {
       args['mode'] = form['mode'][i].value;
@@ -203,6 +238,7 @@ function updateMode(e) {
   var keyRow = document.querySelector('#key-row');
   var remoteCommandRow = document.querySelector('#remote-command-row');
   var serverCommandRow = document.querySelector('#server-command-row');
+  var moshEscapeKeyRow = document.querySelector('#mosh-escape-key-row');
 
   if (sshModeButton.checked) {
     if (sshPortField.value === "") {

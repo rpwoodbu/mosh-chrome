@@ -458,6 +458,7 @@ bool MoshClientInstance::Init(
   const char *secret = nullptr;
   string addr;
   string family;
+  string mosh_escape_key;
   for (int i = 0; i < argc; ++i) {
     string name = argn[i];
     int len = strlen(argv[i]) + 1;
@@ -482,6 +483,8 @@ bool MoshClientInstance::Init(
       ssh_login_.set_server_command(argv[i]);
     } else if (name == "use-agent") {
       ssh_login_.set_use_agent(string(argv[i]) == "true");
+    } else if (name == "mosh-escape-key") {
+      mosh_escape_key = argv[i];
     }
   }
 
@@ -497,6 +500,10 @@ bool MoshClientInstance::Init(
     }
   } else {
     setenv("MOSH_KEY", secret, 1);
+  }
+
+  if (!mosh_escape_key.empty()) {
+    setenv("MOSH_ESCAPE_KEY", mosh_escape_key.c_str(), 1);
   }
 
   PP_HostResolver_Hint hint;
