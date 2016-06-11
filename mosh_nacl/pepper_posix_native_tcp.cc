@@ -40,8 +40,7 @@ int NativeTCP::Bind(const pp::NetAddress &address) {
   pp::Var string_address = address.DescribeAsString(true);
   if (string_address.is_undefined()) {
     Log("NativeTCP::Bind(): Address is bogus.");
-    // TODO: Return something appropriate.
-    return false;
+    return EFAULT;
   }
 
   return socket_->Bind(address, pp::CompletionCallback());
@@ -52,8 +51,7 @@ int NativeTCP::Connect(const pp::NetAddress &address) {
   pp::Var string_address = address_.DescribeAsString(true);
   if (string_address.is_undefined()) {
     Log("NativeTCP::Connect(): Address is bogus.");
-    // TODO: Return something appropriate.
-    return false;
+    return EFAULT;
   }
   if (IsBlocking() == true) {
     Log("NativeTCP::Connect(): Not in non-blocking mode, not implemented!");
