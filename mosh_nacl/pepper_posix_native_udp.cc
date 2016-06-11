@@ -36,7 +36,7 @@ namespace PepperPOSIX {
 using std::vector;
 using util::make_unique;
 
-NativeUDP::NativeUDP(const pp::InstanceHandle &instance_handle) :
+NativeUDP::NativeUDP(const pp::InstanceHandle instance_handle) :
     socket_(new pp::UDPSocket(instance_handle)),
     instance_handle_(instance_handle), factory_(this) {}
 

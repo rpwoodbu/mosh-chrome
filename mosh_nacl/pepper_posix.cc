@@ -44,7 +44,7 @@ using util::make_unique;
 
 const int SIGNAL_FD = -1;
 
-POSIX::POSIX(const pp::InstanceHandle &instance_handle,
+POSIX::POSIX(const pp::InstanceHandle instance_handle,
     unique_ptr<Reader> std_in, unique_ptr<Writer> std_out,
     unique_ptr<Writer> std_err, unique_ptr<Signal> signal)
     : signal_(move(signal)), instance_handle_(instance_handle) {

@@ -109,7 +109,7 @@ class POSIX {
   //
   // Set any of these to the default unique_ptr (nullptr) if not used.
   POSIX(
-      const pp::InstanceHandle &instance_handle,
+      const pp::InstanceHandle instance_handle,
       std::unique_ptr<Reader> std_in,
       std::unique_ptr<Writer> std_out,
       std::unique_ptr<Writer> std_err,
@@ -183,7 +183,7 @@ class POSIX {
   std::function<std::unique_ptr<File> ()> unix_socket_stream_factory_;
   std::unique_ptr<Signal> signal_;
   Selector selector_;
-  const pp::InstanceHandle &instance_handle_;
+  const pp::InstanceHandle instance_handle_;
 
   // Disable copy and assignment.
   POSIX(const POSIX &) = delete;
