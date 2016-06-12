@@ -33,6 +33,8 @@ void PepperResolver::Resolve(
     string domain_name,
     Type type,
     function<void(Error error, vector<string> results)> callback) {
+  CallbackCaller caller(callback);
+
   PP_HostResolver_Hint hint;
   switch (type) {
     case Type::A:
@@ -42,7 +44,7 @@ void PepperResolver::Resolve(
       hint = {PP_NETADDRESS_FAMILY_IPV6, 0};
       break;
     case Type::SSHFP:
-      callback(Error::TYPE_NOT_SUPPORTED, {});
+      caller.Call(Error::TYPE_NOT_SUPPORTED, {});
       return;
     // No default case; all enums accounted for.
   }
@@ -51,18 +53,19 @@ void PepperResolver::Resolve(
       domain_name.c_str(),
       0,
       hint,
-      cc_factory_.NewCallback(&PepperResolver::Callback, callback));
+      cc_factory_.NewCallback(&PepperResolver::Callback, caller.Release()));
 }
 
 void PepperResolver::Callback(
     int32_t result,
     function<void(Error error, vector<string> results)> callback) {
+  CallbackCaller caller(callback);
+
   if (result == PP_ERROR_NAME_NOT_RESOLVED) {
-    callback(Error::NOT_RESOLVED, {});
+    caller.Call(Error::NOT_RESOLVED, {});
     return;
   }
   if (result != PP_OK) {
-    callback(Error::UNKNOWN, {});
     return;
   }
 
@@ -71,5 +74,5 @@ void PepperResolver::Callback(
     results.push_back(
       resolver_.GetNetAddress(i).DescribeAsString(false).AsString());
   }
-  callback(Error::OK, move(results));
+  caller.Call(Error::OK, move(results));
 }

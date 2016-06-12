@@ -46,6 +46,57 @@ class Resolver {
     UNKNOWN,
   };
 
+  // Ensures the callback is always called. If class instance is deleted and
+  // Call() hasn't been called, the callback will be called with a default
+  // error code.
+  class CallbackCaller {
+   public:
+    CallbackCaller() = default;
+    CallbackCaller(
+        std::function<void(Error error, std::vector<std::string> results)> callback)
+      : callback_(callback) {}
+    CallbackCaller(const CallbackCaller&) = delete;
+    CallbackCaller& operator=(const CallbackCaller&) = delete;
+
+    CallbackCaller(CallbackCaller&& orig) {
+      callback_ = orig.Release();
+    }
+
+    CallbackCaller& operator=(CallbackCaller&& orig) {
+      Reset();
+      callback_ = orig.Release();
+      return *this;
+    }
+
+    ~CallbackCaller() {
+      Reset();
+    }
+
+    // Call the callback if there is one, and set this to nullptr.
+    void Reset() {
+      if (callback_ != nullptr) {
+        callback_(Error::UNKNOWN, {});
+      }
+      callback_ = nullptr;
+    }
+
+    // Call the callback. Can only be called once. Afterward, this class will
+    // not call the callback when deleted.
+    void Call(Error error, std::vector<std::string> results) {
+      Release()(error, results);
+    }
+
+    // Release the callback; i.e., do not ever call the callback.
+    std::function<void(Error error, std::vector<std::string> results)> Release() {
+      const auto callback = callback_;
+      callback_ = nullptr;
+      return callback;
+    }
+
+   private:
+    std::function<void(Error error, std::vector<std::string> results)> callback_;
+  };
+
   // Resolve |domain_name| to the given |type|. Returns immediately; calls
   // |callback| with result. If callback's |error| != Error::OK, |results| is
   // empty.
