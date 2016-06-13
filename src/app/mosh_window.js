@@ -94,7 +94,7 @@ mosh.CommandInstance.prototype.run = function() {
   this.io.sendString = this.sendKeyboard_.bind(this);
   this.io.onTerminalResize = this.onTerminalResize_.bind(this);
 
-  // Mosh has no scrollback butter (currently).
+  // Mosh has no scrollback buffer (currently).
   this.io.terminal_.prefs_.set('scrollbar-visible', false);
   // Makes Unicode input work.
   this.io.terminal_.prefs_.set('send-encoding', 'raw');
