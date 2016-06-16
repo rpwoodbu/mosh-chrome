@@ -23,16 +23,11 @@
 
 #include "ppapi/cpp/host_resolver.h"
 
-using std::function;
 using std::move;
 using std::string;
-using std::unique_ptr;
 using std::vector;
 
-void PepperResolver::Resolve(
-    string domain_name,
-    Type type,
-    function<void(Error error, vector<string> results)> callback) {
+void PepperResolver::Resolve(string domain_name, Type type, Callback callback) {
   CallbackCaller caller(callback);
 
   PP_HostResolver_Hint hint;
@@ -44,7 +39,7 @@ void PepperResolver::Resolve(
       hint = {PP_NETADDRESS_FAMILY_IPV6, 0};
       break;
     case Type::SSHFP:
-      caller.Call(Error::TYPE_NOT_SUPPORTED, {});
+      caller.Call(Error::TYPE_NOT_SUPPORTED, Authenticity::INSECURE, {});
       return;
     // No default case; all enums accounted for.
   }
@@ -53,16 +48,15 @@ void PepperResolver::Resolve(
       domain_name.c_str(),
       0,
       hint,
-      cc_factory_.NewCallback(&PepperResolver::Callback, caller.Release()));
+      cc_factory_.NewCallback(
+        &PepperResolver::ResolverCallback, caller.Release()));
 }
 
-void PepperResolver::Callback(
-    int32_t result,
-    function<void(Error error, vector<string> results)> callback) {
+void PepperResolver::ResolverCallback(int32_t result, Callback callback) {
   CallbackCaller caller(callback);
 
   if (result == PP_ERROR_NAME_NOT_RESOLVED) {
-    caller.Call(Error::NOT_RESOLVED, {});
+    caller.Call(Error::NOT_RESOLVED, Authenticity::INSECURE, {});
     return;
   }
   if (result != PP_OK) {
@@ -74,5 +68,5 @@ void PepperResolver::Callback(
     results.push_back(
       resolver_.GetNetAddress(i).DescribeAsString(false).AsString());
   }
-  caller.Call(Error::OK, move(results));
+  caller.Call(Error::OK, Authenticity::INSECURE, move(results));
 }

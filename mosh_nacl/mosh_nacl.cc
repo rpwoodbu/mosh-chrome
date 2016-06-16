@@ -532,11 +532,14 @@ bool MoshClientInstance::Init(
   }
   // Mosh will launch via this callback when the resolution completes.
   resolver_->Resolve(
-    move(addr),
-    type,
-    [this](Resolver::Error error, vector<string> results) {
-      Launch(error, move(results));
-    });
+      move(addr),
+      type,
+      [this](
+          Resolver::Error error,
+          Resolver::Authenticity authenticity,
+          vector<string> results) {
+        Launch(error, authenticity, move(results));
+      });
 
   // Setup communications. We keep pointers to |keyboard_| and
   // |window_change_|, as we need to access their specialized methods. |posix_|
@@ -564,7 +567,17 @@ bool MoshClientInstance::Init(
 }
 
 void MoshClientInstance::Launch(
-    Resolver::Error error, vector<string> results) {
+    Resolver::Error error,
+    Resolver::Authenticity authenticity,
+    vector<string> results) {
+  switch (authenticity) {
+    case Resolver::Authenticity::AUTHENTIC:
+      Log("Authentic name lookup.");
+      break;
+    case Resolver::Authenticity::INSECURE:
+      Log("Insecure name lookup.");
+      break;
+  };
   if (error == Resolver::Error::NOT_RESOLVED) {
     Error("Could not resolve the hostname. "
         "Check the spelling and the address family.");

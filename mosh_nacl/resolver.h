@@ -31,7 +31,7 @@ class Resolver {
   Resolver& operator=(Resolver&&) = default;
   virtual ~Resolver() = default;
 
-  // Data type.
+  // RRtype.
   enum class Type {
     A,
     AAAA,
@@ -46,15 +46,39 @@ class Resolver {
     UNKNOWN,
   };
 
+  // Whether the result is authentic.
+  enum class Authenticity {
+    // Verified authentic.
+    AUTHENTIC,
+    // Authenticity cannot be verified, because the zone is not secure (i.e.,
+    // not DNSSEC). NB: A secure zone will never yield INSECURE; expect an
+    // error instead.
+    INSECURE,
+  };
+
+  // Type of the callback function.
+  using Callback = std::function<void(
+      Error error,
+      Authenticity authenticity,
+      std::vector<std::string> results)>;
+
+  // Resolve |domain_name| to the given |type|. Returns immediately; calls
+  // |callback| with result. If callback's |error| != Error::OK, |results| is
+  // empty.
+  //
+  // |domain_name| is taken by value as a stable copy is needed. Callers can
+  // std::move() it if desired for efficiency.
+  virtual void Resolve(
+      std::string domain_name, Type type, Callback callback) = 0;
+
+ protected:
   // Ensures the callback is always called. If class instance is deleted and
   // Call() hasn't been called, the callback will be called with a default
   // error code.
   class CallbackCaller {
    public:
     CallbackCaller() = default;
-    CallbackCaller(
-        std::function<void(Error error, std::vector<std::string> results)> callback)
-      : callback_(callback) {}
+    CallbackCaller(Callback callback) : callback_(callback) {}
     CallbackCaller(const CallbackCaller&) = delete;
     CallbackCaller& operator=(const CallbackCaller&) = delete;
 
@@ -75,38 +99,27 @@ class Resolver {
     // Call the callback if there is one, and set this to nullptr.
     void Reset() {
       if (callback_ != nullptr) {
-        callback_(Error::UNKNOWN, {});
+        callback_(Error::UNKNOWN, Authenticity::INSECURE, {});
       }
       callback_ = nullptr;
     }
 
     // Call the callback. Can only be called once. Afterward, this class will
     // not call the callback when deleted.
-    void Call(Error error, std::vector<std::string> results) {
-      Release()(error, results);
+    void Call(Error error, Authenticity authenticity, std::vector<std::string> results) {
+      Release()(error, authenticity, results);
     }
 
     // Release the callback; i.e., do not ever call the callback.
-    std::function<void(Error error, std::vector<std::string> results)> Release() {
+    Callback Release() {
       const auto callback = callback_;
       callback_ = nullptr;
       return callback;
     }
 
    private:
-    std::function<void(Error error, std::vector<std::string> results)> callback_;
+    Callback callback_;
   };
-
-  // Resolve |domain_name| to the given |type|. Returns immediately; calls
-  // |callback| with result. If callback's |error| != Error::OK, |results| is
-  // empty.
-  //
-  // |domain_name| is taken by value as a stable copy is needed. Callers can
-  // std::move() it if desired for efficiency.
-  virtual void Resolve(
-      std::string domain_name,
-      Type type,
-      std::function<void(Error error, std::vector<std::string> results)> callback) = 0;
 };
 
 #endif // RESOLVER_H

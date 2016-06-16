@@ -29,7 +29,6 @@
 #include "ppapi/cpp/url_request_info.h"
 #include "ppapi/cpp/url_response_info.h"
 
-using std::function;
 using std::move;
 using std::string;
 using std::unique_ptr;
@@ -81,10 +80,7 @@ string TypeToRRtypeStr(Resolver::Type type) {
 
 } // anonymous namespace
 
-void GPDNSResolver::Resolve(
-    string domain_name,
-    Type type,
-    function<void(Error error, vector<string> results)> callback) {
+void GPDNSResolver::Resolve(string domain_name, Type type, Callback callback) {
   // Query is self-deleting.
   auto* query = new Query(
       instance_handle_, move(domain_name), type, CallbackCaller(callback));
@@ -95,7 +91,7 @@ void GPDNSResolver::Query::Run() {
   unique_ptr<Query> deleter(this);
 
   if (IsNetworkAddress(domain_name_)) {
-    caller_.Call(Error::OK, {domain_name_});
+    caller_.Call(Error::OK, Authenticity::INSECURE, {domain_name_});
     return;
   }
 
@@ -175,10 +171,14 @@ void GPDNSResolver::Query::ProcessResponse(
     return;
   }
 
+  auto authenticity = parsed_json.get("AD", false).asBool()
+      ? Authenticity::AUTHENTIC
+      : Authenticity::INSECURE;
+
   const Json::Value answers = parsed_json["Answer"];
   if (answers.isNull()) {
     // No answer. Does not exist.
-    caller_.Call(Error::NOT_RESOLVED, {});
+    caller_.Call(Error::NOT_RESOLVED, authenticity, {});
     return;
   }
 
@@ -203,9 +203,9 @@ void GPDNSResolver::Query::ProcessResponse(
     // NODATA response. Normally there's just an empty "Answer" section, but in
     // some cases (e.g., CNAME), there may be answers, just for different
     // RRtypes.
-    caller_.Call(Error::NOT_RESOLVED, {});
+    caller_.Call(Error::NOT_RESOLVED, authenticity, {});
     return;
   }
 
-  caller_.Call(Error::OK, move(results));
+  caller_.Call(Error::OK, authenticity, move(results));
 }

@@ -31,23 +31,19 @@
 class PepperResolver : public Resolver {
  public:
   PepperResolver() = delete;
-  PepperResolver(pp::InstanceHandle handle) : resolver_(handle), cc_factory_(this) {}
+  PepperResolver(pp::InstanceHandle handle) :
+      resolver_(handle), cc_factory_(this) {}
   PepperResolver(const PepperResolver&) = delete;
   PepperResolver& operator=(const PepperResolver&) = delete;
   PepperResolver(PepperResolver&&) = default;
   PepperResolver& operator=(PepperResolver&&) = default;
   virtual ~PepperResolver() = default;
 
-  void Resolve(
-      std::string domain_name,
-      Type type,
-      std::function<void(Error error, std::vector<std::string> results)> callback) override;
+  void Resolve(std::string domain_name, Type type, Callback callback) override;
 
  private:
   // Method that |resolver_| will callback.
-  void Callback(
-      int32_t result,
-      std::function<void(Error error, std::vector<std::string> results)> callback);
+  void ResolverCallback(int32_t result, Callback callback);
 
   pp::HostResolver resolver_;
   pp::CompletionCallbackFactory<PepperResolver> cc_factory_;

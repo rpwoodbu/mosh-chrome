@@ -40,10 +40,7 @@ class GPDNSResolver : public Resolver {
   GPDNSResolver& operator=(GPDNSResolver&&) = default;
   virtual ~GPDNSResolver() = default;
 
-  void Resolve(
-      std::string domain_name,
-      Type type,
-      std::function<void(Error error, std::vector<std::string> results)> callback) override;
+  void Resolve(std::string domain_name, Type type, Callback callback) override;
 
  private:
   // Encapsulates data and processing for a single query. Class is self-deleting.

@@ -86,7 +86,10 @@ class MoshClientInstance : public pp::Instance {
 
  private:
   // Launcher that is called as a callback by |resolver_|.
-  void Launch(Resolver::Error error, std::vector<std::string> results);
+  void Launch(
+     Resolver::Error error,
+     Resolver::Authenticity authenticity,
+     std::vector<std::string> results);
 
   // Launches Mosh in a new thread. Must take one argument to be used as a
   // completion callback.
