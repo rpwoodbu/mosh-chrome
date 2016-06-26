@@ -175,6 +175,7 @@ cc_library(
     deps = [
         ":mosh_nacl_hdr",
         ":ssh_lib",
+        ":sshfp_record_lib",
         "@nacl_sdk//:pepper_lib",
     ],
 )

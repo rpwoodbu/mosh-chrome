@@ -19,6 +19,7 @@
 
 #include "make_unique.h"
 #include "mosh_nacl.h"
+#include "sshfp_record.h"
 
 #include <functional>
 #include <future>
@@ -234,6 +235,7 @@ bool SSHLogin::Resolve() {
       case Resolver::Authenticity::INSECURE:
         printf("Unauthenticated SSHFP fingerprint record(s) in DNS;"
             " ignoring.\r\n");
+        resolved_fp_.clear();
         break;
     }
   }
@@ -249,13 +251,35 @@ bool SSHLogin::CheckFingerprint() {
   } else {
     server_name = "[" + host_ + "]:" + port_;
   }
-  const ssh::Key& host_key = session_->GetPublicKey();
-  const string server_fp = host_key.MD5();
-
   printf("Remote ssh host name/address:\r\n  %s\r\n", server_name.c_str());
+
+  const ssh::Key& host_key = session_->GetPublicKey();
+
+  // First check key against SSHFP record(s) (if any).
+  if (!resolved_fp_.empty()) {
+    SSHFPRecord sshfp;
+    if (!sshfp.Parse(resolved_fp_)) {
+      fprintf(stderr, "Authenticated SSHFP DNS record(s) are malformed!\r\n");
+      // Allow to fallthrough to get the diagnostics at the end. Malformed
+      // records will not validate, so this is OK.
+    }
+    if (sshfp.IsValid(host_key)) {
+      return true;
+    }
+    fprintf(stderr,
+        "Authenticated SSHFP DNS record(s) do not validate the host key!\r\n"
+        "Likely man-in-the-middle attack or misconfiguration.\r\n"
+        "SSHFP records(s) are:\r\n");
+    for (const auto& record : resolved_fp_) {
+      fprintf(stderr, "  %s\r\n", record.c_str());
+    }
+    return false;
+  }
+
+  // No SSHFP records. Use sync'd database of fingerprints to validate host.
+  const string server_fp = host_key.MD5();
   printf("%s key fingerprint of remote ssh host (MD5):\r\n  %s\r\n",
       host_key.GetKeyType().AsString().c_str(), server_fp.c_str());
-
   const pp::Var stored_fp_var = known_hosts_.Get(server_name);
   if (stored_fp_var.is_undefined()) {
     bool result = AskYesNo("Server fingerprint unknown. Store and continue?");
