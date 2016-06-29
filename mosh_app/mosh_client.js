@@ -59,15 +59,15 @@ window.onload = function() {
 
   // Add drop-down menu for MOSH_ESCAPE_KEY, listing all ASCII characters from
   // 0x01 to 0x7F.
-  for (var c = 1; c <= 127; ++c) {
-    // For c < 32 and c == 127, see
+  for (var c = 0x01; c <= 0x7F; ++c) {
+    // For c < 0x20 and c == 0x7F, see
     // https://en.wikipedia.org/wiki/C0_and_C1_control_codes#C0_.28ASCII_and_derivatives.29
     var keyName;
-    if (c < 32) {
-      keyName = "Ctrl+" + String.fromCharCode(64 + c);
-    } else if (c == 32) {
+    if (c < 0x20) {
+      keyName = "Ctrl+" + String.fromCharCode(0x40 + c);
+    } else if (c == 0x20) {
       keyName = "SPACE";
-    } else if (c < 127) {
+    } else if (c < 0x7F) {
       keyName = String.fromCharCode(c);
     } else {
       keyName = "Ctrl+?";
