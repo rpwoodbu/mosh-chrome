@@ -74,8 +74,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             <td><input id="server-command" type="text" disabled placeholder="default"></td>
           </tr>
           <tr id="mosh-escape-key-row">
-            <td>Mosh escape key (default: <code>^</code>)</td>
-            <td><input id="mosh-escape-key" type="text" disabled placeholder="default"></td>
+            <td>Mosh escape key:</td>
+            <td>
+              <select name="mosh-escape-key">
+                <!-- Populated in window.onload in mosh_client.js. -->
+              </select>
+            </td>
           </tr>
         </table>
         <input id="connect" type="submit" value="Connect">
