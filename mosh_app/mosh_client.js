@@ -217,7 +217,6 @@ function updateMode(e) {
     keyRow.hidden = true;
     remoteCommandRow.hidden = false;
     serverCommandRow.hidden = false;
-    moshEscapeKeyRow.hidden = false;
   } else {
     if (moshPortField.value === "") {
       moshPortField.value = kMoshDefaultPort;
@@ -228,7 +227,6 @@ function updateMode(e) {
     keyRow.hidden = false;
     remoteCommandRow.hidden = true;
     serverCommandRow.hidden = true;
-    moshEscapeKeyRow.hidden = false;
   }
 }
 
