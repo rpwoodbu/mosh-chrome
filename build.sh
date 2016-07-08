@@ -30,7 +30,7 @@ fi
 NACL_SDK_ZIP="nacl_sdk.zip"
 NACL_SDK_URL="http://storage.googleapis.com/nativeclient-mirror/nacl/nacl_sdk/${NACL_SDK_ZIP}"
 NACL_SDK_DIR="nacl_sdk"
-NACL_SDK_VERSION="pepper_43"
+NACL_SDK_VERSION="pepper_45"
 
 DEPOT_TOOLS_URL="https://chromium.googlesource.com/chromium/tools/depot_tools.git"
 DEPOT_TOOLS_DIR="depot_tools"
@@ -45,8 +45,8 @@ PROTOBUF_TAR="${PROTOBUF_DIR}.tar.bz2"
 PROTOBUF_URL="https://github.com/google/protobuf/releases/download/v${PROTOBUF_VERSION}/${PROTOBUF_TAR}"
 
 LIBSSH_DIR="libssh-0.7.1"
-LIBSSH_TAR="${LIBSSH_DIR}.tar.xz"
-LIBSSH_URL="https://red.libssh.org/attachments/download/154/${LIBSSH_TAR}"
+LIBSSH_TAR="${LIBSSH_DIR}.tar.gz"
+LIBSSH_URL="https://git.libssh.org/projects/libssh.git/snapshot/libssh-0.7.1.tar.gz"
 
 INCLUDE_OVERRIDE="$(pwd)/src/include"
 
@@ -141,7 +141,7 @@ if [[ ! -d "build/${LIBSSH_DIR}" ]]; then
   if [[ ! -f "${LIBSSH_TAR}" ]]; then
     wget "${LIBSSH_URL}"
   fi
-  tar -xJf "${LIBSSH_TAR}"
+  tar -xzf "${LIBSSH_TAR}"
   cd "${LIBSSH_DIR}"
   # Apply patch for NACL.
   patch -p1 < ../../src/libssh.patch
