@@ -1,0 +1,43 @@
+package(default_visibility = ["//visibility:public"])
+
+genrule(
+    name = "hterm",
+    srcs = glob([
+        "hterm/**",
+        "libdot/**",
+    ]),
+    tools = [
+        ":concat",
+        ":git_fake",
+    ],
+    outs = ["hterm_all.js"],
+    cmd = """
+        absolute_out=$$(pwd)/$(OUTS)
+        # Make the "fake git" first in the path.
+        export PATH=$$(pwd)/$$(dirname $(location :git_fake)):$$PATH
+        cd $$(dirname $(location :concat))/../..
+        LIBDOT_SEARCH_PATH=$$(pwd) ./libdot/bin/concat.sh -i \
+            hterm/concat/hterm_all.concat -o $${absolute_out} 2> /dev/null
+    """,
+    message = "Building hterm",
+)
+
+filegroup(
+    name = "concat",
+    srcs = ["libdot/bin/concat.sh"],
+    visibility = ["//visibility:private"],
+)
+
+# The process to build hterm wants to read the git commit ID. That isn't
+# available here, so just fake it out.
+genrule(
+    name = "git_fake",
+    outs = ["git"],
+    cmd = """
+        cat > $(OUTS) << EOF
+#!/bin/sh
+echo "abc123"
+EOF
+        chmod +x $(OUTS)
+    """,
+)

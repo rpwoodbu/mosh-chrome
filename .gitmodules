@@ -1,6 +1,0 @@
-[submodule "deps/libapps"]
-	path = deps/libapps
-	url = https://chromium.googlesource.com/apps/libapps
-[submodule "deps/mosh"]
-	path = deps/mosh
-	url = https://github.com/rpwoodbu/mosh.git

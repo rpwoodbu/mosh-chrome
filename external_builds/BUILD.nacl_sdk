@@ -1,0 +1,52 @@
+package(default_visibility = ["//visibility:public"])
+
+filegroup(
+    name = "pnacl_all_files",
+    srcs = [
+        ":pnacl_toolchain",
+        ":pnacl_includes",
+    ],
+)
+
+filegroup(
+    name = "pnacl_toolchain",
+    srcs = glob(["toolchain/linux_pnacl/**"]),
+)
+
+filegroup(
+    name = "pnacl_includes",
+    srcs = glob(["include/pnacl/**"]),
+)
+
+filegroup(
+    name = "pnacl_strip",
+    srcs = ["toolchain/linux_pnacl/bin/pnacl-strip"],
+)
+
+py_binary(
+    name = "create_nmf",
+    srcs = [
+        "tools/create_nmf.py",
+        "tools/getos.py",
+        "tools/lib/elf.py",
+        "tools/lib/get_shared_deps.py",
+        "tools/lib/quote.py",
+        "tools/oshelpers.py",
+    ],
+    data = [
+        ":pnacl_toolchain",
+        # x86_64-nacl-objdump eliminates warning from create_nmf.py.
+        "toolchain/linux_x86_glibc/bin/x86_64-nacl-objdump",
+    ],
+)
+
+cc_library(
+    name = "pepper_lib",
+    srcs = [
+        # TODO: Release/Debug should be chosen based on build type.
+        "lib/pnacl/Release/libppapi_cpp.a",
+        "toolchain/linux_pnacl/le32-nacl/lib/libppapi.a",
+    ],
+    hdrs = glob(["include/**"]),
+    includes = ["include"],
+)

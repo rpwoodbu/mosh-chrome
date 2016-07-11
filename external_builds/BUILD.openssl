@@ -1,0 +1,11 @@
+package(default_visibility = ["//visibility:public"])
+
+cc_library(
+    name = "openssl",
+    srcs = [
+        "lib/libssl.a",
+        "lib/libcrypto.a",
+    ],
+    hdrs = glob(["include/openssl/*.h"]),
+    includes = ["include"],
+)

@@ -1,0 +1,12 @@
+genrule(
+  name = "zlib",
+  srcs = glob(["**"]),
+  deps = ["@nacl_sdk://:clang++"],
+  cmd = """
+    export NACL_SDK_ROOT="$(location @nacl_sdk//:clang++)"
+    export NACL_ARCH="pnacl"
+    export TOOLCHAIN="pnacl"
+    cd src
+    make zlib
+  """,
+)

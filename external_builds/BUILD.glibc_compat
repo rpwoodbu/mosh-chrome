@@ -1,0 +1,13 @@
+package(default_visibility = ["//visibility:public"])
+
+cc_library(
+    name = "glibc_compat",
+    srcs = ["lib/libglibc-compat.a"],
+    hdrs = glob(["include/glibc-compat/**"]),
+    includes = ["include/glibc-compat"],
+)
+
+filegroup(
+    name = "glibc_compat_includes",
+    srcs = glob(["include/glibc-compat/**"]),
+)

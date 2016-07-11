@@ -1,8 +1,0 @@
-lib*
-*.bc
-*.nmf
-*.nexe
-*.pexe
-*.zip
-hterm
-manifest.json

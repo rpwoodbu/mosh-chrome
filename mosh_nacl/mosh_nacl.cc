@@ -675,6 +675,8 @@ Module *CreateModule() {
 // moved to a general wrapper module.
 //
 
+extern "C" {
+
 int sigaction(int signum, const struct sigaction *act,
     struct sigaction *oldact) {
   Log("sigaction(%d, ...)", signum);
@@ -688,11 +690,7 @@ int sigaction(int signum, const struct sigaction *act,
   return 0;
 }
 
-#ifdef USE_NEWLIB
-int ioctl(int d, int request, ...) {
-#else
 int ioctl(int d, long unsigned int request, ...) {
-#endif
   if (d != STDIN_FILENO || request != TIOCGWINSZ) {
     Log("ioctl(%d, %u, ...): Got unexpected call", d, request);
     errno = EPROTO;
@@ -706,6 +704,8 @@ int ioctl(int d, long unsigned int request, ...) {
   va_end(argp);
   return 0;
 }
+
+} // extern "C"
 
 //
 // Functions for pepper_wrapper.h.

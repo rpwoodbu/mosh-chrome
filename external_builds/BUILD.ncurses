@@ -1,0 +1,12 @@
+package(default_visibility = ["//visibility:public"])
+
+cc_library(
+    name = "ncurses",
+    srcs = ["lib/libncurses.a"],
+    hdrs = glob(["include/*.h"]),
+    includes = ["include"],
+    defines = [
+        "HAVE_NCURSES",
+        "HAVE_NCURSES_H",
+    ],
+)

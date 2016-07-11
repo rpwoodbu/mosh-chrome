@@ -1,0 +1,219 @@
+package(default_visibility = ["//visibility:private"])
+
+load("@io_bazel//third_party/protobuf:protobuf.bzl", "cc_proto_library")
+
+cc_library(
+    name = "mosh_client_lib",
+    srcs = glob(
+        include = [
+            "src/frontend/*.cc",
+            "src/frontend/*.h",
+        ],
+        exclude = ["src/frontend/mosh-server.cc"],
+    ) + [
+        ":pselect_h",
+    ],
+    # No headers are exported. The only function of interest is mosh_main().
+    deps = [
+        ":network_lib",
+        ":networktransport_hdr_lib",
+        ":state_sync_lib",
+        ":terminal_lib",
+        ":version_lib",
+    ],
+    copts = [
+        "-DNACL",
+        "-include", "$(GENDIR)/external/mosh/pselect.h",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+genrule(
+    name = "version_h",
+    srcs = [":version"],
+    outs = ["version.h"],
+    cmd = "echo \"#define BUILD_VERSION \\\"$$(cat $(SRCS))\\\"\" > $@",
+    message = "Generating version.h",
+)
+
+cc_library(
+    name = "version_lib",
+    hdrs = [":version_h"],
+)
+
+genrule(
+    name = "config_h",
+    srcs = [":version"],
+    outs = ["config.h"],
+    cmd = """
+        cat > $(OUTS) << EOF
+#define HAVE_GETTIMEOFDAY 1
+#define HAVE_CLOCK_GETTIME 1
+#define HAVE_LANGINFO_H 1
+#define HAVE_SYS_UIO_H 1
+#define HAVE_PSELECT 1
+EOF
+
+        echo "#define PACKAGE_STRING \\\"$$(cat $(SRCS))\\\"" >> $(OUTS)
+    """,
+    message = "Generating config.h",
+)
+
+genrule(
+    name = "version",
+    srcs = ["configure.ac"],
+    outs = ["version.txt"],
+    cmd = """
+        grep '^AC_INIT' $(SRCS) | \
+            sed -e 's/.*\\[\\(.*\\)\\], \\[\\(.*\\)\\], \\[\\(.*\\)\\]).*/\\1 \\2/' \
+            > $(OUTS)
+    """,
+    message = "Generating version string",
+)
+
+cc_library(
+    name = "config_lib",
+    hdrs = [":config_h"],
+)
+
+# Stub sys/stropts.h to satisfy compile.
+genrule(
+    name = "stropts_file",
+    outs = ["sys/stropts.h"],
+    cmd = "touch $@",
+)
+cc_library(
+    name = "stropts",
+    hdrs = [":stropts_file"],
+    includes = ["."], # This makes it a "system include" (angle-brackets).
+)
+
+# Insanely, a few files include .cc files instead of building and linking. Make
+# these available as "headers libraries".
+cc_library(
+    name = "networktransport_hdr_lib",
+    hdrs = ["src/network/networktransport.cc"],
+    includes = ["src/network"],
+)
+cc_library(
+    name = "transportsender_hdr_lib",
+    hdrs = ["src/network/transportsender.cc"],
+    includes = ["src/network"],
+)
+
+cc_library(
+    name = "crypto_lib",
+    srcs = glob(["src/crypto/*.cc"]),
+    hdrs = glob(["src/crypto/*.h"]),
+    deps = [
+        ":util_lib",
+        "@glibc_compat//:glibc_compat",
+        "@openssl//:openssl",
+    ],
+    includes = ["src/crypto"],
+    copts = ["-Wno-c++11-narrowing"], # To get past issues in byteorder.h.
+)
+
+cc_library(
+    name = "network_lib",
+    srcs = glob(["src/network/*.cc"]),
+    hdrs = glob(["src/network/*.h"]),
+    deps = [
+        ":crypto_lib",
+        ":protos_lib",
+        ":transportsender_hdr_lib",
+        "@zlib//:zlib",
+    ],
+    includes = ["src/network"],
+)
+
+cc_library(
+    name = "state_sync_lib",
+    srcs = glob(["src/statesync/*.cc"]),
+    hdrs = glob(["src/statesync/*.h"]),
+    deps = [
+        ":protos_lib",
+        ":terminal_lib",
+    ],
+    includes = ["src/statesync"],
+)
+
+cc_library(
+    name = "terminal_lib",
+    srcs = glob(["src/terminal/*.cc"]),
+    hdrs = glob(["src/terminal/*.h"]),
+    deps = [
+        ":config_lib",
+        ":util_lib",
+        "@ncurses//:ncurses",
+    ],
+    includes = ["src/terminal"],
+)
+
+cc_library(
+    name = "util_lib",
+    srcs = glob(["src/util/*.cc"]),
+    hdrs = glob(["src/util/*.h"]),
+    deps = [
+        ":config_lib",
+        ":stropts",
+        "@glibc_compat//:glibc_compat",
+    ],
+    includes = ["src/util"],
+    defines = ["HAVE_FORKPTY"],
+)
+
+# This rule makes the pb.h files available where the code expects.
+cc_library(
+    name = "protos_lib",
+    deps = [":protos"],
+    includes = ["src/protobufs"],
+)
+
+cc_proto_library(
+    name = "protos",
+    srcs = [
+        "src/protobufs/hostinput.proto",
+        "src/protobufs/transportinstruction.proto",
+        "src/protobufs/userinput.proto",
+    ],
+    protoc = "@io_bazel//third_party/protobuf:protoc",
+    default_runtime = "@io_bazel//third_party/protobuf:protobuf_clib",
+)
+
+# Newlib header files don't declare pselect. This rule allows us to force this
+# declaration into the build using -include.
+genrule(
+    name = "pselect_h",
+    outs = ["pselect.h"],
+    cmd = """
+        cat > $(OUTS) << EOF
+#include <sys/signal.h>
+extern "C" {
+extern int pselect (int __nfds, fd_set *__restrict __readfds,
+  fd_set *__restrict __writefds,
+  fd_set *__restrict __exceptfds,
+  const struct timespec *__restrict __timeout,
+  const sigset_t *__restrict __sigmask);
+} // extern "C"
+EOF
+    """,
+)
+
+# This builds mosh using Make, in the usual way. Probably not useful here.
+genrule(
+    name = "mosh_make",
+    srcs = glob(["**"]),
+    outs = [
+        "src/frontend/mosh-client.o",
+        "src/frontend/stmclient.o",
+        "src/frontend/terminaloverlay.o",
+    ],
+    cmd = """
+        cp -R $$(dirname $(location autogen.sh))/* $(@D)
+        cd $(@D)
+        ./autogen.sh
+        ./configure
+        make
+    """,
+)

@@ -317,12 +317,7 @@ int getsockopt(int sockfd, int level, int optname,
   return GetPOSIX().GetSockOpt(sockfd, level, optname, optval, optlen);
 }
 
-// For some reason, after linking in ssh.cc, dup() gets brought in from libnacl
-// (which I don't even want to link, but seems to anyway). Using linker flag
-// "--wrap=dup" allows me to work around this by redirecting all references to
-// "dup" to "__wrap_dup" instead. Unfortunately, Clang doesn't have that flag,
-// so instead this is awkwardly redirected in the magic assert.h.
-int __wrap_dup(int oldfd) {
+int dup(int oldfd) {
   return GetPOSIX().Dup(oldfd);
 }
 
