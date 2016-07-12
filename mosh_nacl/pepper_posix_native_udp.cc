@@ -61,7 +61,8 @@ int NativeUDP::Bind(const pp::NetAddress &address) {
 }
 
 ssize_t NativeUDP::Send(
-    const vector<char> &buf, int flags,
+    const vector<char> &buf,
+    __attribute__((unused)) int flags,
     const pp::NetAddress &address) {
   if (!bound_) {
     const auto family = address.GetFamily();
@@ -105,7 +106,7 @@ ssize_t NativeUDP::Send(
 
 // StartReceive prepares to receive another packet, and returns without
 // blocking.
-void NativeUDP::StartReceive(int32_t unused) {
+void NativeUDP::StartReceive(__attribute__((unused)) int32_t unused) {
   int32_t result = socket_->RecvFrom(
       receive_buffer_, sizeof(receive_buffer_),
       factory_.NewCallbackWithOutput(&NativeUDP::Received));

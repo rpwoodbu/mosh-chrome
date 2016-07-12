@@ -72,7 +72,10 @@ POSIX::POSIX(const pp::InstanceHandle &instance_handle,
   }
 }
 
-int POSIX::Open(const char *pathname, int flags, mode_t mode) {
+int POSIX::Open(
+    const char *pathname,
+    __attribute__((unused)) int flags,
+    __attribute__((unused)) mode_t mode) {
   auto factories_iter = factories_.find(string(pathname));
   if (factories_iter == factories_.end()) {
     errno = EACCES;
@@ -197,8 +200,13 @@ int POSIX::Dup(int oldfd) {
   return Socket(AF_INET, SOCK_DGRAM, 0);
 }
 
-int POSIX::PSelect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
-    const struct timespec *timeout, const sigset_t *sigmask) {
+int POSIX::PSelect(
+    int nfds,
+    fd_set *readfds,
+    fd_set *writefds,
+    fd_set *exceptfds,
+    const struct timespec *timeout,
+    __attribute__((unused)) const sigset_t *sigmask) {
   int result = 0;
   fd_set new_readfds, new_writefds;
   FD_ZERO(&new_readfds);

@@ -65,7 +65,7 @@ int NativeTCP::Connect(const pp::NetAddress &address) {
 }
 
 // This callback should only be called on the main thread.
-void NativeTCP::ConnectOnMainThread(int32_t unusued) {
+void NativeTCP::ConnectOnMainThread(__attribute__((unused)) int32_t unused) {
   int32_t result = socket_->Connect(
       address_, factory_.NewCallback(&NativeTCP::Connected));
   if (result != PP_OK_COMPLETIONPENDING) {

@@ -93,17 +93,20 @@ void Stream::AddData(const void *buf, size_t count) {
   target_->UpdateRead(true);
 }
 
-int StubTCP::Bind(const pp::NetAddress &address) {
+int StubTCP::Bind(__attribute__((unused)) const pp::NetAddress &address) {
   Log("StubBind()");
   return 0;
 }
 
-int StubTCP::Connect(const pp::NetAddress &address) {
+int StubTCP::Connect(__attribute__((unused)) const pp::NetAddress &address) {
   Log("StubConnect()");
   return 0;
 }
 
-ssize_t StubTCP::Send(const void *buf, size_t count, int flags) {
+ssize_t StubTCP::Send(
+    __attribute__((unused)) const void *buf,
+    __attribute__((unused)) size_t count,
+    __attribute__((unused)) int flags) {
   Log("StubSend()");
   return 0;
 }

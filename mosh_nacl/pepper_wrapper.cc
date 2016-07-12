@@ -72,26 +72,32 @@ BadInterning strings;
 
 extern "C" {
 
+#define UNUSED __attribute__((unused))
+
 // These are used to avoid CORE dumps. Should be OK to stub them out. However,
 // it seems that on x86_32 with glibc, pthread_create() calls this with
 // RLIMIT_STACK. It needs to return an error at least, otherwise the thread
 // cannot be created. This does not seem to be an issue on x86_64 nor with
 // newlib (which doesn't have RLIMIT_STACK in the headers).
-int getrlimit(int resource, struct rlimit *rlim) {
 #ifndef USE_NEWLIB
+int getrlimit(int resource, UNUSED struct rlimit *rlim) {
   if (resource == RLIMIT_STACK) {
     errno = EAGAIN;
     return -1;
   }
-#endif
   return 0;
 }
-int setrlimit(int resource, const struct rlimit *rlim) {
+#else
+int getrlimit(UNUSED int resource, UNUSED struct rlimit *rlim) {
+  return 0;
+}
+#endif
+int setrlimit(UNUSED int resource, UNUSED const struct rlimit *rlim) {
   return 0;
 }
 
 // sigprocmask() isn't meaningful in NaCl; stubbing out.
-int sigprocmask(int how, const sigset_t *set, sigset_t *oldset) {
+int sigprocmask(int how, UNUSED const sigset_t *set, UNUSED sigset_t *oldset) {
   Log("sigprocmask(%d, ...)", how);
   return 0;
 }
@@ -132,11 +138,12 @@ char *nl_langinfo(nl_item item) {
 }
 
 // We don't really care about terminal attributes.
-int tcgetattr(int fd, struct termios *termios_p) {
+int tcgetattr(int fd, UNUSED struct termios *termios_p) {
   Log("tcgetattr(%d, ...)", fd);
   return 0;
 }
-int tcsetattr(int fd, int optional_actions, const struct termios *termios_p) {
+int tcsetattr(
+    int fd, int optional_actions, UNUSED const struct termios *termios_p) {
   Log("tcsetattr(%d, %d, ...)", fd, optional_actions);
   return 0;
 }
@@ -268,7 +275,7 @@ void freeaddrinfo(struct addrinfo *res) {
   }
 }
 
-char *gai_strerror(int errcode) {
+char *gai_strerror(UNUSED int errcode) {
   Log("gai_strerror(): Not implemented.");
   return strings.Get("gai_strerror not implemented");
 }
@@ -299,15 +306,16 @@ int socket(int domain, int type, int protocol) {
   return GetPOSIX().Socket(domain, type, protocol);
 }
 
-int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
+int bind(
+    int sockfd, UNUSED const struct sockaddr *addr, UNUSED socklen_t addrlen) {
   Log("bind(%d, ...): Not implemented", sockfd);
   errno = ENOMEM;
   return -1;
 }
 
 // Most socket options aren't supported by PPAPI, so just stubbing out.
-int setsockopt(int sockfd, int level, int optname,
-    const void *optval, socklen_t optlen) {
+int setsockopt(UNUSED int sockfd, UNUSED int level, UNUSED int optname,
+    UNUSED const void *optval, UNUSED socklen_t optlen) {
   return 0;
 }
 

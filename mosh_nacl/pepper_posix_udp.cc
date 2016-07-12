@@ -99,7 +99,8 @@ UDP::~UDP() {
   packets_.clear();
 }
 
-ssize_t UDP::Receive(struct ::msghdr *message, int flags) {
+ssize_t UDP::Receive(
+    struct ::msghdr *message, __attribute((unused)) int flags) {
   unique_ptr<MsgHdr> latest;
 
   {
@@ -144,14 +145,16 @@ void UDP::AddPacket(unique_ptr<MsgHdr> message) {
 }
 
 ssize_t StubUDP::Send(
-    const vector<char> &buf, int flags, const pp::NetAddress &addr) {
+    const vector<char> &buf,
+    __attribute__((unused)) int flags,
+    __attribute__((unused)) const pp::NetAddress &addr) {
   Log("StubUDP::Send(): size=%d", buf.size());
   Log("StubUDP::Send(): Pretending we received something.");
   AddPacket(nullptr);
   return buf.size();
 }
 
-int StubUDP::Bind(const pp::NetAddress &address) {
+int StubUDP::Bind(__attribute__((unused)) const pp::NetAddress &address) {
   Log("StubBind()");
   return 0;
 }

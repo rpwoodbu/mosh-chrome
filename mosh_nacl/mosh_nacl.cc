@@ -259,7 +259,10 @@ class UnixSocketStreamImpl : public PepperPOSIX::UnixSocketStream {
     }
   }
 
-  ssize_t Send(const void *buf, size_t count, int flags) override {
+  ssize_t Send(
+      const void *buf,
+      size_t count,
+      __attribute__((unused)) int flags) override {
     switch (file_type_) {
      case FileType::UNSET:
       Log("UnixSocketStreamImpl::Send(): "
@@ -310,7 +313,7 @@ class UnixSocketStreamImpl : public PepperPOSIX::UnixSocketStream {
     return 0;
   }
 
-  int Bind(const string& path) override {
+  int Bind(__attribute__((unused)) const string& path) override {
     // Not implemented.
     errno = EACCES;
     return -1;
@@ -565,7 +568,7 @@ void MoshClientInstance::Launch(int32_t result) {
   }
 }
 
-void MoshClientInstance::LaunchMosh(int32_t unused) {
+void MoshClientInstance::LaunchMosh(__attribute__((unused)) int32_t unused) {
   int thread_err = pthread_create(&thread_, nullptr, MoshThread, this);
   if (thread_err != 0) {
     Error("Failed to create Mosh thread: %s", strerror(thread_err));

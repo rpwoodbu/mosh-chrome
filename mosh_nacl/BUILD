@@ -96,7 +96,6 @@ cc_binary(
         "@mosh//:mosh_client_lib",
         "@nacl_sdk//:pepper_lib",
     ],
-    copts = ["-Wno-unused-parameter"], # TODO: Fix this.
 )
 
 cc_library(
@@ -114,7 +113,6 @@ cc_library(
     deps = [
         ":pepper_posix_lib",
     ],
-    copts = ["-Wno-unused-parameter"],
     defines = ["USE_NEWLIB"],
 )
 
@@ -135,7 +133,6 @@ cc_library(
         ":pepper_posix_native_udp_lib",
         ":pepper_posix_native_tcp_lib",
     ],
-    copts = ["-Wno-unused-parameter"], # TODO: Fix this.
 )
 
 cc_library(
@@ -161,7 +158,6 @@ cc_library(
         ":pepper_posix_hdr",
         "@glibc_compat//:glibc_compat",
     ],
-    copts = ["-Wno-unused-parameter"], # TODO: Fix this.
 )
 
 cc_library(
@@ -172,7 +168,6 @@ cc_library(
         ":pepper_posix_hdr",
         "@glibc_compat//:glibc_compat",
     ],
-    copts = ["-Wno-unused-parameter"], # TODO: Fix this.
 )
 
 cc_library(
@@ -182,7 +177,6 @@ cc_library(
     deps = [
         ":pepper_posix_udp_lib",
     ],
-    copts = ["-Wno-unused-parameter"], # TODO: Fix this.
 )
 
 cc_library(
@@ -192,7 +186,6 @@ cc_library(
     deps = [
         ":pepper_posix_tcp_lib",
     ],
-    copts = ["-Wno-unused-parameter"], # TODO: Fix this.
 )
 
 cc_library(
