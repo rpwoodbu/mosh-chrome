@@ -58,7 +58,9 @@ window.onload = function() {
   form.onsubmit = function() { return false; };
 
   // Add drop-down menu for MOSH_ESCAPE_KEY, listing all ASCII characters from
-  // 0x01 to 0x7F.
+  // 0x01 to 0x7F, as well an initial entry "default" to not pass
+  // MOSH_ESCAPE_KEY at all.
+  form['mosh-escape-key'].add(new Option("default", "", true));
   for (var c = 0x01; c <= 0x7F; ++c) {
     // For c < 0x20 and c == 0x7F, see
     // https://en.wikipedia.org/wiki/C0_and_C1_control_codes#C0_.28ASCII_and_derivatives.29
@@ -74,10 +76,9 @@ window.onload = function() {
     }
     form['mosh-escape-key'].add(new Option(
         keyName,
-        // value element of <option> element must be HTML-encoded.
+        // Value element of <option> element must be HTML-encoded.
         "&#x" + c.toString(16),
-        // Make Ctrl-^ (0x1E) the default MOSH_ESCAPE_KEY.
-        c == 0x1E));
+        false));
   }
 
   migrateSettings(function() {
@@ -187,7 +188,10 @@ function onConnectClick(e) {
   args['key'] = form['key'].value;
   args['remote-command'] = form['remote-command'].value;
   args['server-command'] = form['server-command'].value;
-  args['mosh-escape-key'] = decodeHtml(form['mosh-escape-key'].value);
+  var decodedMoshEscapeKey = decodeHtml(form['mosh-escape-key'].value);
+  if (decodedMoshEscapeKey !== "") {
+    args['mosh-escape-key'] = decodedMoshEscapeKey;
+  }
   for (var i = 0; i < form['mode'].length; ++i) {
     if (form['mode'][i].checked) {
       args['mode'] = form['mode'][i].value;
