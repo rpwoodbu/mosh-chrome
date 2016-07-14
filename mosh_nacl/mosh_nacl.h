@@ -22,13 +22,13 @@
 #define MOSH_NACL_H
 
 #include "pepper_wrapper.h"
+#include "resolver.h"
 #include "ssh_login.h"
 
 #include <memory>
 #include <string>
 #include <pthread.h>
 
-#include "ppapi/cpp/host_resolver.h"
 #include "ppapi/cpp/instance.h"
 #include "ppapi/cpp/instance_handle.h"
 #include "ppapi/cpp/var.h"
@@ -85,8 +85,8 @@ class MoshClientInstance : public pp::Instance {
   class WindowChange* window_change_ = nullptr;
 
  private:
-  // Launcher that can be a callback.
-  void Launch(int32_t result);
+  // Launcher that is called as a callback by |resolver_|.
+  void Launch(Resolver::Error error, std::vector<std::string> results);
 
   // Launches Mosh in a new thread. Must take one argument to be used as a
   // completion callback.
@@ -112,10 +112,11 @@ class MoshClientInstance : public pp::Instance {
   SSHLogin ssh_login_;
   class UnixSocketStreamImpl* ssh_agent_socket_ = nullptr;
 
-  pp::InstanceHandle instance_handle_ = this;
+  // Resolver to use for DNS lookups.
+  std::unique_ptr<Resolver> resolver_;
+
   // Class POSIX takes ownership of this, but keeping pointer for convenience.
   class Keyboard* keyboard_ = nullptr;
-  pp::HostResolver resolver_;
   pp::CompletionCallbackFactory<MoshClientInstance> cc_factory_;
 
   // Disable copy and assignment.

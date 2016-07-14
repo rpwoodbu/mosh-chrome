@@ -50,6 +50,7 @@ cc_binary(
     deps = [
         ":mosh_nacl_hdr",
         ":pepper_posix_tcp_lib",
+        ":pepper_resolver_lib",
         ":ssh_login_lib",
         "@mosh//:mosh_client_lib",
         "@nacl_sdk//:pepper_lib",
@@ -61,6 +62,7 @@ cc_library(
     hdrs = ["mosh_nacl.h"],
     deps = [
         ":pepper_wrapper_lib",
+        ":resolver_lib",
     ],
 )
 
@@ -163,6 +165,21 @@ cc_library(
     deps = [
         ":mosh_nacl_hdr",
         ":ssh_lib",
+        "@nacl_sdk//:pepper_lib",
+    ],
+)
+
+cc_library(
+    name = "resolver_lib",
+    hdrs = ["resolver.h"],
+)
+
+cc_library(
+    name = "pepper_resolver_lib",
+    srcs = ["pepper_resolver.cc"],
+    hdrs = ["pepper_resolver.h"],
+    deps = [
+        ":resolver_lib",
         "@nacl_sdk//:pepper_lib",
     ],
 )

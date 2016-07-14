@@ -21,6 +21,7 @@
 #include "make_unique.h"
 #include "mosh_nacl.h"
 #include "pepper_posix_tcp.h"
+#include "pepper_resolver.h"
 #include "pthread_locks.h"
 
 #include <algorithm>
@@ -342,7 +343,9 @@ const map<string, UnixSocketStreamImpl::FileType>
 };
 
 MoshClientInstance::MoshClientInstance(PP_Instance instance) :
-    pp::Instance(instance), resolver_(instance_handle_), cc_factory_(this) {
+    pp::Instance(instance),
+    resolver_(make_unique<PepperResolver>(this)),
+    cc_factory_(this) {
   ++num_instances_;
   assert (num_instances_ == 1);
   ::instance = this;
@@ -506,18 +509,22 @@ bool MoshClientInstance::Init(
     setenv("MOSH_ESCAPE_KEY", mosh_escape_key.c_str(), 1);
   }
 
-  PP_HostResolver_Hint hint;
+  Resolver::Type type;
   if (family == "IPv4") {
-    hint = {PP_NETADDRESS_FAMILY_IPV4, 0};
+    type = Resolver::Type::A;
   } else if (family == "IPv6") {
-    hint = {PP_NETADDRESS_FAMILY_IPV6, 0};
+    type = Resolver::Type::AAAA;
   } else {
     Log("Must supply family attribute (IPv4 or IPv6).");
     return false;
   }
   // Mosh will launch via this callback when the resolution completes.
-  resolver_.Resolve(addr.c_str(), 0, hint,
-    cc_factory_.NewCallback(&MoshClientInstance::Launch));
+  resolver_->Resolve(
+    move(addr),
+    type,
+    [this](Resolver::Error error, vector<string> results) {
+      Launch(error, move(results));
+    });
 
   // Setup communications. We keep pointers to |keyboard_| and
   // |window_change_|, as we need to access their specialized methods. |posix_|
@@ -528,7 +535,7 @@ bool MoshClientInstance::Init(
   keyboard_ = keyboard.get();
   window_change_ = window_change.get();
   posix_ = make_unique<PepperPOSIX::POSIX>(
-     instance_handle_,
+     this,
      move(keyboard),
      make_unique<Terminal>(*this),
      make_unique<ErrorLog>(*this),
@@ -544,28 +551,29 @@ bool MoshClientInstance::Init(
   return true;
 }
 
-void MoshClientInstance::Launch(int32_t result) {
-  if (result == PP_ERROR_NAME_NOT_RESOLVED) {
+void MoshClientInstance::Launch(
+    Resolver::Error error, vector<string> results) {
+  if (error == Resolver::Error::NOT_RESOLVED) {
     Error("Could not resolve the hostname. "
         "Check the spelling and the address family.");
     Output(TYPE_EXIT, "");
     return;
   }
-  if (result != PP_OK) {
-    Error("Name resolution failed with unexpected error code: %d", result);
+  if (error != Resolver::Error::OK) {
+    Error("Name resolution failed with unexpected error code: %d", error);
     Output(TYPE_EXIT, "");
     return;
   }
-  if (resolver_.GetNetAddressCount() < 1) {
+  if (results.size() == 0) {
     Error("There were no addresses.");
     Output(TYPE_EXIT, "");
     return;
   }
-  pp::NetAddress address = resolver_.GetNetAddress(0);
-  string addr_str = address.DescribeAsString(false).AsString();
-  int addr_len = addr_str.size() + 1;
-  addr_ = make_unique<char[]>(addr_len);
-  strncpy(addr_.get(), addr_str.c_str(), addr_len);
+  // Only using first address.
+  const string& address = results[0];
+  int address_len = address.size() + 1;
+  addr_ = make_unique<char[]>(address_len);
+  strncpy(addr_.get(), address.c_str(), address_len);
 
   if (ssh_mode_) {
     // HandleMessage() will call LaunchSSHLogin().
