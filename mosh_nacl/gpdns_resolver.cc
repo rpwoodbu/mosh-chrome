@@ -23,6 +23,8 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 
+#include "json/reader.h"
+#include "json/value.h"
 #include "ppapi/cpp/url_loader.h"
 #include "ppapi/cpp/url_request_info.h"
 #include "ppapi/cpp/url_response_info.h"
@@ -33,7 +35,7 @@ using std::string;
 using std::unique_ptr;
 using std::vector;
 
-static const string gpdns_url = "https://dns.google.com/resolve";
+static const string kGPDNSURL = "https://dns.google.com/resolve";
 
 namespace {
 
@@ -55,50 +57,56 @@ bool IsNetworkAddress(const string& candidate) {
   return false;
 }
 
+int TypeToRRtype(Resolver::Type type) {
+  switch (type) {
+    case Resolver::Type::A:
+      return 1;
+    case Resolver::Type::AAAA:
+      return 28;
+    case Resolver::Type::SSHFP:
+      return 44;
+  }
+}
+
+string TypeToRRtypeStr(Resolver::Type type) {
+  switch (type) {
+    case Resolver::Type::A:
+      return "A";
+    case Resolver::Type::AAAA:
+      return "AAAA";
+    case Resolver::Type::SSHFP:
+      return "SSHFP";
+  }
+}
+
 } // anonymous namespace
 
 void GPDNSResolver::Resolve(
     string domain_name,
     Type type,
     function<void(Error error, vector<string> results)> callback) {
-  CallbackCaller caller(callback);
+  // Query is self-deleting.
+  auto* query = new Query(
+      instance_handle_, move(domain_name), type, CallbackCaller(callback));
+  query->Run();
+}
 
-  if (IsNetworkAddress(domain_name)) {
-    caller.Call(Error::OK, {domain_name});
+void GPDNSResolver::Query::Run() {
+  unique_ptr<Query> deleter(this);
+
+  if (IsNetworkAddress(domain_name_)) {
+    caller_.Call(Error::OK, {domain_name_});
     return;
   }
 
-  string rr_type;
-  switch (type) {
-    case Type::A:
-      rr_type = "A";
-      break;
-    case Type::AAAA:
-      rr_type = "AAAA";
-      break;
-    case Type::SSHFP:
-      rr_type = "SSHFP";
-      break;
-    // No default case; all enums accounted for.
-  }
+  const string url =
+      kGPDNSURL + "?name=" + domain_name_ + "&type=" + TypeToRRtypeStr(type_);
 
-  const string url = gpdns_url + "?name=" + domain_name + "&type=" + rr_type;
+  request_.SetURL(url);
+  request_.SetMethod("GET");
 
-  pp::URLRequestInfo request(instance_handle_);
-  request.SetURL(url);
-  request.SetMethod("GET");
-
-  // Query is self-deleting.
-  auto* query = new Query(instance_handle_);
-  query->Run(move(request), move(caller));
-}
-
-void GPDNSResolver::Query::Run(
-    pp::URLRequestInfo request, CallbackCaller caller) {
-  unique_ptr<Query> deleter(this);
-  caller_ = move(caller);
   deleter.release();
-  loader_.Open(request, cc_factory_.NewCallback(&Query::OpenCallback));
+  loader_.Open(request_, cc_factory_.NewCallback(&Query::OpenCallback));
 }
 
 void GPDNSResolver::Query::OpenCallback(int32_t result) {
@@ -160,88 +168,44 @@ void GPDNSResolver::Query::ReadCallback(int32_t result) {
 
 void GPDNSResolver::Query::ProcessResponse(
     __attribute__((unused)) unique_ptr<Query> deleter) {
-  // TODO: Use a proper JSON parser.
-  static const string answer_text = "\"Answer\":";
-  const size_t answer_pos = response_.find(answer_text);
-  if (answer_pos == string::npos) {
+  Json::Reader reader;
+  Json::Value parsed_json;
+  if (!reader.parse(response_, parsed_json)) {
+    // Malformed response.
+    return;
+  }
+
+  const Json::Value answers = parsed_json["Answer"];
+  if (answers.isNull()) {
     // No answer. Does not exist.
     caller_.Call(Error::NOT_RESOLVED, {});
     return;
   }
-  
-  // Find matching brackets in the "Answer" section.
-  const size_t answer_begin = response_.find('[', answer_pos);
-  if (answer_begin == string::npos) {
-    // Malformed response.
-    return;
-  }
-  const size_t answer_end = response_.find(']', answer_pos);
-  if (answer_end == string::npos) {
-    // Malformed response.
-    return;
-  }
-
-  ProcessAnswer(response_.substr(answer_begin + 1, answer_end - answer_begin));
-  // This is the end. Let the deleter delete *this naturally.
-}
-
-void GPDNSResolver::Query::ProcessAnswer(const string& answer) {
-  // Find all of the answers.
-  vector<size_t> answer_positions;
-  size_t cursor = 0;
-  for (;;) {
-    const size_t pos = answer.find('{', cursor);
-    if (pos == string::npos) {
-      break;
-    }
-    answer_positions.push_back(pos);
-    cursor = pos + 1;
-  }
 
   vector<string> results;
+  for (const Json::Value answer : answers) {
+    if (!answer.isMember("type")) {
+      // Malformed response.
+      return;
+    }
+    if (answer.get("type", -1).asInt() != TypeToRRtype(type_)) {
+      // Not the type we're looking for (e.g., CNAME).
+      continue;
+    }
+    if (!answer.isMember("data")) {
+      // Malformed response.
+      return;
+    }
+    results.push_back(answer.get("data", "").asString());
+  }
 
-  for (const auto pos : answer_positions) {
-    const size_t end_pos = answer.find('}', pos);
-    if (end_pos == string::npos) {
-      // Malformed response.
-      return;
-    }
-    const string one_answer =
-      ProcessOneAnswer(answer.substr(pos + 1, end_pos - pos));
-    if (one_answer.size() == 0) {
-      // Malformed response.
-      return;
-    }
-    results.push_back(one_answer);
+  if (results.size() == 0) {
+    // NODATA response. Normally there's just an empty "Answer" section, but in
+    // some cases (e.g., CNAME), there may be answers, just for different
+    // RRtypes.
+    caller_.Call(Error::NOT_RESOLVED, {});
+    return;
   }
 
   caller_.Call(Error::OK, move(results));
-}
-
-string GPDNSResolver::Query::ProcessOneAnswer(const string& answer) {
-  const size_t data_pos = answer.find("\"data\"");
-  if (data_pos == string::npos) {
-    // Malformed response. Return the empty string.
-    return "";
-  }
-
-  const size_t colon_pos = answer.find(':', data_pos);
-  if (colon_pos == string::npos) {
-    // Malformed response. Return the empty string.
-    return "";
-  }
-
-  const size_t quote_pos = answer.find('"', colon_pos);
-  if (quote_pos == string::npos) {
-    // Malformed response. Return the empty string.
-    return "";
-  }
-
-  const size_t close_quote_pos = answer.find('"', quote_pos + 1);
-  if (close_quote_pos == string::npos) {
-    // Malformed response. Return the empty string.
-    return "";
-  }
-
-  return answer.substr(quote_pos + 1, close_quote_pos - quote_pos - 1);
 }

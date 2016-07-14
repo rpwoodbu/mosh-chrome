@@ -26,6 +26,7 @@
 
 #include "ppapi/cpp/instance_handle.h"
 #include "ppapi/cpp/url_loader.h"
+#include "ppapi/cpp/url_request_info.h"
 
 #include "ppapi/utility/completion_callback_factory.h"
 
@@ -48,13 +49,21 @@ class GPDNSResolver : public Resolver {
   // Encapsulates data and processing for a single query. Class is self-deleting.
   class Query {
    public:
-    Query(pp::InstanceHandle handle) :
+    Query(
+        pp::InstanceHandle handle,
+        std::string domain_name,
+        Type type,
+        CallbackCaller caller) :
+      caller_(std::move(caller)),
+      request_(handle),
       loader_(handle),
       buffer_(kBufferSize),
+      domain_name_(std::move(domain_name)),
+      type_(type),
       cc_factory_(this) {}
 
     // Do the query.
-    void Run(pp::URLRequestInfo request, CallbackCaller caller);
+    void Run();
 
    private:
     // Method that will be called when the URL is opened.
@@ -72,19 +81,15 @@ class GPDNSResolver : public Resolver {
     // Process the response.
     void ProcessResponse(std::unique_ptr<Query> deleter);
 
-    // Process the "Answer" part of the response.
-    void ProcessAnswer(const std::string& answer);
-
-    // Process one of the "Answer" parts of the response.
-    std::string ProcessOneAnswer(const std::string& answer);
-
     // Buffer size for reading data from GPDNS.
     static const size_t kBufferSize = 16 * 1024; // 16 kB
 
-   private:
     CallbackCaller caller_;
+    pp::URLRequestInfo request_;
     pp::URLLoader loader_;
     std::vector<char> buffer_;
+    const std::string domain_name_;
+    const Type type_;
     std::string response_;
     pp::CompletionCallbackFactory<Query> cc_factory_;
   };
