@@ -241,6 +241,44 @@ KeyType::KeyType(KeyTypeEnum type) {
   }
 }
 
+KeyType::KeyTypeEnum KeyType::type() const {
+  switch (type_) {
+    case SSH_KEYTYPE_DSS:
+      return DSS;
+    case SSH_KEYTYPE_RSA:
+      return RSA;
+    case SSH_KEYTYPE_RSA1:
+      return RSA1;
+    case SSH_KEYTYPE_ECDSA:
+      return ECDSA;
+    case SSH_KEYTYPE_ED25519:
+      return ED25519;
+    case SSH_KEYTYPE_DSS_CERT00:
+      return DSS_CERT00;
+    case SSH_KEYTYPE_RSA_CERT00:
+      return RSA_CERT00;
+    case SSH_KEYTYPE_DSS_CERT01:
+      return DSS_CERT01;
+    case SSH_KEYTYPE_RSA_CERT01:
+      return RSA_CERT01;
+    case SSH_KEYTYPE_ECDSA_SHA2_NISTP256_CERT01:
+      return ECDSA_SHA2_NISTP256_CERT01;
+    case SSH_KEYTYPE_ECDSA_SHA2_NISTP384_CERT01:
+      return ECDSA_SHA2_NISTP384_CERT01;
+    case SSH_KEYTYPE_ECDSA_SHA2_NISTP521_CERT01:
+      return ECDSA_SHA2_NISTP521_CERT01;
+    case SSH_KEYTYPE_UNKNOWN:
+      return UNKNOWN;
+  };
+#ifndef __clang__
+  // Should be unreachable, but GCC doesn't understand that all enum cases
+  // above are covered. GCC is useful for unit tests, as it is usually the
+  // compiler installed by default. Prefer to keep this hack out of Clang so it
+  // can detect any missing enums.
+  return UNKNOWN;
+#endif
+}
+
 string KeyType::AsString() const {
   return string(ssh_key_type_to_char(type_));
 }
@@ -266,6 +304,19 @@ bool Key::ImportPrivateKey(const string &key, const char *passphrase) {
   return true;
 }
 
+bool Key::ImportPublicKey(const string &key, KeyType type) {
+  if (key_ != nullptr) {
+    ssh_key_free(key_);
+    key_ = nullptr;
+  }
+  int result = ssh_pki_import_pubkey_base64(
+      key.c_str(), type.type_, &key_);
+  if (result != SSH_OK) {
+    return false;
+  }
+  return true;
+}
+
 unique_ptr<Key> Key::GetPublicKey() const {
   if (key_ == nullptr) {
     return nullptr;
@@ -281,13 +332,21 @@ unique_ptr<Key> Key::GetPublicKey() const {
 }
 
 string Key::MD5() const {
+  return Hash(SSH_PUBLICKEY_HASH_MD5);
+}
+
+string Key::SHA1() const {
+  return Hash(SSH_PUBLICKEY_HASH_SHA1);
+}
+
+string Key::Hash(const ssh_publickey_hash_type type) const {
   if (key_ == nullptr) {
     return string();
   }
   unsigned char *hash_buf = nullptr;
   size_t hash_len = 0;
   int result = ssh_get_publickey_hash(
-      key_, SSH_PUBLICKEY_HASH_MD5, &hash_buf, &hash_len);
+      key_, type, &hash_buf, &hash_len);
   if (result != 0 ) {
     return string();
   }

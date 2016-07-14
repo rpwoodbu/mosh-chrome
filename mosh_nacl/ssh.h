@@ -239,14 +239,16 @@ class KeyType {
   KeyType& operator=(const KeyType&) = default;
   ~KeyType() = default;
 
-  KeyType(KeyTypeEnum type);
+  explicit KeyType(KeyTypeEnum type);
+
+  KeyType::KeyTypeEnum type() const;
 
   // Get a human-readable string representation of the key type.
   std::string AsString() const;
 
  private:
   friend class Key;
-  KeyType(ssh_keytypes_e type) : type_(type) {}
+  explicit KeyType(ssh_keytypes_e type) : type_(type) {}
 
   ssh_keytypes_e type_ = SSH_KEYTYPE_UNKNOWN;
 };
@@ -269,6 +271,9 @@ class Key {
   // manage lifecycle of sensitive data.
   bool ImportPrivateKey(const std::string &key, const char *passphrase);
 
+  // Import a base64 formatted public key.
+  bool ImportPublicKey(const std::string &key, KeyType type);
+
   // Get the public version of the private key. Only works if a private key is
   // loaded into the current object. Ownership is transferred to the caller.
   // Returns nullptr on error.
@@ -277,10 +282,15 @@ class Key {
   // Get key as MD5 hash. Will return an empty string on error.
   std::string MD5() const;
 
+  // Get key as SHA1 hash. Will return an empty string on error.
+  std::string SHA1() const;
+
   // Get the key type of this key.
   KeyType GetKeyType() const;
 
  private:
+  std::string Hash(ssh_publickey_hash_type type) const;
+
   ssh_key key_ = nullptr;
 };
 

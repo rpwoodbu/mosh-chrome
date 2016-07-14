@@ -160,6 +160,15 @@ cc_library(
 )
 
 cc_library(
+    name = "sshfp_record_lib",
+    srcs = ["sshfp_record.cc"],
+    hdrs = ["sshfp_record.h"],
+    deps = [
+        ":ssh_lib",
+    ],
+)
+
+cc_library(
     name = "ssh_login_lib",
     srcs = ["ssh_login.cc"],
     hdrs = ["ssh_login.h"],
