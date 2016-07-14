@@ -41,6 +41,7 @@ class GPDNSResolver : public Resolver {
   virtual ~GPDNSResolver() = default;
 
   void Resolve(std::string domain_name, Type type, Callback callback) override;
+  bool IsValidating() const override { return true; }
 
  private:
   // Encapsulates data and processing for a single query. Class is self-deleting.
@@ -63,6 +64,12 @@ class GPDNSResolver : public Resolver {
     void Run();
 
    private:
+    // All private methods are run on the main thread.
+
+    // Callback to switch execution to main thread (necessary to call Pepper
+    // APIs).
+    void RunOnMainThread(uint32_t unused);
+
     // Method that will be called when the URL is opened.
     void OpenCallback(int32_t result);
 

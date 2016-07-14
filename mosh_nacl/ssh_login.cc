@@ -20,10 +20,15 @@
 #include "make_unique.h"
 #include "mosh_nacl.h"
 
+#include <functional>
+#include <future>
 #include <memory>
 #include <string>
 #include <vector>
 
+using std::future;
+using std::move;
+using std::promise;
 using std::string;
 using std::unique_ptr;
 using std::vector;
@@ -34,11 +39,9 @@ const int RETRIES = 3;
 const string kServerCommandDefault(
     "mosh-server new -s -c 256 -l LANG=en_US.UTF-8");
 
-SSHLogin::SSHLogin() {}
+namespace {
 
-SSHLogin::~SSHLogin() {}
-
-void SSHLogin::GetKeyboardLine(char *buf, size_t len, bool echo) {
+void GetKeyboardLine(char *buf, size_t len, bool echo) {
   int i = 0;
   while (i < len) {
     char in = getchar();
@@ -67,6 +70,8 @@ void SSHLogin::GetKeyboardLine(char *buf, size_t len, bool echo) {
   buf[i] = 0;
 }
 
+} // anonymous namespace
+
 bool SSHLogin::AskYesNo(const string &prompt) {
   for (int i = 0; i < RETRIES; ++i) {
     printf("%s (Yes/No): ", prompt.c_str());
@@ -89,7 +94,12 @@ bool SSHLogin::AskYesNo(const string &prompt) {
 bool SSHLogin::Start() {
   setenv("HOME", "dummy", 1); // To satisfy libssh.
 
-  session_ = make_unique<ssh::Session>(addr_, atoi(port_.c_str()), user_);
+  if (Resolve() == false) {
+    return false;
+  }
+
+  session_ =
+    make_unique<ssh::Session>(resolved_addr_, atoi(port_.c_str()), user_);
   session_->SetOption(SSH_OPTIONS_TIMEOUT, 30); // Extend connection timeout to 30s.
   // Uncomment below for lots of debugging output.
   //session_->SetOption(SSH_OPTIONS_LOG_VERBOSITY, 30);
@@ -150,17 +160,99 @@ bool SSHLogin::Start() {
   return true;
 }
 
+bool SSHLogin::Resolve() {
+  // Lookup the address.
+  promise<string> addr_promise;
+  promise<Resolver::Authenticity> addr_auth_promise;
+  resolver_->Resolve(
+      host_,
+      type_,
+      [&addr_promise, &addr_auth_promise](
+          Resolver::Error error,
+          Resolver::Authenticity authenticity,
+          vector<string> results) {
+        addr_auth_promise.set_value(authenticity);
+        if (error == Resolver::Error::NOT_RESOLVED) {
+          fprintf(stderr, "Could not resolve the hostname. "
+            "Check the spelling and the address family.\r\n");
+          addr_promise.set_value("");
+          return;
+        }
+        if (error != Resolver::Error::OK) {
+          fprintf(
+              stderr,
+              "Name resolution failed with unexpected error code: %d\r\n",
+              error);
+          addr_promise.set_value("");
+          return;
+        }
+        // Only using first address.
+        addr_promise.set_value(move(results[0]));
+      });
+
+  // Simultaneously lookup the SSHFP record.
+  promise<vector<string>> fp_promise;
+  promise<Resolver::Authenticity> fp_auth_promise;
+  resolver_->Resolve(
+      host_,
+      Resolver::Type::SSHFP,
+      [&fp_promise, &fp_auth_promise](
+          Resolver::Error error,
+          Resolver::Authenticity authenticity,
+          vector<string> results) {
+        fp_auth_promise.set_value(authenticity);
+        if (error == Resolver::Error::OK) {
+          fp_promise.set_value(move(results));
+        } else {
+          fp_promise.set_value({});
+        }
+        return;
+      });
+
+  // Collect the results.
+  resolved_addr_ = addr_promise.get_future().get();
+  resolved_fp_ = fp_promise.get_future().get();
+
+  switch (addr_auth_promise.get_future().get()) {
+    case Resolver::Authenticity::AUTHENTIC:
+      printf("Authenticated DNS lookup.\r\n");
+      break;
+    case Resolver::Authenticity::INSECURE:
+      printf("Could NOT authenticate DNS lookup.\r\n");
+      break;
+  }
+
+  if (resolved_addr_.size() == 0) {
+    return false;
+  }
+
+  if (!resolved_fp_.empty()) {
+    switch (fp_auth_promise.get_future().get()) {
+      case Resolver::Authenticity::AUTHENTIC:
+        printf("Found authentic SSHFP fingerprint record(s) in DNS.\r\n");
+        break;
+      case Resolver::Authenticity::INSECURE:
+        printf("Unauthenticated SSHFP fingerprint record(s) in DNS;"
+            " ignoring.\r\n");
+        break;
+    }
+  }
+  return true;
+}
+
 bool SSHLogin::CheckFingerprint() {
   string server_name;
-  if (addr_.find(':') == string::npos) {
-    server_name = addr_ + ":" + port_;
+  // DO NOT SUBMIT: Consider the implications of switching from IP addresses to
+  // hostnames for storing fingerprints.
+  if (host_.find(':') == string::npos) {
+    server_name = host_ + ":" + port_;
   } else {
-    server_name = "[" + addr_ + "]:" + port_;
+    server_name = "[" + host_ + "]:" + port_;
   }
   const ssh::Key& host_key = session_->GetPublicKey();
   const string server_fp = host_key.MD5();
 
-  printf("Remote ssh host address:\r\n  %s\r\n", server_name.c_str());
+  printf("Remote ssh host name/address:\r\n  %s\r\n", server_name.c_str());
   printf("%s key fingerprint of remote ssh host (MD5):\r\n  %s\r\n",
       host_key.GetKeyType().AsString().c_str(), server_fp.c_str());
 
@@ -396,7 +488,7 @@ bool SSHLogin::DoConversation() {
   // Default Mosh address to the one with which we connected. It
   // will get overridden if there's a MOSH IP line in the
   // response.
-  mosh_addr_ = addr_;
+  mosh_addr_ = resolved_addr_;
 
   size_t left_pos = 0;
   while (true) {
@@ -433,5 +525,4 @@ bool SSHLogin::DoConversation() {
     return false;
   }
   return true;
-
 }

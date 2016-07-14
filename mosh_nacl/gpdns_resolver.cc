@@ -74,7 +74,7 @@ string TypeToRRtypeStr(Resolver::Type type) {
     case Resolver::Type::AAAA:
       return "AAAA";
     case Resolver::Type::SSHFP:
-      return "SSHFP";
+      return "44"; // SSHFP (Mnemonic not yet supported by DNS-over-HTTPS.)
   }
 }
 
@@ -88,6 +88,13 @@ void GPDNSResolver::Resolve(string domain_name, Type type, Callback callback) {
 }
 
 void GPDNSResolver::Query::Run() {
+  pp::Module::Get()->core()->CallOnMainThread(
+      0,
+      cc_factory_.NewCallback(&GPDNSResolver::Query::RunOnMainThread));
+}
+
+void GPDNSResolver::Query::RunOnMainThread(
+    __attribute__((unused)) uint32_t unused) {
   unique_ptr<Query> deleter(this);
 
   if (IsNetworkAddress(domain_name_)) {

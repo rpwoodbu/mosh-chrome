@@ -40,8 +40,16 @@ class PepperResolver : public Resolver {
   virtual ~PepperResolver() = default;
 
   void Resolve(std::string domain_name, Type type, Callback callback) override;
+  bool IsValidating() const override { return false; }
 
  private:
+  // Way to call |resolver_| from main thread.
+  void ResolveOnMainThread(
+     uint32_t unused,
+     std::string domain_name,
+     PP_HostResolver_Hint hint,
+     Callback callback);
+
   // Method that |resolver_| will callback.
   void ResolverCallback(int32_t result, Callback callback);
 

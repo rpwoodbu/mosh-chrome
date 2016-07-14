@@ -18,21 +18,27 @@
 #ifndef SSH_LOGIN_H
 #define SSH_LOGIN_H
 
+#include "ssh.h"
+
 #include <stddef.h>
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "ssh.h"
 #include "ppapi/cpp/var.h"
 #include "ppapi/cpp/var_dictionary.h"
+#include "resolver.h"
 
 // SSHLogin takes care of the SSH connection and conversation to initiate the
 // Mosh session.
 class SSHLogin {
  public:
-  SSHLogin();
-  ~SSHLogin();
+  SSHLogin() = default;
+  SSHLogin(const SSHLogin&) = delete;
+  SSHLogin& operator=(const SSHLogin&) = delete;
+  SSHLogin(SSHLogin&&) = default;
+  SSHLogin& operator=(SSHLogin&&) = default;
+  ~SSHLogin() = default;
 
   // Begin the SSH login session. Returns true iff SSH Login succeeded.
   bool Start();
@@ -40,8 +46,15 @@ class SSHLogin {
   bool use_agent() const { return use_agent_; }
   void set_use_agent(bool use_agent) { use_agent_ = use_agent; }
 
-  std::string addr() const { return addr_; }
-  void set_addr(const std::string &addr) { addr_ = addr; }
+  Resolver* resolver() const { return resolver_; }
+  // Set the resolver to use. Does not take ownership.
+  void set_resolver(Resolver* resolver) { resolver_ = resolver; }
+
+  std::string host() const { return host_; }
+  void set_host(const std::string &host) { host_ = host; }
+
+  Resolver::Type type() const { return type_; }
+  void set_type(Resolver::Type type) { type_ = type; }
 
   std::string port() const { return port_; }
   void set_port(const std::string &port) { port_ = port; }
@@ -72,11 +85,9 @@ class SSHLogin {
   std::string mosh_addr() const { return mosh_addr_; }
 
  private:
-  // Passed as function pointer to pthread_create(). |data| is |this|.
-  static void *ThreadEntry(void *data);
-
-  // Get a line of input from the keyboard.
-  static void GetKeyboardLine(char *buf, size_t len, bool echo);
+  // Resolve |host_| and |type_| to |resolved_addr_| and |resolved_fp_| via
+  // |resolver_|.
+  bool Resolve();
 
   // Display and check the remote server fingerprint.
   bool CheckFingerprint();
@@ -95,21 +106,25 @@ class SSHLogin {
   bool DoConversation();
 
   bool use_agent_ = false;
-  std::string addr_;
+  Resolver* resolver_ = nullptr;
+  std::string host_;
+  Resolver::Type type_ = Resolver::Type::A;
   std::string port_;
   std::string user_;
   std::string key_;
   std::string server_command_;
   std::string remote_command_;
+
+  // Resolved address of |host_|.
+  std::string resolved_addr_;
+  // Resolved fingerprints for |host_|. Empty if none.
+  std::vector<std::string> resolved_fp_;
+
   std::string mosh_port_;
   std::string mosh_key_;
   std::string mosh_addr_;
   pp::VarDictionary known_hosts_;
   std::unique_ptr<ssh::Session> session_;
-
-  // Disable copy and assignment.
-  SSHLogin(const SSHLogin &) = delete;
-  SSHLogin &operator=(const SSHLogin &) = delete;
 };
 
 #endif // SSH_LOGIN_H

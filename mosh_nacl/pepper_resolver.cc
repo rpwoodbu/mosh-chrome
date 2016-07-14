@@ -44,12 +44,27 @@ void PepperResolver::Resolve(string domain_name, Type type, Callback callback) {
     // No default case; all enums accounted for.
   }
 
+  caller.Release();
+  pp::Module::Get()->core()->CallOnMainThread(
+      0,
+      cc_factory_.NewCallback(
+        &PepperResolver::ResolveOnMainThread,
+        move(domain_name),
+        hint,
+        callback));
+}
+
+void PepperResolver::ResolveOnMainThread(
+    __attribute__((unused)) uint32_t unused,
+    string domain_name,
+    PP_HostResolver_Hint hint,
+    Callback callback) {
   resolver_.Resolve(
       domain_name.c_str(),
       0,
       hint,
       cc_factory_.NewCallback(
-        &PepperResolver::ResolverCallback, caller.Release()));
+        &PepperResolver::ResolverCallback, callback));
 }
 
 void PepperResolver::ResolverCallback(int32_t result, Callback callback) {

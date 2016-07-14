@@ -71,6 +71,9 @@ class Resolver {
   virtual void Resolve(
       std::string domain_name, Type type, Callback callback) = 0;
 
+  // Whether this resolver validates responses (i.e. DNSSEC).
+  virtual bool IsValidating() const = 0;
+
  protected:
   // Ensures the callback is always called. If class instance is deleted and
   // Call() hasn't been called, the callback will be called with a default

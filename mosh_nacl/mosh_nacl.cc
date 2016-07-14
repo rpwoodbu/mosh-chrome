@@ -459,8 +459,6 @@ void MoshClientInstance::Error(const char *format, ...) {
 bool MoshClientInstance::Init(
     uint32_t argc, const char *argn[], const char *argv[]) {
   const char *secret = nullptr;
-  string addr;
-  string family;
   string mosh_escape_key;
   for (int i = 0; i < argc; ++i) {
     string name = argn[i];
@@ -468,12 +466,17 @@ bool MoshClientInstance::Init(
     if (name == "key") {
       secret = argv[i];
     } else if (name == "addr" && addr_ == nullptr) {
-      addr = argv[i];
+      host_ = argv[i];
     } else if (name == "port" && port_ == nullptr) {
       port_ = make_unique<char[]>(len);
       strncpy(port_.get(), argv[i], len);
     } else if (name == "family") {
-      family = argv[i];
+      const string family = argv[i];
+      if (family == "IPv4") {
+       type_ = Resolver::Type::A;
+      } else if (family == "IPv6") {
+       type_ = Resolver::Type::AAAA;
+      }
     } else if (name == "mode") {
       if (string(argv[i]) == "ssh") {
         ssh_mode_ = true;
@@ -499,7 +502,7 @@ bool MoshClientInstance::Init(
     }
   }
 
-  if (addr.size() == 0 || port_ == nullptr) {
+  if (host_.size() == 0 || port_ == nullptr) {
     Log("Must supply addr and port attributes.");
     return false;
   }
@@ -516,30 +519,6 @@ bool MoshClientInstance::Init(
   if (!mosh_escape_key.empty()) {
     setenv("MOSH_ESCAPE_KEY", mosh_escape_key.c_str(), 1);
   }
-
-  if (resolver_ == nullptr) {
-    // Use default resolver.
-    resolver_ = make_unique<PepperResolver>(this);
-  }
-  Resolver::Type type;
-  if (family == "IPv4") {
-    type = Resolver::Type::A;
-  } else if (family == "IPv6") {
-    type = Resolver::Type::AAAA;
-  } else {
-    Log("Must supply family attribute (IPv4 or IPv6).");
-    return false;
-  }
-  // Mosh will launch via this callback when the resolution completes.
-  resolver_->Resolve(
-      move(addr),
-      type,
-      [this](
-          Resolver::Error error,
-          Resolver::Authenticity authenticity,
-          vector<string> results) {
-        Launch(error, authenticity, move(results));
-      });
 
   // Setup communications. We keep pointers to |keyboard_| and
   // |window_change_|, as we need to access their specialized methods. |posix_|
@@ -562,22 +541,43 @@ bool MoshClientInstance::Init(
       return make_unique<UnixSocketStreamImpl>(*this);
   });
 
-  // Mosh will launch via the resolution callback (see above).
+  if (resolver_ == nullptr) {
+    // Use default resolver.
+    resolver_ = make_unique<PepperResolver>(this);
+  }
+
+  if (ssh_mode_) {
+    // HandleMessage() will call LaunchSSHLogin().
+    Output(TYPE_GET_SSH_KEY, "");
+  } else {
+    // Mosh will launch via this callback when the resolution completes.
+    resolver_->Resolve(
+        host_,
+        type_,
+        [this](
+            Resolver::Error error,
+            Resolver::Authenticity authenticity,
+            vector<string> results) {
+          LaunchManual(error, authenticity, move(results));
+        });
+  }
   return true;
 }
 
-void MoshClientInstance::Launch(
+void MoshClientInstance::LaunchManual(
     Resolver::Error error,
     Resolver::Authenticity authenticity,
     vector<string> results) {
-  switch (authenticity) {
-    case Resolver::Authenticity::AUTHENTIC:
-      Log("Authentic name lookup.");
-      break;
-    case Resolver::Authenticity::INSECURE:
-      Log("Insecure name lookup.");
-      break;
-  };
+  if (resolver_->IsValidating()) {
+    switch (authenticity) {
+      case Resolver::Authenticity::AUTHENTIC:
+        Output(TYPE_DISPLAY, "Authenticated DNS lookup.\r\n");
+        break;
+      case Resolver::Authenticity::INSECURE:
+        Output(TYPE_DISPLAY, "Could NOT authenticate DNS lookup.\r\n");
+        break;
+    };
+  }
   if (error == Resolver::Error::NOT_RESOLVED) {
     Error("Could not resolve the hostname. "
         "Check the spelling and the address family.");
@@ -599,13 +599,7 @@ void MoshClientInstance::Launch(
   int address_len = address.size() + 1;
   addr_ = make_unique<char[]>(address_len);
   strncpy(addr_.get(), address.c_str(), address_len);
-
-  if (ssh_mode_) {
-    // HandleMessage() will call LaunchSSHLogin().
-    Output(TYPE_GET_SSH_KEY, "");
-  } else {
-    LaunchMosh(0);
-  }
+  LaunchMosh(0);
 }
 
 void MoshClientInstance::LaunchMosh(__attribute__((unused)) int32_t unused) {
@@ -642,8 +636,10 @@ void *MoshClientInstance::MoshThread(void *data) {
 }
 
 void MoshClientInstance::LaunchSSHLogin() {
-  ssh_login_.set_addr(string(addr_.get()));
+  ssh_login_.set_host(host_);
+  ssh_login_.set_type(type_);
   ssh_login_.set_port(string(port_.get()));
+  ssh_login_.set_resolver(resolver_.get());
   setenv("SSH_AUTH_SOCK", "agent", 1); // Connects to UnixSocketStreamImpl.
 
   int thread_err = pthread_create(&thread_, nullptr, SSHLoginThread, this);

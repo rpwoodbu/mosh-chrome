@@ -85,8 +85,9 @@ class MoshClientInstance : public pp::Instance {
   class WindowChange* window_change_ = nullptr;
 
  private:
-  // Launcher that is called as a callback by |resolver_|.
-  void Launch(
+  // Launcher that is called as a callback by |resolver_|, for manually
+  // initiated sessions.
+  void LaunchManual(
      Resolver::Error error,
      Resolver::Authenticity authenticity,
      std::vector<std::string> results);
@@ -111,6 +112,9 @@ class MoshClientInstance : public pp::Instance {
   std::unique_ptr<char[]> addr_;
   std::unique_ptr<char[]> port_;
 
+  // Hostname or address.
+  std::string host_;
+  Resolver::Type type_ = Resolver::Type::A;
   bool ssh_mode_ = false;
   SSHLogin ssh_login_;
   class UnixSocketStreamImpl* ssh_agent_socket_ = nullptr;
