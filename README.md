@@ -29,7 +29,7 @@ Building
   Don't be alarmed if you see a few warnings. In particular, the linker may
   complain about duplicated symbols.
 
-  If succesful, Bazel will output something like this:
+  If successful, Bazel will output something like this:
 
     Target //:mosh_chrome up-to-date:
       bazel-genfiles/mosh_chrome_dev.zip
