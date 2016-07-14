@@ -22,7 +22,8 @@
     "contextMenus",
     "notifications",
     "storage",
-    "app.window.fullscreen.overrideEsc"
+    "app.window.fullscreen.overrideEsc",
+    "https://dns.google.com/resolve"
   ],
   "icons": {
     "128": "laptop_terminal.png"

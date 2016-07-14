@@ -133,6 +133,7 @@ var kSyncFieldNames = [
   'remote-command',
   'server-command',
   'mosh-escape-key',
+  'google-public-dns',
 ];
 
 function loadFields() {
@@ -141,7 +142,11 @@ function loadFields() {
     var key = 'field_' + field;
     chrome.storage.local.get(key, function(o) {
       if (o[key] !== undefined) {
-        form[field].value = o[key];
+        if (form[field].type === "checkbox") {
+          form[field].checked = o[key] === "true" ? true : false;
+        } else {
+          form[field].value = o[key];
+        }
       }
     });
     // Form fields are disabled at first, so if Chrome is slow to run this
@@ -159,7 +164,11 @@ function saveFields() {
       chrome.storage.local.remove(key);
     } else {
       var o = {};
-      o[key] = form[field].value;
+      if (form[field].type === "checkbox") {
+        o[key] = form[field].checked ? "true" : "false";
+      } else {
+        o[key] = form[field].value;
+      }
       chrome.storage.local.set(o);
     }
   });
@@ -191,6 +200,9 @@ function onConnectClick(e) {
   var decodedMoshEscapeKey = decodeHtml(form['mosh-escape-key'].value);
   if (decodedMoshEscapeKey !== "") {
     args['mosh-escape-key'] = decodedMoshEscapeKey;
+  }
+  if (form['google-public-dns'].checked) {
+    args['dns-resolver'] = 'google-public-dns';
   }
   for (var i = 0; i < form['mode'].length; ++i) {
     if (form['mode'][i].checked) {

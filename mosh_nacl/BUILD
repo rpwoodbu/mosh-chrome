@@ -48,6 +48,7 @@ cc_binary(
     name = "mosh_client",
     srcs = ["mosh_nacl.cc"],
     deps = [
+        ":gpdns_resolver_lib",
         ":mosh_nacl_hdr",
         ":pepper_posix_tcp_lib",
         ":pepper_resolver_lib",

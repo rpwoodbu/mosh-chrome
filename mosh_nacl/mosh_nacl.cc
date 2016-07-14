@@ -18,6 +18,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+#include "gpdns_resolver.h"
 #include "make_unique.h"
 #include "mosh_nacl.h"
 #include "pepper_posix_tcp.h"
@@ -344,7 +345,6 @@ const map<string, UnixSocketStreamImpl::FileType>
 
 MoshClientInstance::MoshClientInstance(PP_Instance instance) :
     pp::Instance(instance),
-    resolver_(make_unique<PepperResolver>(this)),
     cc_factory_(this) {
   ++num_instances_;
   assert (num_instances_ == 1);
@@ -488,6 +488,14 @@ bool MoshClientInstance::Init(
       ssh_login_.set_use_agent(string(argv[i]) == "true");
     } else if (name == "mosh-escape-key") {
       mosh_escape_key = argv[i];
+    } else if (name == "dns-resolver") {
+      const string resolver_name = argv[i];
+      if (resolver_name == "google-public-dns") {
+        resolver_ = make_unique<GPDNSResolver>(this);
+      } else {
+        Log("Unknown resolver '%s'.", resolver_name.c_str());
+        return false;
+      }
     }
   }
 
@@ -509,6 +517,10 @@ bool MoshClientInstance::Init(
     setenv("MOSH_ESCAPE_KEY", mosh_escape_key.c_str(), 1);
   }
 
+  if (resolver_ == nullptr) {
+    // Use default resolver.
+    resolver_ = make_unique<PepperResolver>(this);
+  }
   Resolver::Type type;
   if (family == "IPv4") {
     type = Resolver::Type::A;
