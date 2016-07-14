@@ -1,0 +1,95 @@
+// gpdns_resolver.h - The Google Public DNS-over-HTTPS resolver.
+
+// Copyright 2016 Richard Woodbury
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+#ifndef GPDNS_RESOLVER_H
+#define GPDNS_RESOLVER_H
+
+#include "resolver.h"
+
+#include <functional>
+#include <string>
+#include <vector>
+
+#include "ppapi/cpp/instance_handle.h"
+#include "ppapi/cpp/url_loader.h"
+
+#include "ppapi/utility/completion_callback_factory.h"
+
+class GPDNSResolver : public Resolver {
+ public:
+  GPDNSResolver() = delete;
+  GPDNSResolver(pp::InstanceHandle handle) : instance_handle_(handle) {}
+  GPDNSResolver(const GPDNSResolver&) = delete;
+  GPDNSResolver& operator=(const GPDNSResolver&) = delete;
+  GPDNSResolver(GPDNSResolver&&) = default;
+  GPDNSResolver& operator=(GPDNSResolver&&) = default;
+  virtual ~GPDNSResolver() = default;
+
+  void Resolve(
+      std::string domain_name,
+      Type type,
+      std::function<void(Error error, std::vector<std::string> results)> callback) override;
+
+ private:
+  // Encapsulates data and processing for a single query. Class is self-deleting.
+  class Query {
+   public:
+    Query(pp::InstanceHandle handle) :
+      loader_(handle),
+      buffer_(kBufferSize),
+      cc_factory_(this) {}
+
+    // Do the query.
+    void Run(pp::URLRequestInfo request, CallbackCaller caller);
+
+   private:
+    // Method that will be called when the URL is opened.
+    void OpenCallback(int32_t result);
+
+    // Read some data.
+    void ReadMore(std::unique_ptr<Query> deleter);
+
+    // Append |num_bytes| of data from |buffer_| into |respose_|.
+    void AppendDataBytes(int32_t num_bytes);
+
+    // Method that may be called when the URL is read.
+    void ReadCallback(int32_t result);
+
+    // Process the response.
+    void ProcessResponse(std::unique_ptr<Query> deleter);
+
+    // Process the "Answer" part of the response.
+    void ProcessAnswer(const std::string& answer);
+
+    // Process one of the "Answer" parts of the response.
+    std::string ProcessOneAnswer(const std::string& answer);
+
+    // Buffer size for reading data from GPDNS.
+    static const size_t kBufferSize = 16 * 1024; // 16 kB
+
+   private:
+    CallbackCaller caller_;
+    pp::URLLoader loader_;
+    std::vector<char> buffer_;
+    std::string response_;
+    pp::CompletionCallbackFactory<Query> cc_factory_;
+  };
+
+  const pp::InstanceHandle instance_handle_;
+};
+
+#endif // GPDNS_RESOLVER_H

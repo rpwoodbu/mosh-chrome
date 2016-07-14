@@ -185,6 +185,18 @@ cc_library(
 )
 
 cc_library(
+    name = "gpdns_resolver_lib",
+    srcs = ["gpdns_resolver.cc"],
+    hdrs = ["gpdns_resolver.h"],
+    deps = [
+        ":resolver_lib",
+        "@glibc_compat//:glibc_compat",
+        "@jsoncpp//:jsoncpp",
+        "@nacl_sdk//:pepper_lib",
+    ],
+)
+
+cc_library(
     name = "make_unique_lib",
     hdrs = ["make_unique.h"],
 )
