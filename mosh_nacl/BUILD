@@ -1,93 +1,47 @@
 package(default_visibility = ["//visibility:private"])
 
-# TODO: PNaCl rules deserve to be in Skylark, not genrules.
+load("//:nacl_sdk/pnacl.bzl", "pnacl_nexe", "pnacl_pexe")
+load("//:nacl_sdk/nacl.bzl", "nacl_manifest")
 
-genrule(
-    name = "mosh_client_x86_64",
-    srcs = [":mosh_client_pexe"],
-    outs = ["mosh_client_x86_64.nexe"],
-    tools = ["@nacl_sdk//:pnacl_toolchain"],
-    message = "Translating bytecode to native code",
-    cmd = """
-        external/nacl_sdk/toolchain/linux_pnacl/bin/pnacl-translate \
-        -arch x86-64 \
-        $(SRCS) -o $(OUTS)
-    """,
+architectures = ("x86_64", "i686", "armv7")
+
+[pnacl_nexe(
+    name = "mosh_client_" + arch,
+    src = ":mosh_client_pexe",
+    arch = arch,
+    visibility = ["//visibility:public"],
+) for arch in architectures]
+
+filegroup(
+    name = "mosh_client_all_architectures",
+    srcs = [":mosh_client_" + arch for arch in architectures],
     visibility = ["//visibility:public"],
 )
 
-genrule(
-    name = "mosh_client_i686",
-    srcs = [":mosh_client_pexe"],
-    outs = ["mosh_client_i686.nexe"],
-    tools = ["@nacl_sdk//:pnacl_toolchain"],
-    message = "Translating bytecode to native code",
-    cmd = """
-        external/nacl_sdk/toolchain/linux_pnacl/bin/pnacl-translate \
-        -arch i686 \
-        $(SRCS) -o $(OUTS)
-    """,
-    visibility = ["//visibility:public"],
-)
-
-genrule(
-    name = "mosh_client_armv7",
-    srcs = [":mosh_client_pexe"],
-    outs = ["mosh_client_armv7.nexe"],
-    tools = ["@nacl_sdk//:pnacl_toolchain"],
-    message = "Translating bytecode to native code",
-    # ARM translation seems broken; see Issue #90. Setting -threads=seq at
-    # least prevents the file size from varying, and _may_ reduce the number of
-    # incidents of broken nexes.
-    cmd = """
-        external/nacl_sdk/toolchain/linux_pnacl/bin/pnacl-translate \
-        -arch armv7 \
-        -threads=seq \
-        $(SRCS) -o $(OUTS)
-    """,
-    visibility = ["//visibility:public"],
-)
-
-genrule(
+pnacl_pexe(
     name = "mosh_client_pexe",
-    srcs = [":mosh_client_bc"],
-    outs = ["mosh_client.pexe"],
-    tools = ["@nacl_sdk//:pnacl_toolchain"],
-    cmd = "external/nacl_sdk/toolchain/linux_pnacl/bin/pnacl-finalize $(SRCS) -o $(OUTS)",
-    message = "Finalizing pexe",
+    src = ":mosh_client_lib",
     visibility = ["//visibility:public"],
 )
 
-genrule(
-    name = "mosh_client_manifest",
-    srcs = [
-        ":mosh_client_x86_64",
-        ":mosh_client_i686",
-        ":mosh_client_armv7",
-    ],
-    outs = ["all_platforms/mosh_client.nmf"],
-    tools = ["@nacl_sdk//:create_nmf"],
-    cmd = "$(location @nacl_sdk//:create_nmf) -o $(OUTS) $(SRCS)",
-    message = "Building NaCl manifest",
+nacl_manifest(
+    name = "mosh_client_manifest_all_architectures",
+    srcs = [":mosh_client_" + arch for arch in architectures],
+    out = "all_architectures/mosh_client.nmf",
     visibility = ["//visibility:public"],
 )
 
 # This is a convenience rule which only builds the x86_64 translation, saving
 # build time while testing.
-genrule(
+nacl_manifest(
     name = "mosh_client_manifest_x86_64",
-    srcs = [
-        ":mosh_client_x86_64",
-    ],
-    outs = ["x86_64/mosh_client.nmf"],
-    tools = ["@nacl_sdk//:create_nmf"],
-    cmd = "$(location @nacl_sdk//:create_nmf) -o $(OUTS) $(SRCS)",
-    message = "Building x86_64-only NaCl manifest",
+    srcs = [":mosh_client_x86_64"],
+    out = "x86_64/mosh_client.nmf",
     visibility = ["//visibility:public"],
 )
 
 cc_binary(
-    name = "mosh_client_bc",
+    name = "mosh_client_lib",
     srcs = ["mosh_nacl.cc"],
     deps = [
         ":mosh_nacl_hdr",
