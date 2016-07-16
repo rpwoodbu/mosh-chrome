@@ -27,7 +27,12 @@ pnacl_pexe(
 nacl_manifest(
     name = "mosh_client_manifest_all_architectures",
     srcs = [":mosh_client_" + arch for arch in architectures],
-    out = "all_architectures/mosh_client.nmf",
+    visibility = ["//visibility:public"],
+)
+
+nacl_manifest(
+    name = "mosh_client_manifest_pexe",
+    srcs = [":mosh_client_pexe"],
     visibility = ["//visibility:public"],
 )
 
@@ -36,7 +41,6 @@ nacl_manifest(
 nacl_manifest(
     name = "mosh_client_manifest_x86_64",
     srcs = [":mosh_client_x86_64"],
-    out = "x86_64/mosh_client.nmf",
     visibility = ["//visibility:public"],
 )
 

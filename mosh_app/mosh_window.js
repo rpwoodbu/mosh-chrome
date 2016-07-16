@@ -105,8 +105,8 @@ mosh.CommandInstance.prototype.run = function() {
       'top: -99px' +
       'width: 0;' +
       'height: 0;');
-  this.moshNaCl_.setAttribute('src', 'mosh_client.nmf');
-  this.moshNaCl_.setAttribute('type', 'application/x-nacl');
+  this.moshNaCl_.setAttribute('src', nacl_nmf_file);
+  this.moshNaCl_.setAttribute('type', nacl_mime_type);
   for (var k in this.argv_.argString) {
     this.moshNaCl_.setAttribute(k, this.argv_.argString[k]);
   }

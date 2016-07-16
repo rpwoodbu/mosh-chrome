@@ -39,6 +39,10 @@ case "${MODE}" in
     TARGET="//:mosh_chrome_dev_x86_64"
     FLAGS="-c opt"
     ;;
+  "dev-pexe")
+    TARGET="//:mosh_chrome_dev_pexe"
+    FLAGS="-c opt"
+    ;;
   "release")
     TARGET="//:mosh_chrome"
     FLAGS="-c opt"
@@ -49,7 +53,7 @@ case "${MODE}" in
     ;;
   *)
     echo "Unrecognized running mode." 1>&2
-    echo "Usage: ${0} ( dev | dev-x86_64 | release | debug ) [ bazel options ... ]" 1>&2
+    echo "Usage: ${0} ( dev | dev-x86_64 | dev-pexe | release | debug ) [ bazel options ... ]" 1>&2
     exit 1
 esac
 
