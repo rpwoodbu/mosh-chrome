@@ -1,7 +1,7 @@
 """PNaCl build rules."""
 
-def pnacl_pexe(name, src, visibility=None):
-  """Finalize a library to a portable bitcode PEXE for distribution.
+def pnacl_finalized(name, src, visibility=None):
+  """Finalizes a library to portable bitcode for distribution.
 
   Args:
     name: (str) Name for this target.
@@ -14,13 +14,13 @@ def pnacl_pexe(name, src, visibility=None):
     outs = [name + ".pexe"],
     tools = ["@nacl_sdk//:pnacl_toolchain"],
     cmd = "external/nacl_sdk/toolchain/linux_pnacl/bin/pnacl-finalize $(SRCS) -o $(OUTS)",
-    message = "Finalizing PEXE",
+    message = "Finalizing portable binary",
     visibility = visibility,
   )
 
 
-def pnacl_nexe(name, src, arch, visibility=None):
-  """Translate a PEXE to a NEXE native executable for an architecture.
+def pnacl_translated(name, src, arch, visibility=None):
+  """Translates finalized portable bitcode to native executable.
 
   Args:
     name: (str) Name for this target.
@@ -39,7 +39,7 @@ def pnacl_nexe(name, src, arch, visibility=None):
     srcs = [src],
     outs = [name + ".nexe"],
     tools = ["@nacl_sdk//:pnacl_toolchain"],
-    message = "Translating bitcode PEXE to native code NEXE",
+    message = "Translating portable bitcode to native code",
     cmd = """
       external/nacl_sdk/toolchain/linux_pnacl/bin/pnacl-translate \
         -arch {arch} {threads_flag} $(SRCS) -o $(OUTS)

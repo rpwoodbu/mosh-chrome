@@ -1,11 +1,11 @@
 package(default_visibility = ["//visibility:private"])
 
-load("//:nacl_sdk/pnacl.bzl", "pnacl_nexe", "pnacl_pexe")
+load("//:nacl_sdk/pnacl.bzl", "pnacl_translated", "pnacl_finalized")
 load("//:nacl_sdk/nacl.bzl", "nacl_manifest")
 
 architectures = ("x86_64", "i686", "armv7")
 
-[pnacl_nexe(
+[pnacl_translated(
     name = "mosh_client_" + arch,
     src = ":mosh_client_pexe",
     arch = arch,
@@ -18,9 +18,9 @@ filegroup(
     visibility = ["//visibility:public"],
 )
 
-pnacl_pexe(
+pnacl_finalized(
     name = "mosh_client_pexe",
-    src = ":mosh_client_lib",
+    src = ":mosh_client",
     visibility = ["//visibility:public"],
 )
 
@@ -45,7 +45,7 @@ nacl_manifest(
 )
 
 cc_binary(
-    name = "mosh_client_lib",
+    name = "mosh_client",
     srcs = ["mosh_nacl.cc"],
     deps = [
         ":mosh_nacl_hdr",
