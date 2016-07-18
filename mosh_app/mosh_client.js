@@ -50,6 +50,8 @@ window.onload = function() {
   sshModeButton.onchange = updateMode;
   var manualModeButton = document.querySelector('#manual-mode');
   manualModeButton.onchange = updateMode;
+  var gpdnsCheckbox = document.querySelector('#google-public-dns');
+  gpdnsCheckbox.onchange = onGpdnsCheckboxChange;
   var sshKeyLink = document.querySelector('#ssh-key');
   sshKeyLink.onclick = onSshKeyClick;
   var prefsLink = document.querySelector('#prefs');
@@ -134,6 +136,7 @@ var kSyncFieldNames = [
   'server-command',
   'mosh-escape-key',
   'google-public-dns',
+  'trust-sshfp',
 ];
 
 function loadFields() {
@@ -148,11 +151,12 @@ function loadFields() {
           form[field].value = o[key];
         }
       }
+      // Call onchange callback if it exists.
+      var onchange = form[field].onchange;
+      if (onchange != undefined) {
+        onchange();
+      }
     });
-    // Form fields are disabled at first, so if Chrome is slow to run this
-    // function, the user can't start typing ahead of the fields getting
-    // loaded.
-    form[field].disabled = false;
   });
 }
 
@@ -204,6 +208,7 @@ function onConnectClick(e) {
   if (form['google-public-dns'].checked) {
     args['dns-resolver'] = 'google-public-dns';
   }
+  args['trust-sshfp'] = form['trust-sshfp'].checked ? 'true' : 'false';
   for (var i = 0; i < form['mode'].length; ++i) {
     if (form['mode'][i].checked) {
       args['mode'] = form['mode'][i].value;
@@ -301,4 +306,10 @@ function onPrefsClick(e) {
       });
   // Prevent default handling.
   return true;
+}
+
+function onGpdnsCheckboxChange(e) {
+  var gpdnsCheckbox = document.querySelector('#google-public-dns');
+  var sshfpCheckbox = document.querySelector('#trust-sshfp');
+  sshfpCheckbox.disabled = !gpdnsCheckbox.checked;
 }

@@ -499,6 +499,10 @@ bool MoshClientInstance::Init(
         Log("Unknown resolver '%s'.", resolver_name.c_str());
         return false;
       }
+    } else if (name == "trust-sshfp") {
+      if (string(argv[i]) == "true") {
+       ssh_login_.set_trust_sshfp(true);
+      }
     }
   }
 

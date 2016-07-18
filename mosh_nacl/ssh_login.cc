@@ -263,17 +263,22 @@ bool SSHLogin::CheckFingerprint() {
       // Allow to fallthrough to get the diagnostics at the end. Malformed
       // records will not validate, so this is OK.
     }
-    if (sshfp.IsValid(host_key)) {
+    if (!sshfp.IsValid(host_key)) {
+      fprintf(stderr,
+          "Authenticated SSHFP DNS record(s) do not validate the host key!\r\n"
+          "Likely man-in-the-middle attack or misconfiguration.\r\n"
+          "SSHFP records(s) are:\r\n");
+      for (const auto& record : resolved_fp_) {
+        fprintf(stderr, "  %s\r\n", record.c_str());
+      }
+      if (trust_sshfp()) {
+        // If the user doesn't trust the SSHFP, a borked one shouldn't block
+        // the login. All of this was for informational purposes.
+        return false;
+      }
+    } else if (trust_sshfp()) {
       return true;
     }
-    fprintf(stderr,
-        "Authenticated SSHFP DNS record(s) do not validate the host key!\r\n"
-        "Likely man-in-the-middle attack or misconfiguration.\r\n"
-        "SSHFP records(s) are:\r\n");
-    for (const auto& record : resolved_fp_) {
-      fprintf(stderr, "  %s\r\n", record.c_str());
-    }
-    return false;
   }
 
   // No SSHFP records. Use sync'd database of fingerprints to validate host.

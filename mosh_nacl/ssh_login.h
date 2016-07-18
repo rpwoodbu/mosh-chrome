@@ -50,6 +50,9 @@ class SSHLogin {
   // Set the resolver to use. Does not take ownership.
   void set_resolver(Resolver* resolver) { resolver_ = resolver; }
 
+  bool trust_sshfp() const { return trust_sshfp_; }
+  void set_trust_sshfp(bool trust_sshfp) { trust_sshfp_ = trust_sshfp; }
+
   std::string host() const { return host_; }
   void set_host(const std::string &host) { host_ = host; }
 
@@ -107,6 +110,7 @@ class SSHLogin {
 
   bool use_agent_ = false;
   Resolver* resolver_ = nullptr;
+  bool trust_sshfp_ = false;
   std::string host_;
   Resolver::Type type_ = Resolver::Type::A;
   std::string port_;

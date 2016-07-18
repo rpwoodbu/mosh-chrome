@@ -38,16 +38,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
           </tr>
           <tr id="username-row">
             <td>Username:</td>
-            <td><input id="user" type="text" disabled autofocus></td>
+            <td><input id="user" type="text" autofocus></td>
           </tr>
           <tr>
             <td>Hostname or IP address:</td>
-            <td><input id="addr" type="text" disabled></td>
+            <td><input id="addr" type="text"></td>
           </tr>
           <tr>
             <td>Address family:</td>
             <td>
-              <select id="family" disabled>
+              <select id="family">
                 <option value="IPv4" selected>IPv4</option>
                 <option value="IPv6">IPv6</option>
               </select>
@@ -59,19 +59,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
           </tr>
           <tr id="ssh-port-row" hidden="true">
             <td>SSH port:</td>
-            <td><input id="ssh-port" type="text" disabled></td>
+            <td><input id="ssh-port" type="text"></td>
           </tr>
           <tr id="mosh-port-row" hidden="true">
             <td>Mosh port:</td>
-            <td><input id="mosh-port" type="text" disabled></td>
+            <td><input id="mosh-port" type="text"></td>
           </tr>
           <tr id="remote-command-row">
             <td>Remote command:</td>
-            <td><input id="remote-command" type="text" disabled placeholder="default"></td>
+            <td><input id="remote-command" type="text" placeholder="default"></td>
           </tr>
           <tr id="server-command-row">
             <td>Mosh server command:</td>
-            <td><input id="server-command" type="text" disabled placeholder="default"></td>
+            <td><input id="server-command" type="text" placeholder="default"></td>
           </tr>
           <tr id="mosh-escape-key-row">
             <td>Mosh escape key:</td>
@@ -82,8 +82,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             </td>
           </tr>
           <tr>
-            <td>Use Google Public DNS-over-HTTPS:</td>
-            <td><input id="google-public-dns" type="checkbox"></td>
+            <td>DNS settings:</td>
+            <td>
+              <label>
+                <input id="google-public-dns" type="checkbox">
+                Use Google Public DNS-over-HTTPS
+              </label>
+              <br>
+              <label>
+                <input id="trust-sshfp" type="checkbox" disabled>
+                Trust authenticated SSHFP
+              </label>
+            </td>
           </tr>
         </table>
         <input id="connect" type="submit" value="Connect">
