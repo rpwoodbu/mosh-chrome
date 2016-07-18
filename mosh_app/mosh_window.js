@@ -172,8 +172,10 @@ mosh.CommandInstance.prototype.discoverAgentThenInsertMosh = function() {
 };
 
 mosh.CommandInstance.prototype.insertMosh = function() {
-  this.io.print("Loading NaCl module (takes a while the first time" +
-      " after an update).\r\n");
+  if (nacl_mime_type == "application/x-pnacl") {
+    this.io.print("Loading NaCl module (takes a while the first time" +
+        " after an update).\r\n");
+  }
   document.body.insertBefore(this.moshNaCl_, document.body.firstChild);
 };
 
@@ -248,6 +250,11 @@ mosh.CommandInstance.prototype.onTerminalResize_ = function(w, h) {
 };
 
 mosh.CommandInstance.prototype.onProgress_ = function(e) {
+  if (nacl_mime_type != "application/x-pnacl") {
+    // Don't bother with this unless it is a portable NaCl executable. Native
+    // executables load essentially instantly.
+    return;
+  }
   if (e.lengthComputable && e.total > 0) {
     var divisions = 15;
     var fraction = event.loaded / event.total;
@@ -266,7 +273,9 @@ mosh.CommandInstance.prototype.onProgress_ = function(e) {
 };
 
 mosh.CommandInstance.prototype.onLoad_ = function(e) {
-  this.io.print('\r\nLoaded.\r\n');
+  if (nacl_mime_type == "application/x-pnacl") {
+    this.io.print('\r\nLoaded.\r\n');
+  }
   this.running_ = true;
   // Remove sensitive argument attributes.
   this.moshNaCl_.removeAttribute('key');
