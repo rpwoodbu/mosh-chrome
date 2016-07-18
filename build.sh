@@ -30,22 +30,14 @@
 
 MODE="${1}"
 
+FLAGS=""
+
 case "${MODE}" in
   "dev")
     TARGET="//:mosh_chrome_dev"
-    FLAGS="-c opt"
-    ;;
-  "dev-x86_64")
-    TARGET="//:mosh_chrome_dev_x86_64"
-    FLAGS="-c opt"
-    ;;
-  "dev-pexe")
-    TARGET="//:mosh_chrome_dev_pexe"
-    FLAGS="-c opt"
     ;;
   "release")
     TARGET="//:mosh_chrome"
-    FLAGS="-c opt"
     ;;
   "debug")
     TARGET="//:mosh_chrome_dev"
@@ -53,7 +45,7 @@ case "${MODE}" in
     ;;
   *)
     echo "Unrecognized running mode." 1>&2
-    echo "Usage: ${0} ( dev | dev-x86_64 | dev-pexe | release | debug ) [ bazel options ... ]" 1>&2
+    echo "Usage: ${0} ( dev | release | debug ) [ bazel options ... ]" 1>&2
     exit 1
 esac
 
@@ -64,9 +56,4 @@ if ! which bazel > /dev/null; then
 fi
 
 shift
-bazel build "${TARGET}" \
-  --crosstool_top=//:toolchain \
-  --cpu=pnacl \
-  --distinct_host_configuration=false \
-  ${FLAGS} \
-  "$@"
+bazel build "${TARGET}" ${FLAGS} "$@"
