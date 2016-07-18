@@ -244,14 +244,22 @@ bool SSHLogin::Resolve() {
 
 bool SSHLogin::CheckFingerprint() {
   string server_name;
-  // DO NOT SUBMIT: Consider the implications of switching from IP addresses to
-  // hostnames for storing fingerprints.
   if (host_.find(':') == string::npos) {
     server_name = host_ + ":" + port_;
   } else {
     server_name = "[" + host_ + "]:" + port_;
   }
   printf("Remote ssh host name/address:\r\n  %s\r\n", server_name.c_str());
+
+  // TODO: Remove |legacy_server_name| and all the legacy fingerprint handling
+  // code around it, enough time has passed that most users' fingerprints have
+  // been migrated.
+  string legacy_server_name;
+  if (resolved_addr_.find(':') == string::npos) {
+    legacy_server_name = resolved_addr_ + ":" + port_;
+  } else {
+    legacy_server_name = "[" + resolved_addr_ + "]:" + port_;
+  }
 
   const ssh::Key& host_key = session_->GetPublicKey();
 
@@ -287,13 +295,32 @@ bool SSHLogin::CheckFingerprint() {
       host_key.GetKeyType().AsString().c_str(), server_fp.c_str());
   const pp::Var stored_fp_var = known_hosts_.Get(server_name);
   if (stored_fp_var.is_undefined()) {
+    // No stored fingerprint.
+    // Check to see if there's a "legacy" entry (by IP address).
+    const pp::Var legacy_stored_fp_var = known_hosts_.Get(legacy_server_name);
+    if (!legacy_stored_fp_var.is_undefined()) {
+      const string legacy_stored_fp = legacy_stored_fp_var.AsString();
+      if (legacy_stored_fp == server_fp) {
+        printf(
+            "Fingerprints are now stored by hostname, but an old matching\r\n"
+            "fingerprint for this host's IP address (%s) was found.\r\n",
+            resolved_addr_.c_str());
+        bool result = AskYesNo(
+            "Would you like to use this fingerprint for this host?");
+        if (result == true) {
+          known_hosts_.Set(server_name, legacy_stored_fp.c_str());
+          return true;
+        }
+      }
+    }
+
     bool result = AskYesNo("Server fingerprint unknown. Store and continue?");
     if (result == true) {
       known_hosts_.Set(server_name, server_fp);
       return true;
     }
   } else {
-    string stored_fp = stored_fp_var.AsString();
+    const string stored_fp = stored_fp_var.AsString();
     if (stored_fp == server_fp) {
       return true;
     }
