@@ -1,5 +1,10 @@
 package(default_visibility = ["//visibility:private"])
 
+config_setting(
+    name = "pnacl_mode",
+    values = { "cpu": "pnacl" },
+)
+
 cc_library(
     name = "libssh",
     srcs = glob(
@@ -13,15 +18,29 @@ cc_library(
     includes = ["include"],
     deps = [
         ":config_lib",
-        "@glibc_compat//:glibc_compat",
-        "@openssl//:openssl",
-        "@zlib//:zlib",
-    ],
-    copts = [
-        "-DPNACL=ON",
+    ] + select({
+        ":pnacl_mode": [
+            "@glibc_compat//:glibc_compat",
+            "@openssl//:openssl",
+            "@zlib//:zlib",
+        ],
+        "//conditions:default": [
+            ":local_openssl",
+            ":local_zlib",
+        ],
+    }),
+    copts = select({
+        "pnacl_mode": [
+            "-DPNACL=ON",
+            "-DWITH_STATIC_LIB=ON",
+            "-DWITH_SHARED_LIB=OFF",
+        ],
+        "//conditions:default": [
+            "-DWITH_STATIC_LIB=OFF",
+            "-DWITH_SHARED_LIB=ON",
+        ],
+    }) + [
         "-DWITH_ZLIB=OFF",
-        "-DWITH_STATIC_LIB=ON",
-        "-DWITH_SHARED_LIB=OFF",
         "-DWITH_EXAMPLES=OFF",
         "-Wno-char-subscripts",
         "-Wno-implicit-function-declaration",
@@ -75,4 +94,17 @@ EOF
 cc_library(
     name = "config_lib",
     hdrs = [":config_file"],
+)
+
+cc_library(
+    name = "local_openssl",
+    linkopts = [
+        "-lcrypto",
+        "-lssl",
+    ],
+)
+
+cc_library(
+    name = "local_zlib",
+    linkopts = ["-lz"],
 )
