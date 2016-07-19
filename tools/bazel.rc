@@ -4,8 +4,3 @@ build --cpu=pnacl
 
 # By default, built in opt mode. Fastbuild has no benefit here.
 build -c opt
-
-# There is no host toolchain (yet). Bazel complains because of wanting a "k8"
-# CPU, even though we aren't trying to build anything with the local toolchain.
-# This avoids that error.
-build --distinct_host_configuration=false
