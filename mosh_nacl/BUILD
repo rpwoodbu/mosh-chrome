@@ -175,6 +175,7 @@ cc_test(
     # Undefine NDEBUG, as this test uses assert(), which is rightly disabled in
     # opt builds.
     copts = ["-UNDEBUG"],
+    size = "small",
 )
 
 cc_library(
