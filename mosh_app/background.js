@@ -37,6 +37,8 @@ function newSession() {
 chrome.app.runtime.onLaunched.addListener(newSession);
 
 function updateAvailable(e) {
+  maybeReloadApp();
+
   window.state.updateAvailable = e.version;
   var w = chrome.app.window.get('mosh_client');
   if (w != null) {
@@ -67,3 +69,19 @@ chrome.contextMenus.create({
 });
 
 chrome.contextMenus.onClicked.addListener(function() { newSession(); });
+
+function onSessionWindowClosed(id) {
+  delete window.state.windows[id];
+  maybeReloadApp();
+}
+
+// Reloads the app iff there are no session windows open and there's an update
+// available. It is OK to reload if session initiation window is open.
+function maybeReloadApp() {
+  if (window.state.updateAvailable != null &&
+      Object.keys(window.state.windows).length == 0) {
+    // Update is available and there are no open session windows. Reload the
+    // app to get the update.
+    chrome.runtime.reload();
+  }
+}

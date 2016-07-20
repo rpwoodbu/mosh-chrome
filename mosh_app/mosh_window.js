@@ -22,14 +22,8 @@
 //   window.state - The global state object from background.js.
 
 window.onload = function() {
-  chrome.app.window.current().onClosed.addListener(onClosed);
   lib.init(execMosh, console.log.bind(console));
 };
-
-function onClosed() {
-  var appWindow = chrome.app.window.current();
-  delete window.state.windows[appWindow.id];
-}
 
 function execMosh() {
   var terminal = new hterm.Terminal('mosh');

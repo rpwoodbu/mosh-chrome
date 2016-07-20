@@ -240,6 +240,15 @@ function onConnectClick(e) {
           bg.state.windows[id] = createdWindow;
           createdWindow.contentWindow.args = args;
           createdWindow.contentWindow.state = bg.state;
+          // Adding a listener to onClosed is tricky, as a lot of functionality
+          // is missing while the window is being destroyed. Using setTimeout()
+          // on the background window ensures the callback is run in its
+          // (persistent) context.
+          createdWindow.onClosed.addListener(function() {
+            bg.setTimeout(function() {
+              bg.onSessionWindowClosed(id);
+            }, 0)
+          });
           chrome.app.window.current().close();
         });
   });
