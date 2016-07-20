@@ -1,6 +1,5 @@
 # Use nacl-sdk toolchain, specifically pnacl.
 build --crosstool_top=//:toolchain
-build --cpu=pnacl
 
 # By default, built in opt mode. Fastbuild has no benefit here.
 build -c opt
