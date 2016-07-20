@@ -11,6 +11,9 @@
 #
 # To build an unoptimized debug version of the dev track (for use with gdb):
 #   $ ./build.sh debug
+#
+# To run unit tests:
+#   $ ./build.sh test
 
 
 # Copyright 2016 Richard Woodbury
@@ -31,6 +34,7 @@
 MODE="${1}"
 
 FLAGS=""
+ACTION="build"
 
 case "${MODE}" in
   "dev")
@@ -43,9 +47,14 @@ case "${MODE}" in
     TARGET="//:mosh_chrome_dev"
     FLAGS="-c dbg"
     ;;
+  "test")
+    ACTION="test"
+    TARGET="..."
+    FLAGS="--cpu=k8 --build_tests_only"
+    ;;
   *)
     echo "Unrecognized running mode." 1>&2
-    echo "Usage: ${0} ( dev | release | debug ) [ bazel options ... ]" 1>&2
+    echo "Usage: ${0} ( dev | release | debug | test ) [ bazel options ... ]" 1>&2
     exit 1
 esac
 
@@ -56,4 +65,4 @@ if ! which bazel > /dev/null; then
 fi
 
 shift
-bazel build "${TARGET}" ${FLAGS} "$@"
+bazel "${ACTION}" "${TARGET}" ${FLAGS} "$@"
