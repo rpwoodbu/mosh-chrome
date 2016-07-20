@@ -106,7 +106,11 @@ class MoshClientInstance : public pp::Instance {
   static void *SSHLoginThread(void *data);
 
   static int num_instances_; // This needs to be a singleton.
+#ifdef USE_NEWLIB
   pthread_t thread_ = nullptr;
+#else
+  pthread_t thread_ = EINVAL;
+#endif
 
   // Non-const params for mosh_main().
   std::unique_ptr<char[]> addr_;

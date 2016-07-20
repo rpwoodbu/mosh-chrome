@@ -21,6 +21,8 @@
 #include "mosh_nacl.h"
 #include "sshfp_record.h"
 
+#include <string.h> // TODO: Eliminate use of strlen().
+#include <algorithm>
 #include <functional>
 #include <future>
 #include <memory>

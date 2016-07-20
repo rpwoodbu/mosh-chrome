@@ -189,6 +189,7 @@ genrule(
     cmd = """
         cat > $(OUTS) << EOF
 #include <sys/signal.h>
+#include <sys/types.h>
 extern "C" {
 extern int pselect (int __nfds, fd_set *__restrict __readfds,
   fd_set *__restrict __writefds,

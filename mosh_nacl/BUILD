@@ -5,6 +5,11 @@ load("//:nacl_sdk/nacl.bzl", "nacl_manifest")
 
 architectures = ("x86_64", "i686", "armv7")
 
+config_setting(
+    name = "pnacl_mode",
+    values = { "cpu": "pnacl" },
+)
+
 [pnacl_translated(
     name = "mosh_client_" + arch,
     src = ":mosh_client_pexe",
@@ -65,6 +70,10 @@ cc_library(
         ":pepper_wrapper_lib",
         ":resolver_lib",
     ],
+    defines = select({
+        ":pnacl_mode": ["USE_NEWLIB"],
+        "//conditions:default": [],
+    }),
 )
 
 cc_library(
@@ -74,7 +83,10 @@ cc_library(
     deps = [
         ":pepper_posix_lib",
     ],
-    defines = ["USE_NEWLIB"],
+    defines = select({
+        ":pnacl_mode": ["USE_NEWLIB"],
+        "//conditions:default": [],
+    }),
 )
 
 cc_library(

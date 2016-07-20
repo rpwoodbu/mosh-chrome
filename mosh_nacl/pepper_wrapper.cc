@@ -275,7 +275,11 @@ void freeaddrinfo(struct addrinfo *res) {
   }
 }
 
+#ifdef USE_NEWLIB
 char *gai_strerror(UNUSED int errcode) {
+#else
+const char *gai_strerror(UNUSED int errcode) {
+#endif
   Log("gai_strerror(): Not implemented.");
   return strings.Get("gai_strerror not implemented");
 }
