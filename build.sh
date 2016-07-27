@@ -33,7 +33,7 @@
 
 MODE="${1}"
 
-FLAGS=""
+FLAGS="--config=pnacl"
 ACTION="build"
 
 case "${MODE}" in
@@ -50,7 +50,7 @@ case "${MODE}" in
   "test")
     ACTION="test"
     TARGET="..."
-    FLAGS="--cpu=k8 --build_tests_only"
+    FLAGS=""
     ;;
   *)
     echo "Unrecognized running mode." 1>&2
