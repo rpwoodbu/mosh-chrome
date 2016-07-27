@@ -183,10 +183,10 @@ cc_library(
 cc_test(
     name = "sshfp_record_test",
     srcs = ["sshfp_record_test.cc"],
-    deps = [":sshfp_record_lib"],
-    # Undefine NDEBUG, as this test uses assert(), which is rightly disabled in
-    # opt builds.
-    copts = ["-UNDEBUG"],
+    deps = [
+        ":sshfp_record_lib",
+        "@io_bazel//third_party:gtest",
+    ],
     size = "small",
 )
 
