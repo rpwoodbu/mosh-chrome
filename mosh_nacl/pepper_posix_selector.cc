@@ -19,11 +19,11 @@
 
 #include "make_unique.h"
 
-#include <algorithm>
-#include <memory>
 #include <assert.h>
 #include <errno.h>
 #include <unistd.h>
+#include <algorithm>
+#include <memory>
 
 namespace PepperPOSIX {
 
@@ -31,7 +31,7 @@ using std::unique_ptr;
 using std::vector;
 using util::make_unique;
 
-Selector::Selector() { }
+Selector::Selector() {}
 
 Selector::~Selector() {
   // It is a logical error to delete Selector before all Targets have been
@@ -61,10 +61,9 @@ void Selector::Notify() {
   notify_cv_.Signal();
 }
 
-vector<Target*> Selector::Select(
-    const vector<Target*>& read_targets,
-    const vector<Target*>& write_targets,
-    const struct timespec *timeout) {
+vector<Target*> Selector::Select(const vector<Target*>& read_targets,
+                                 const vector<Target*>& write_targets,
+                                 const struct timespec* timeout) {
   struct timespec abstime;
   if (timeout != nullptr) {
     // Calculate absolute time for timeout. This should be done ASAP to reduce
@@ -123,9 +122,8 @@ vector<Target*> Selector::Select(
   }
 }
 
-vector<Target*> Selector::HasData(
-    const vector<Target*> &read_targets,
-    const vector<Target*> &write_targets) const {
+vector<Target*> Selector::HasData(const vector<Target*>& read_targets,
+                                  const vector<Target*>& write_targets) const {
   vector<Target*> result;
   for (auto* target : read_targets) {
     if (target->has_read_data()) {
@@ -140,9 +138,7 @@ vector<Target*> Selector::HasData(
   return result;
 }
 
-Target::~Target() {
-  selector_.Deregister(*this);
-}
+Target::~Target() { selector_.Deregister(*this); }
 
 void Target::UpdateRead(bool has_data) {
   if (has_data == has_read_data_) {
@@ -170,4 +166,4 @@ void Target::UpdateWrite(bool has_data) {
   }
 }
 
-} // namespace PepperPosix
+}  // namespace PepperPosix

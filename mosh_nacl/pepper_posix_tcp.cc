@@ -24,11 +24,11 @@
 
 namespace PepperPOSIX {
 
-Stream::Stream() { }
+Stream::Stream() {}
 
-Stream::~Stream() { }
+Stream::~Stream() {}
 
-ssize_t Stream::Receive(void *buf, size_t count, int flags) {
+ssize_t Stream::Receive(void* buf, size_t count, int flags) {
   bool peek = false;
   if (flags & MSG_PEEK) {
     peek = true;
@@ -48,19 +48,15 @@ ssize_t Stream::Receive(void *buf, size_t count, int flags) {
     errno = EWOULDBLOCK;
     return -1;
   }
-  char *cbuf = (char *)buf;
+  char* cbuf = (char*)buf;
   int read_count = 0;
   if (peek) {
-    for (;
-        read_count < count && read_count < buffer_.size();
-        ++read_count) {
+    for (; read_count < count && read_count < buffer_.size(); ++read_count) {
       *cbuf = buffer_[read_count];
       ++cbuf;
     }
   } else {
-    for (;
-        read_count < count && buffer_.size() > 0;
-        ++read_count) {
+    for (; read_count < count && buffer_.size() > 0; ++read_count) {
       *cbuf = buffer_.front();
       buffer_.pop_front();
       ++cbuf;
@@ -71,16 +67,14 @@ ssize_t Stream::Receive(void *buf, size_t count, int flags) {
   return read_count;
 }
 
-ssize_t Stream::Read(void *buf, size_t count) {
-  return Receive(buf, count, 0);
-}
+ssize_t Stream::Read(void* buf, size_t count) { return Receive(buf, count, 0); }
 
-ssize_t Stream::Write(const void *buf, size_t count) {
+ssize_t Stream::Write(const void* buf, size_t count) {
   return Send(buf, count, 0);
 }
 
-void Stream::AddData(const void *buf, size_t count) {
-  const char *cbuf = (const char *)buf;
+void Stream::AddData(const void* buf, size_t count) {
+  const char* cbuf = (const char*)buf;
 
   {
     pthread::MutexLock m(buffer_lock_);
@@ -93,22 +87,21 @@ void Stream::AddData(const void *buf, size_t count) {
   target_->UpdateRead(true);
 }
 
-int StubTCP::Bind(__attribute__((unused)) const pp::NetAddress &address) {
+int StubTCP::Bind(__attribute__((unused)) const pp::NetAddress& address) {
   Log("StubBind()");
   return 0;
 }
 
-int StubTCP::Connect(__attribute__((unused)) const pp::NetAddress &address) {
+int StubTCP::Connect(__attribute__((unused)) const pp::NetAddress& address) {
   Log("StubConnect()");
   return 0;
 }
 
-ssize_t StubTCP::Send(
-    __attribute__((unused)) const void *buf,
-    __attribute__((unused)) size_t count,
-    __attribute__((unused)) int flags) {
+ssize_t StubTCP::Send(__attribute__((unused)) const void* buf,
+                      __attribute__((unused)) size_t count,
+                      __attribute__((unused)) int flags) {
   Log("StubSend()");
   return 0;
 }
 
-} // namespace PepperPOSIX
+}  // namespace PepperPOSIX

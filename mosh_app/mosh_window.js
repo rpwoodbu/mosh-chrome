@@ -94,11 +94,11 @@ mosh.CommandInstance.prototype.run = function() {
   this.io.terminal_.prefs_.set('send-encoding', 'raw');
 
   this.moshNaCl_ = window.document.createElement('embed');
-  this.moshNaCl_.style.cssText = (
-      'position: absolute;' +
-      'top: -99px' +
-      'width: 0;' +
-      'height: 0;');
+  this.moshNaCl_.style.cssText =
+      ('position: absolute;' +
+       'top: -99px' +
+       'width: 0;' +
+       'height: 0;');
   this.moshNaCl_.setAttribute('src', nacl_nmf_file);
   this.moshNaCl_.setAttribute('type', nacl_mime_type);
   for (var k in this.argv_.argString) {
@@ -162,13 +162,14 @@ mosh.CommandInstance.prototype.discoverAgentThenInsertMosh = function() {
 
   // To probe for an agent, post an empty message just to get a response or a
   // disconnection.
-  this.agentPort_.postMessage({'type':'auth-agent@openssh.com','data':[0]});
+  this.agentPort_.postMessage({'type': 'auth-agent@openssh.com', 'data': [0]});
 };
 
 mosh.CommandInstance.prototype.insertMosh = function() {
-  if (nacl_mime_type == "application/x-pnacl") {
-    this.io.print("Loading NaCl module (takes a while the first time" +
-        " after an update).\r\n");
+  if (nacl_mime_type == 'application/x-pnacl') {
+    this.io.print(
+        'Loading NaCl module (takes a while the first time' +
+        ' after an update).\r\n');
   }
   document.body.insertBefore(this.moshNaCl_, document.body.firstChild);
 };
@@ -244,7 +245,7 @@ mosh.CommandInstance.prototype.onTerminalResize_ = function(w, h) {
 };
 
 mosh.CommandInstance.prototype.onProgress_ = function(e) {
-  if (nacl_mime_type != "application/x-pnacl") {
+  if (nacl_mime_type != 'application/x-pnacl') {
     // Don't bother with this unless it is a portable NaCl executable. Native
     // executables load essentially instantly.
     return;
@@ -267,7 +268,7 @@ mosh.CommandInstance.prototype.onProgress_ = function(e) {
 };
 
 mosh.CommandInstance.prototype.onLoad_ = function(e) {
-  if (nacl_mime_type == "application/x-pnacl") {
+  if (nacl_mime_type == 'application/x-pnacl') {
     this.io.print('\r\nLoaded.\r\n');
   }
   this.running_ = true;
@@ -275,11 +276,12 @@ mosh.CommandInstance.prototype.onLoad_ = function(e) {
   this.moshNaCl_.removeAttribute('key');
 };
 
-mosh.CommandInstance.prototype.onCrash_ = function(e) {
+mosh.CommandInstance.prototype.onCrash_ =
+    function(e) {
   this.exit_('Mosh NaCl crashed.');
 }
 
-mosh.CommandInstance.prototype.exit_ = function(output) {
+    mosh.CommandInstance.prototype.exit_ = function(output) {
   this.io.print('\r\n' + output + '\r\n');
   console.log(output);
   this.io.print('Press "x" to close the window.\r\n');
@@ -288,9 +290,6 @@ mosh.CommandInstance.prototype.exit_ = function(output) {
 
 // Send data to an SSH agent.
 mosh.CommandInstance.prototype.sendToAgent_ = function(data) {
-  var message = {
-    'type': 'auth-agent@openssh.com',
-    'data': data
-  };
+  var message = {'type': 'auth-agent@openssh.com', 'data': data};
   this.agentPort_.postMessage(message);
 }

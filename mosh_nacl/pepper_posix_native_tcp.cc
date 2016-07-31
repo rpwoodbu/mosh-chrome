@@ -30,13 +30,12 @@
 
 namespace PepperPOSIX {
 
-NativeTCP::NativeTCP(const pp::InstanceHandle &instance_handle) :
-    socket_(new pp::TCPSocket(instance_handle)),
-    factory_(this) {}
+NativeTCP::NativeTCP(const pp::InstanceHandle& instance_handle)
+    : socket_(new pp::TCPSocket(instance_handle)), factory_(this) {}
 
 NativeTCP::~NativeTCP() {}
 
-int NativeTCP::Bind(const pp::NetAddress &address) {
+int NativeTCP::Bind(const pp::NetAddress& address) {
   pp::Var string_address = address.DescribeAsString(true);
   if (string_address.is_undefined()) {
     Log("NativeTCP::Bind(): Address is bogus.");
@@ -46,7 +45,7 @@ int NativeTCP::Bind(const pp::NetAddress &address) {
   return socket_->Bind(address, pp::CompletionCallback());
 }
 
-int NativeTCP::Connect(const pp::NetAddress &address) {
+int NativeTCP::Connect(const pp::NetAddress& address) {
   address_ = address;
   pp::Var string_address = address_.DescribeAsString(true);
   if (string_address.is_undefined()) {
@@ -64,11 +63,12 @@ int NativeTCP::Connect(const pp::NetAddress &address) {
 
 // This callback should only be called on the main thread.
 void NativeTCP::ConnectOnMainThread(__attribute__((unused)) int32_t unused) {
-  int32_t result = socket_->Connect(
-      address_, factory_.NewCallback(&NativeTCP::Connected));
+  int32_t result =
+      socket_->Connect(address_, factory_.NewCallback(&NativeTCP::Connected));
   if (result != PP_OK_COMPLETIONPENDING) {
     Log("NativeTCP::ConnectOnMainThread(): "
-        "socket_->Connect() returned %d", result);
+        "socket_->Connect() returned %d",
+        result);
     // TODO: Perhaps crash here?
   }
   // TODO: Flesh out error mapping.
@@ -83,33 +83,33 @@ void NativeTCP::Connected(int32_t result) {
 
   Log("NativeTCP::Connected(): Connection failed; result: %d", result);
   switch (result) {
-   case PP_ERROR_NOACCESS:
-    connection_errno_ = EACCES;
-    break;
-   case PP_ERROR_ADDRESS_UNREACHABLE:
-    connection_errno_ = EHOSTUNREACH;
-    break;
-   case PP_ERROR_CONNECTION_REFUSED:
-    connection_errno_ = ECONNREFUSED;
-    break;
-   case PP_ERROR_CONNECTION_TIMEDOUT:
-    connection_errno_ = ETIMEDOUT;
-    break;
-   default:
-    connection_errno_ = EIO;
-    break;
+    case PP_ERROR_NOACCESS:
+      connection_errno_ = EACCES;
+      break;
+    case PP_ERROR_ADDRESS_UNREACHABLE:
+      connection_errno_ = EHOSTUNREACH;
+      break;
+    case PP_ERROR_CONNECTION_REFUSED:
+      connection_errno_ = ECONNREFUSED;
+      break;
+    case PP_ERROR_CONNECTION_TIMEDOUT:
+      connection_errno_ = ETIMEDOUT;
+      break;
+    default:
+      connection_errno_ = EIO;
+      break;
   }
 
   target_->UpdateWrite(true);
   target_->UpdateRead(true);
 }
 
-ssize_t NativeTCP::Send(const void *buf, size_t count, int flags) {
+ssize_t NativeTCP::Send(const void* buf, size_t count, int flags) {
   if (flags != 0) {
     Log("NativeTCP::Send(): Unsupported flag: 0x%x", flags);
   }
-  int32_t result = socket_->Write(
-      (const char *)buf, count, pp::CompletionCallback());
+  int32_t result =
+      socket_->Write((const char*)buf, count, pp::CompletionCallback());
   if (result < 0) {
     Log("NativeTCP::Send(): Got negative result: %d", result);
   }
@@ -118,9 +118,8 @@ ssize_t NativeTCP::Send(const void *buf, size_t count, int flags) {
 
 // StartReceive prepares to receive more data, and returns without blocking.
 void NativeTCP::StartReceive() {
-  int32_t result = socket_->Read(
-      receive_buffer_, sizeof(receive_buffer_),
-      factory_.NewCallback(&NativeTCP::Received));
+  int32_t result = socket_->Read(receive_buffer_, sizeof(receive_buffer_),
+                                 factory_.NewCallback(&NativeTCP::Received));
   if (result != PP_OK_COMPLETIONPENDING) {
     Log("NativeTCP::StartReceive(): Read unexpectedly returned %d", result);
     // TODO: Perhaps crash here?
@@ -145,4 +144,4 @@ int NativeTCP::Close() {
   return 0;
 }
 
-} // namespace PepperPOSIX
+}  // namespace PepperPOSIX

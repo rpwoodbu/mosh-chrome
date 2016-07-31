@@ -28,7 +28,7 @@
 
 namespace PepperPOSIX {
 
-class Target; // This is declared fully below.
+class Target;  // This is declared fully below.
 
 // Selector implements select()-style functionality for callback-style I/O.
 // In your I/O implementation, get and retain a Target instance by calling
@@ -39,7 +39,7 @@ class Selector {
  public:
   Selector();
   ~Selector();
-  friend class Target; // Allow Target to access private members of Selector.
+  friend class Target;  // Allow Target to access private members of Selector.
 
   // NewTarget creates a new Target instance for use by an I/O class. The
   // returned Target is owned by the caller, but Selector maintains a pointer
@@ -48,48 +48,46 @@ class Selector {
   // distinguish one Target from another.
   std::unique_ptr<Target> NewTarget(int id);
 
-  // Select returns a subset of targets for which data is available, or 
+  // Select returns a subset of targets for which data is available, or
   // waits until the timeout period has passed. It calls
-  // pthread_cond_timedwait() if there are no targets with data available 
+  // pthread_cond_timedwait() if there are no targets with data available
   // when the method is called.
   //
   // Vectors of pointers were chosen for simplicity, even though ownership
   // looks ambiguous. The alternative would have been
   // std::vector<std::reference_wrapper<Target>>, which is messy at best.
   // Select() does not take or convey ownership.
-  std::vector<Target*> Select(
-      const std::vector<Target*>& read_targets,
-      const std::vector<Target*>& write_targets,
-      const struct timespec *timeout);
+  std::vector<Target*> Select(const std::vector<Target*>& read_targets,
+                              const std::vector<Target*>& write_targets,
+                              const struct timespec* timeout);
 
   // SelectAll is similar to Select, but waits for all registered targets.
-  std::vector<Target*> SelectAll(const struct timespec *timeout) {
+  std::vector<Target*> SelectAll(const struct timespec* timeout) {
     return Select(targets_, targets_, timeout);
   }
 
  private:
-  // Notify is to be called only from class Target to indicate when 
+  // Notify is to be called only from class Target to indicate when
   // there is data available. Internally, Notify uses
-  // pthread_cond_signal() to indicate that there is data. It does not 
+  // pthread_cond_signal() to indicate that there is data. It does not
   // need to procure a lock, as it modifies no internal state.
   void Notify();
 
-  // Deregister is to be called only from the class Target when it is 
+  // Deregister is to be called only from the class Target when it is
   // being destroyed and must deregister with Selector.
   void Deregister(const Target& target);
 
   // HasData returns a vector of Targets that have data ready to be read.
-  std::vector<Target*> HasData(
-      const std::vector<Target*>& read_targets,
-      const std::vector<Target*>& write_targets) const;
+  std::vector<Target*> HasData(const std::vector<Target*>& read_targets,
+                               const std::vector<Target*>& write_targets) const;
 
-  std::vector<Target*> targets_; // Does not own Targets!
+  std::vector<Target*> targets_;  // Does not own Targets!
   pthread::Mutex notify_mutex_;
   pthread::Conditional notify_cv_;
 
   // Disable copy and assignment.
   Selector(const Selector&) = delete;
-  Selector &operator=(const Selector&) = delete;
+  Selector& operator=(const Selector&) = delete;
 };
 
 // Target is used by an I/O "target" to communicate with a Selector instance
@@ -105,14 +103,14 @@ class Target {
   // I/O target. If the state has changed, Target notifies Selector of the
   // change.  You can call UpdateRead even if the state has not changed since
   // the last call to UpdateRead, as UpdateRead will detect that and not send
-  // superfluous notifications to Selector. 
+  // superfluous notifications to Selector.
   void UpdateRead(bool has_data);
 
   // UpdateWrite updates Target whether new data can be accepted by the I/O
   // target. If the state has changed, Target notifies Selector of the change.
   // You can call UpdateWrite even if the state has not changed since the last
   // call to UpdateWrite, as UpdateWrite will detect that and not send
-  // superfluous notifications to Selector. 
+  // superfluous notifications to Selector.
   void UpdateWrite(bool has_data);
 
   bool has_read_data() const { return has_read_data_; }
@@ -121,16 +119,16 @@ class Target {
   bool operator==(const Target& rh) { return id() == rh.id(); }
 
  private:
-  class Selector &selector_;
+  class Selector& selector_;
   int id_ = -1;
   bool has_read_data_ = false;
   bool has_write_data_ = true;
 
   // Disable copy and assignment.
   Target(const Target&) = delete;
-  Target &operator=(const Target&) = delete;
+  Target& operator=(const Target&) = delete;
 };
 
-} // namespace PepperPosix
+}  // namespace PepperPosix
 
-#endif // PEPPER_POSIX_SELECTOR_HPP
+#endif  // PEPPER_POSIX_SELECTOR_HPP

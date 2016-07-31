@@ -54,32 +54,36 @@ class SSHLogin {
   void set_trust_sshfp(bool trust_sshfp) { trust_sshfp_ = trust_sshfp; }
 
   std::string host() const { return host_; }
-  void set_host(const std::string &host) { host_ = host; }
+  void set_host(const std::string& host) { host_ = host; }
 
   Resolver::Type type() const { return type_; }
   void set_type(Resolver::Type type) { type_ = type; }
 
   std::string port() const { return port_; }
-  void set_port(const std::string &port) { port_ = port; }
+  void set_port(const std::string& port) { port_ = port; }
 
   std::string user() const { return user_; }
-  void set_user(const std::string &user) { user_ = user; }
+  void set_user(const std::string& user) { user_ = user; }
 
   std::string key() const { return key_; }
-  void set_key(const std::string &key) { key_ = key; }
+  void set_key(const std::string& key) { key_ = key; }
 
   // The command to run on the remote host. Set to the empty string to use the
   // default.
   std::string remote_command() const { return remote_command_; }
-  void set_remote_command(const std::string &command) { remote_command_ = command; }
+  void set_remote_command(const std::string& command) {
+    remote_command_ = command;
+  }
 
   // The command to start the mosh-server on the remote host. Set to the empty
   // string to use the default.
   std::string server_command() const { return server_command_; }
-  void set_server_command(const std::string &command) { server_command_ = command; }
+  void set_server_command(const std::string& command) {
+    server_command_ = command;
+  }
 
   pp::VarDictionary known_hosts() const { return known_hosts_; }
-  void set_known_hosts(const pp::Var &var) { known_hosts_ = var; }
+  void set_known_hosts(const pp::Var& var) { known_hosts_ = var; }
 
   std::string mosh_port() const { return mosh_port_; }
 
@@ -101,7 +105,7 @@ class SSHLogin {
 
   // Ask a yes/no question to the user, and return the answer as a bool.
   // Prefers to return false if input is not parseable.
-  bool AskYesNo(const std::string &prompt);
+  bool AskYesNo(const std::string& prompt);
 
   bool DoPasswordAuth();
   bool DoInteractiveAuth();
@@ -131,4 +135,4 @@ class SSHLogin {
   std::unique_ptr<ssh::Session> session_;
 };
 
-#endif // SSH_LOGIN_H
+#endif  // SSH_LOGIN_H

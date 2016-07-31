@@ -25,12 +25,12 @@
 #include "pepper_posix_selector.h"
 #include "pthread_locks.h"
 
-#include <deque>
-#include <memory>
-#include <vector>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/uio.h>
+#include <deque>
+#include <memory>
+#include <vector>
 
 #include "ppapi/cpp/net_address.h"
 
@@ -39,10 +39,7 @@ namespace PepperPOSIX {
 // Wrapper over struct msghdr, which ensures proper destruction.
 struct MsgHdr : public ::msghdr {
   MsgHdr() = delete;
-  MsgHdr(
-      const pp::NetAddress& addr,
-      int32_t size,
-      const char* const buf);
+  MsgHdr(const pp::NetAddress& addr, int32_t size, const char* const buf);
   ~MsgHdr();
 
   // Disable copy and assignment.
@@ -61,47 +58,46 @@ class UDP : public File {
   ~UDP() override;
 
   // Receive replaces recvmsg(); see its documentation for usage.
-  ssize_t Receive(struct ::msghdr *message, int flags);
+  ssize_t Receive(struct ::msghdr* message, int flags);
 
   // Bind replaces bind().
-  virtual int Bind(const pp::NetAddress &address) = 0;
+  virtual int Bind(const pp::NetAddress& address) = 0;
 
   // Send replaces sendto(). Usage is similar, but tweaked for C++.
-  virtual ssize_t Send(
-    const std::vector<char> &buf, int flags, const pp::NetAddress &address) = 0;
+  virtual ssize_t Send(const std::vector<char>& buf, int flags,
+                       const pp::NetAddress& address) = 0;
 
  protected:
   // AddPacket is used by the subclass to add a packet to the incoming queue.
   // This method can be called from another thread than the one used to call
   // the other methods. Takes ownership of *message and its associated buffers.
   void AddPacket(std::unique_ptr<MsgHdr> message);
- 
+
  private:
-  std::deque<std::unique_ptr<MsgHdr>> packets_; // Guard with packets_lock_.
+  std::deque<std::unique_ptr<MsgHdr>> packets_;  // Guard with packets_lock_.
   pthread::Mutex packets_lock_;
 
   // Disable copy and assignment.
-  UDP(const UDP &) = delete;
-  UDP &operator=(const UDP &) = delete;
+  UDP(const UDP&) = delete;
+  UDP& operator=(const UDP&) = delete;
 };
 
 // StubUDP is an instantiatable stubbed subclass of UDP for debugging.
 class StubUDP : public UDP {
  public:
   // Bind replaces bind().
-  int Bind(const pp::NetAddress &address) override;
+  int Bind(const pp::NetAddress& address) override;
 
   // Send replaces sendto. Usage is similar, but tweaked for C++.
-  ssize_t Send(
-    const std::vector<char> &buf, int flags,
-    const pp::NetAddress &address) override;
+  ssize_t Send(const std::vector<char>& buf, int flags,
+               const pp::NetAddress& address) override;
 
  private:
   // Disable copy and assignment.
-  StubUDP(const StubUDP &) = delete;
-  StubUDP &operator=(const StubUDP &) = delete;
+  StubUDP(const StubUDP&) = delete;
+  StubUDP& operator=(const StubUDP&) = delete;
 };
 
-} // namespace PepperPOSIX
+}  // namespace PepperPOSIX
 
-#endif // PEPPER_POSIX_UDP_HPP
+#endif  // PEPPER_POSIX_UDP_HPP

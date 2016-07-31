@@ -41,30 +41,23 @@ void PepperResolver::Resolve(string domain_name, Type type, Callback callback) {
     case Type::SSHFP:
       caller.Call(Error::TYPE_NOT_SUPPORTED, Authenticity::INSECURE, {});
       return;
-    // No default case; all enums accounted for.
+      // No default case; all enums accounted for.
   }
 
   caller.Release();
   pp::Module::Get()->core()->CallOnMainThread(
-      0,
-      cc_factory_.NewCallback(
-        &PepperResolver::ResolveOnMainThread,
-        move(domain_name),
-        hint,
-        callback));
+      0, cc_factory_.NewCallback(&PepperResolver::ResolveOnMainThread,
+                                 move(domain_name), hint, callback));
 }
 
-void PepperResolver::ResolveOnMainThread(
-    __attribute__((unused)) uint32_t unused,
-    string domain_name,
-    PP_HostResolver_Hint hint,
-    Callback callback) {
+void PepperResolver::ResolveOnMainThread(__attribute__((unused))
+                                         uint32_t unused,
+                                         string domain_name,
+                                         PP_HostResolver_Hint hint,
+                                         Callback callback) {
   resolver_.Resolve(
-      domain_name.c_str(),
-      0,
-      hint,
-      cc_factory_.NewCallback(
-        &PepperResolver::ResolverCallback, callback));
+      domain_name.c_str(), 0, hint,
+      cc_factory_.NewCallback(&PepperResolver::ResolverCallback, callback));
 }
 
 void PepperResolver::ResolverCallback(int32_t result, Callback callback) {
@@ -81,7 +74,7 @@ void PepperResolver::ResolverCallback(int32_t result, Callback callback) {
   vector<string> results;
   for (int i = 0; i < resolver_.GetNetAddressCount(); ++i) {
     results.push_back(
-      resolver_.GetNetAddress(i).DescribeAsString(false).AsString());
+        resolver_.GetNetAddress(i).DescribeAsString(false).AsString());
   }
   caller.Call(Error::OK, Authenticity::INSECURE, move(results));
 }

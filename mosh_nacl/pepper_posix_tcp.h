@@ -25,11 +25,11 @@
 #include "pepper_posix_selector.h"
 #include "pthread_locks.h"
 
-#include <deque>
-#include <vector>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/uio.h>
+#include <deque>
+#include <vector>
 
 #include "ppapi/cpp/net_address.h"
 
@@ -46,16 +46,16 @@ class Stream : public ReadWriter {
   ~Stream() override;
 
   // Read replaces read().
-  ssize_t Read(void *buf, size_t count) override;
+  ssize_t Read(void* buf, size_t count) override;
 
   // Recv replaces recv().
-  virtual ssize_t Receive(void *buf, size_t count, int flags);
+  virtual ssize_t Receive(void* buf, size_t count, int flags);
 
   // Write replaces write().
-  ssize_t Write(const void *buf, size_t count) override;
+  ssize_t Write(const void* buf, size_t count) override;
 
   // Send replaces send().
-  virtual ssize_t Send(const void *buf, size_t count, int flags) = 0;
+  virtual ssize_t Send(const void* buf, size_t count, int flags) = 0;
 
   // Connection status, errno-style.
   int connection_errno_ = 0;
@@ -64,15 +64,15 @@ class Stream : public ReadWriter {
   // AddData is used by the subclass to add data to the incoming buffer.
   // This method can be called from another thread than the one used to call
   // the other methods. Takes ownership of *message and its associated buffers.
-  void AddData(const void *buf, size_t count);
+  void AddData(const void* buf, size_t count);
 
  private:
-  std::deque<char> buffer_; // Guard with buffer_lock_.
+  std::deque<char> buffer_;  // Guard with buffer_lock_.
   pthread::Mutex buffer_lock_;
 
   // Disable copy and assignment.
-  Stream(const Stream &) = delete;
-  Stream &operator=(const Stream &) = delete;
+  Stream(const Stream&) = delete;
+  Stream& operator=(const Stream&) = delete;
 };
 
 // TCP adds the TCP-specific interfaces to Stream. An implementation must also
@@ -80,10 +80,10 @@ class Stream : public ReadWriter {
 class TCP : public Stream {
  public:
   // Bind replaces bind().
-  virtual int Bind(const pp::NetAddress &address) = 0;
+  virtual int Bind(const pp::NetAddress& address) = 0;
 
   // Connect replaces connect().
-  virtual int Connect(const pp::NetAddress &address) = 0;
+  virtual int Connect(const pp::NetAddress& address) = 0;
 };
 
 // UnixSocketStream adds to Stream the interfaces specific to Unix domain
@@ -100,18 +100,19 @@ class UnixSocketStream : public Stream {
 // StubTCP is an instantiatable stubbed subclass of TCP for debugging.
 class StubTCP : public TCP {
  public:
-  StubTCP() {};
-  ~StubTCP() override {};
+  StubTCP(){};
+  ~StubTCP() override{};
 
-  ssize_t Send(const void *buf, size_t count, int flags) override;
-  int Bind(const pp::NetAddress &address) override;
-  int Connect(const pp::NetAddress &address) override;
+  ssize_t Send(const void* buf, size_t count, int flags) override;
+  int Bind(const pp::NetAddress& address) override;
+  int Connect(const pp::NetAddress& address) override;
+
  private:
   // Disable copy and assignment.
-  StubTCP(const StubTCP &) = delete;
-  StubTCP &operator=(const StubTCP &) = delete;
+  StubTCP(const StubTCP&) = delete;
+  StubTCP& operator=(const StubTCP&) = delete;
 };
 
-} // namespace PepperPOSIX
+}  // namespace PepperPOSIX
 
-#endif // PEPPER_POSIX_TCP_HPP
+#endif  // PEPPER_POSIX_TCP_HPP

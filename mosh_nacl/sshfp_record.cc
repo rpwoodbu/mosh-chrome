@@ -31,7 +31,7 @@ using std::vector;
 namespace {
 
 SSHFPRecord::Fingerprint::Algorithm ConvertAlgorithm(
-   const ssh::KeyType::KeyTypeEnum algorithm) {
+    const ssh::KeyType::KeyTypeEnum algorithm) {
   switch (algorithm) {
     case ssh::KeyType::RSA:
       return SSHFPRecord::Fingerprint::Algorithm::RSA;
@@ -119,7 +119,7 @@ RdataParseResult ParsePresentation(const string& rdata) {
   RdataParseResult result;
 
   const int scanned =
-    sscanf(rdata.c_str(), "%d %d", &result.algorithm_num, &result.type_num);
+      sscanf(rdata.c_str(), "%d %d", &result.algorithm_num, &result.type_num);
   if (scanned != 2) {
     return result;
   }
@@ -130,7 +130,7 @@ RdataParseResult ParsePresentation(const string& rdata) {
     return result;
   }
   const size_t second_whitespace =
-    rdata.find_first_of(" \t", first_whitespace + 1);
+      rdata.find_first_of(" \t", first_whitespace + 1);
   if (second_whitespace == string::npos) {
     return result;
   }
@@ -143,7 +143,7 @@ RdataParseResult ParsePresentation(const string& rdata) {
   return result;
 }
 
-} // anonymous namespace
+}  // anonymous namespace
 
 bool SSHFPRecord::Parse(const vector<string>& rdata) {
   fingerprints_.clear();

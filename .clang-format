@@ -1,0 +1,7 @@
+BasedOnStyle: Google
+---
+Language: Cpp
+DerivePointerAlignment: false
+---
+Language: JavaScript
+# Nothing to specify, but support the language.

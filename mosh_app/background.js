@@ -23,15 +23,10 @@ window.state.updateAvailable = null;
 window.state.windows = {};
 
 function newSession() {
-  chrome.app.window.create(
-    'mosh_client.html',
-    {
-      'bounds': {
-        'width': 450,
-        'height': 180
-      },
-      'id': 'mosh_client',
-    });
+  chrome.app.window.create('mosh_client.html', {
+    'bounds': {'width': 450, 'height': 180},
+    'id': 'mosh_client',
+  });
 };
 
 chrome.app.runtime.onLaunched.addListener(newSession);
@@ -48,8 +43,7 @@ function updateAvailable(e) {
   var message = 'Update to v' + e.version + ' is available.';
   message += ' Close all Mosh windows to update. See changelog for details.';
   chrome.notifications.create(
-      'update_notification',
-      {
+      'update_notification', {
         'type': 'basic',
         'title': 'Mosh update available',
         'message': message,

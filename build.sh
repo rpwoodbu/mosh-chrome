@@ -14,6 +14,9 @@
 #
 # To run unit tests:
 #   $ ./build.sh test
+#
+# To do a clang-format pass over the code:
+#   $ ./build.sh format
 
 
 # Copyright 2016 Richard Woodbury
@@ -32,6 +35,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 MODE="${1}"
+
+format() {
+  CLANG_FORMAT="clang-format-4.0"
+  if ! which "${CLANG_FORMAT}" > /dev/null; then
+    echo "${CLANG_FORMAT} not in the path. Get it at: http://apt.llvm.org/" 1>&2
+    exit 1
+  fi
+  cd "$(git rev-parse --show-toplevel)" # Go to root of git repo.
+  find . -name '*.cc' -or -name '*.h' -or -name '*.js' | xargs "${CLANG_FORMAT}" -i
+}
 
 FLAGS="--config=pnacl"
 ACTION="build"
@@ -52,9 +65,14 @@ case "${MODE}" in
     TARGET="..."
     FLAGS=""
     ;;
+  "format")
+    format
+    exit 0
+    ;;
   *)
     echo "Unrecognized running mode." 1>&2
     echo "Usage: ${0} ( dev | release | debug | test ) [ bazel options ... ]" 1>&2
+    echo "       ${0} format" 1>&2
     exit 1
 esac
 

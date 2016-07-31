@@ -26,7 +26,7 @@
 
 #include <memory>
 
-const int UDP_RECEIVE_BUFFER_SIZE = 1500; // Typical MTU.
+const int UDP_RECEIVE_BUFFER_SIZE = 1500;  // Typical MTU.
 
 namespace PepperPOSIX {
 
@@ -37,19 +37,18 @@ class NativeUDP : public UDP {
   ~NativeUDP() override;
 
   // Bind replaces bind().
-  int Bind(const pp::NetAddress &address) override;
+  int Bind(const pp::NetAddress& address) override;
 
   // Send replaces sendto. Usage is similar, but tweaked for C++.
-  ssize_t Send(
-      const std::vector<char> &buf, int flags,
-      const pp::NetAddress &address) override;
+  ssize_t Send(const std::vector<char>& buf, int flags,
+               const pp::NetAddress& address) override;
 
   // Close replaces close().
   int Close() override;
 
  private:
   void StartReceive(int32_t unused);
-  void Received(int32_t result, const pp::NetAddress &address);
+  void Received(int32_t result, const pp::NetAddress& address);
 
   std::unique_ptr<pp::UDPSocket> socket_;
   bool bound_ = false;
@@ -59,9 +58,9 @@ class NativeUDP : public UDP {
 
   // Disable copy and assignment.
   NativeUDP(const NativeUDP&) = delete;
-  NativeUDP &operator=(const NativeUDP&) = delete;
+  NativeUDP& operator=(const NativeUDP&) = delete;
 };
 
-} // namespace PepperPOSIX
+}  // namespace PepperPOSIX
 
-#endif // PEPPER_POSIX_NATIVE_UDP_HPP
+#endif  // PEPPER_POSIX_NATIVE_UDP_HPP

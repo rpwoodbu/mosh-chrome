@@ -26,24 +26,24 @@
 
 #include <memory>
 
-const int TCP_RECEIVE_BUFFER_SIZE = 64*1024; // 64 kB, a decent window size.
+const int TCP_RECEIVE_BUFFER_SIZE = 64 * 1024;  // 64 kB, a decent window size.
 
 namespace PepperPOSIX {
 
 // NativeTCP implements TCP using the native Pepper TCPSockets API.
 class NativeTCP : public TCP {
  public:
-  NativeTCP(const pp::InstanceHandle &instance_handle);
+  NativeTCP(const pp::InstanceHandle& instance_handle);
   ~NativeTCP() override;
 
   // Bind replaces bind().
-  int Bind(const pp::NetAddress &address) override;
+  int Bind(const pp::NetAddress& address) override;
 
   // Connect replaces connect().
-  int Connect(const pp::NetAddress &address) override;
+  int Connect(const pp::NetAddress& address) override;
 
   // Send replaces send().
-  ssize_t Send(const void *buf, size_t count, int flags) override;
+  ssize_t Send(const void* buf, size_t count, int flags) override;
 
   // Close replaces close().
   int Close() override;
@@ -61,9 +61,9 @@ class NativeTCP : public TCP {
 
   // Disable copy and assignment.
   NativeTCP(const NativeTCP&) = delete;
-  NativeTCP &operator=(const NativeTCP&) = delete;
+  NativeTCP& operator=(const NativeTCP&) = delete;
 };
 
-} // namespace PepperPOSIX
+}  // namespace PepperPOSIX
 
-#endif // PEPPER_POSIX_NATIVE_TCP_HPP
+#endif  // PEPPER_POSIX_NATIVE_TCP_HPP

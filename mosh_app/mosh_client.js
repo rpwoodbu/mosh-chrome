@@ -62,25 +62,24 @@ window.onload = function() {
   // Add drop-down menu for MOSH_ESCAPE_KEY, listing all ASCII characters from
   // 0x01 to 0x7F, as well an initial entry "default" to not pass
   // MOSH_ESCAPE_KEY at all.
-  form['mosh-escape-key'].add(new Option("default", "", true));
+  form['mosh-escape-key'].add(new Option('default', '', true));
   for (var c = 0x01; c <= 0x7F; ++c) {
     // For c < 0x20 and c == 0x7F, see
     // https://en.wikipedia.org/wiki/C0_and_C1_control_codes#C0_.28ASCII_and_derivatives.29
     var keyName;
     if (c < 0x20) {
-      keyName = "Ctrl+" + String.fromCharCode(0x40 + c);
+      keyName = 'Ctrl+' + String.fromCharCode(0x40 + c);
     } else if (c == 0x20) {
-      keyName = "SPACE";
+      keyName = 'SPACE';
     } else if (c < 0x7F) {
       keyName = String.fromCharCode(c);
     } else {
-      keyName = "Ctrl+?";
+      keyName = 'Ctrl+?';
     }
     form['mosh-escape-key'].add(new Option(
         keyName,
         // Value element of <option> element must be HTML-encoded.
-        "&#x" + c.toString(16),
-        false));
+        '&#x' + c.toString(16), false));
   }
 
   migrateSettings(function() {
@@ -90,9 +89,10 @@ window.onload = function() {
 };
 
 // Mapping of old chrome.storage.local keys to their new key names.
-var kLocalKeysToMigrate = {
-  'field_command': 'field_server-command',
-}
+var kLocalKeysToMigrate =
+    {
+      'field_command': 'field_server-command',
+    }
 
 // Migrates settings from one form to another, to keep a tidy shop while
 // avoiding losing old data. Calls callback when done (fields will not be ready
@@ -104,7 +104,7 @@ function migrateSettings(callback) {
     chrome.storage.local.get(oldKey, function(o) {
       if (o[oldKey] !== undefined) {
         var newKey = kLocalKeysToMigrate[oldKey];
-        console.log("Migrating " + oldKey + " to " + newKey);
+        console.log('Migrating ' + oldKey + ' to ' + newKey);
         var newObject = {};
         newObject[newKey] = o[oldKey];
         count++;
@@ -145,8 +145,8 @@ function loadFields() {
     var key = 'field_' + field;
     chrome.storage.local.get(key, function(o) {
       if (o[key] !== undefined) {
-        if (form[field].type === "checkbox") {
-          form[field].checked = o[key] === "true" ? true : false;
+        if (form[field].type === 'checkbox') {
+          form[field].checked = o[key] === 'true' ? true : false;
         } else {
           form[field].value = o[key];
         }
@@ -164,12 +164,12 @@ function saveFields() {
   var form = document.querySelector('#args');
   kSyncFieldNames.forEach(function(field) {
     var key = 'field_' + field;
-    if (form[field].value === "") {
+    if (form[field].value === '') {
       chrome.storage.local.remove(key);
     } else {
       var o = {};
-      if (form[field].type === "checkbox") {
-        o[key] = form[field].checked ? "true" : "false";
+      if (form[field].type === 'checkbox') {
+        o[key] = form[field].checked ? 'true' : 'false';
       } else {
         o[key] = form[field].value;
       }
@@ -179,14 +179,14 @@ function saveFields() {
 }
 
 function decodeHtml(html) {
-    var txt = document.createElement("textarea");
-    txt.innerHTML = html;
-    return txt.value;
+  var txt = document.createElement('textarea');
+  txt.innerHTML = html;
+  return txt.value;
 }
 
 function onConnectClick(e) {
   saveFields();
-  var args = {}
+  var args = {};
   var form = document.querySelector('#args');
   var sshModeButton = document.querySelector('#ssh-mode');
 
@@ -202,7 +202,7 @@ function onConnectClick(e) {
   args['remote-command'] = form['remote-command'].value;
   args['server-command'] = form['server-command'].value;
   var decodedMoshEscapeKey = decodeHtml(form['mosh-escape-key'].value);
-  if (decodedMoshEscapeKey !== "") {
+  if (decodedMoshEscapeKey !== '') {
     args['mosh-escape-key'] = decodedMoshEscapeKey;
   }
   if (form['google-public-dns'].checked) {
@@ -219,11 +219,8 @@ function onConnectClick(e) {
   // Define an ID that should, usually, uniquely define a connection to a
   // server. This will preserve the window position across sessions. But still
   // allow multiple simultaneous connections to the same server.
-  var id = 'mosh_window_' +
-    args['mode'] + '_' +
-    args['user'] + '@' +
-    args['addr'] + ':' +
-    args['port'];
+  var id = 'mosh_window_' + args['mode'] + '_' + args['user'] + '@' +
+      args['addr'] + ':' + args['port'];
 
   chrome.runtime.getBackgroundPage(function(bg) {
     while (id in bg.state.windows) {
@@ -232,8 +229,7 @@ function onConnectClick(e) {
     }
 
     chrome.app.window.create(
-        'mosh_window.html',
-        {
+        'mosh_window.html', {
           'id': id,
         },
         function(createdWindow) {
@@ -245,9 +241,7 @@ function onConnectClick(e) {
           // on the background window ensures the callback is run in its
           // (persistent) context.
           createdWindow.onClosed.addListener(function() {
-            bg.setTimeout(function() {
-              bg.onSessionWindowClosed(id);
-            }, 0)
+            bg.setTimeout(function() { bg.onSessionWindowClosed(id); }, 0)
           });
           chrome.app.window.current().close();
         });
@@ -267,7 +261,7 @@ function updateMode(e) {
   var moshEscapeKeyRow = document.querySelector('#mosh-escape-key-row');
 
   if (sshModeButton.checked) {
-    if (sshPortField.value === "") {
+    if (sshPortField.value === '') {
       sshPortField.value = kSSHDefaultPort;
     }
     usernameRow.hidden = false;
@@ -277,7 +271,7 @@ function updateMode(e) {
     remoteCommandRow.hidden = false;
     serverCommandRow.hidden = false;
   } else {
-    if (moshPortField.value === "") {
+    if (moshPortField.value === '') {
       moshPortField.value = kMoshDefaultPort;
     }
     usernameRow.hidden = true;
@@ -290,29 +284,25 @@ function updateMode(e) {
 }
 
 function onSshKeyClick(e) {
-  chrome.app.window.create(
-      'ssh_key.html',
-      {
-        'bounds': {
-          'width': 400,
-          'height': 300,
-        },
-        'id': 'ssh_key',
-      });
+  chrome.app.window.create('ssh_key.html', {
+    'bounds': {
+      'width': 400,
+      'height': 300,
+    },
+    'id': 'ssh_key',
+  });
   // Prevent default handling.
   return true;
 }
 
 function onPrefsClick(e) {
-  chrome.app.window.create(
-      'mosh_prefs.html',
-      {
-        'bounds': {
-          'width': 400,
-          'height': 300,
-        },
-        'id': 'preferences_editor',
-      });
+  chrome.app.window.create('mosh_prefs.html', {
+    'bounds': {
+      'width': 400,
+      'height': 300,
+    },
+    'id': 'preferences_editor',
+  });
   // Prevent default handling.
   return true;
 }

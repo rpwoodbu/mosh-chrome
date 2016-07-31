@@ -57,10 +57,8 @@ class Resolver {
   };
 
   // Type of the callback function.
-  using Callback = std::function<void(
-      Error error,
-      Authenticity authenticity,
-      std::vector<std::string> results)>;
+  using Callback = std::function<void(Error error, Authenticity authenticity,
+                                      std::vector<std::string> results)>;
 
   // Resolve |domain_name| to the given |type|. Returns immediately; calls
   // |callback| with result. If callback's |error| != Error::OK, |results| is
@@ -68,8 +66,8 @@ class Resolver {
   //
   // |domain_name| is taken by value as a stable copy is needed. Callers can
   // std::move() it if desired for efficiency.
-  virtual void Resolve(
-      std::string domain_name, Type type, Callback callback) = 0;
+  virtual void Resolve(std::string domain_name, Type type,
+                       Callback callback) = 0;
 
   // Whether this resolver validates responses (i.e. DNSSEC).
   virtual bool IsValidating() const = 0;
@@ -85,9 +83,7 @@ class Resolver {
     CallbackCaller(const CallbackCaller&) = delete;
     CallbackCaller& operator=(const CallbackCaller&) = delete;
 
-    CallbackCaller(CallbackCaller&& orig) {
-      callback_ = orig.Release();
-    }
+    CallbackCaller(CallbackCaller&& orig) { callback_ = orig.Release(); }
 
     CallbackCaller& operator=(CallbackCaller&& orig) {
       Reset();
@@ -95,9 +91,7 @@ class Resolver {
       return *this;
     }
 
-    ~CallbackCaller() {
-      Reset();
-    }
+    ~CallbackCaller() { Reset(); }
 
     // Call the callback if there is one, and set this to nullptr.
     void Reset() {
@@ -109,7 +103,8 @@ class Resolver {
 
     // Call the callback. Can only be called once. Afterward, this class will
     // not call the callback when deleted.
-    void Call(Error error, Authenticity authenticity, std::vector<std::string> results) {
+    void Call(Error error, Authenticity authenticity,
+              std::vector<std::string> results) {
       Release()(error, authenticity, results);
     }
 
@@ -125,4 +120,4 @@ class Resolver {
   };
 };
 
-#endif // RESOLVER_H
+#endif  // RESOLVER_H

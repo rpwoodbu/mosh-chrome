@@ -31,8 +31,8 @@
 class PepperResolver : public Resolver {
  public:
   PepperResolver() = delete;
-  PepperResolver(pp::InstanceHandle handle) :
-      resolver_(handle), cc_factory_(this) {}
+  PepperResolver(pp::InstanceHandle handle)
+      : resolver_(handle), cc_factory_(this) {}
   PepperResolver(const PepperResolver&) = delete;
   PepperResolver& operator=(const PepperResolver&) = delete;
   PepperResolver(PepperResolver&&) = default;
@@ -44,11 +44,8 @@ class PepperResolver : public Resolver {
 
  private:
   // Way to call |resolver_| from main thread.
-  void ResolveOnMainThread(
-     uint32_t unused,
-     std::string domain_name,
-     PP_HostResolver_Hint hint,
-     Callback callback);
+  void ResolveOnMainThread(uint32_t unused, std::string domain_name,
+                           PP_HostResolver_Hint hint, Callback callback);
 
   // Method that |resolver_| will callback.
   void ResolverCallback(int32_t result, Callback callback);
@@ -57,4 +54,4 @@ class PepperResolver : public Resolver {
   pp::CompletionCallbackFactory<PepperResolver> cc_factory_;
 };
 
-#endif // PEPPER_RESOLVER_H
+#endif  // PEPPER_RESOLVER_H

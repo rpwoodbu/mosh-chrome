@@ -19,13 +19,12 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "pepper_posix.h"
-#include "pepper_posix_native_udp.h"
 #include "pepper_posix_native_tcp.h"
+#include "pepper_posix_native_udp.h"
 #include "pepper_posix_tcp.h"
 
 #include "make_unique.h"
 
-#include <memory>
 #include <errno.h>
 #include <fcntl.h>
 #include <netinet/in.h>
@@ -33,6 +32,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
+#include <memory>
 
 namespace PepperPOSIX {
 
@@ -45,8 +45,8 @@ using util::make_unique;
 const int SIGNAL_FD = -1;
 
 POSIX::POSIX(const pp::InstanceHandle instance_handle,
-    unique_ptr<Reader> std_in, unique_ptr<Writer> std_out,
-    unique_ptr<Writer> std_err, unique_ptr<Signal> signal)
+             unique_ptr<Reader> std_in, unique_ptr<Writer> std_out,
+             unique_ptr<Writer> std_err, unique_ptr<Signal> signal)
     : signal_(move(signal)), instance_handle_(instance_handle) {
   if (std_in != nullptr) {
     std_in->target_ = selector_.NewTarget(STDIN_FILENO);
@@ -72,10 +72,8 @@ POSIX::POSIX(const pp::InstanceHandle instance_handle,
   }
 }
 
-int POSIX::Open(
-    const char *pathname,
-    __attribute__((unused)) int flags,
-    __attribute__((unused)) mode_t mode) {
+int POSIX::Open(const char* pathname, __attribute__((unused)) int flags,
+                __attribute__((unused)) mode_t mode) {
   auto factories_iter = factories_.find(string(pathname));
   if (factories_iter == factories_.end()) {
     errno = EACCES;
@@ -101,19 +99,19 @@ int POSIX::Close(int fd) {
   return result;
 }
 
-ssize_t POSIX::Read(int fd, void *buf, size_t count) {
+ssize_t POSIX::Read(int fd, void* buf, size_t count) {
   if (files_.count(fd) == 0) {
     errno = EBADF;
     return -1;
   }
-  Reader *reader = dynamic_cast<Reader *>(files_[fd].get());
+  Reader* reader = dynamic_cast<Reader*>(files_[fd].get());
   if (reader == nullptr) {
     errno = EBADF;
     return -1;
   }
 
   if (reader->IsBlocking()) {
-    vector<Target*> read_targets, write_targets;
+    vector<Target *> read_targets, write_targets;
     read_targets.push_back(reader->target_.get());
     selector_.Select(read_targets, write_targets, nullptr);
   }
@@ -121,19 +119,19 @@ ssize_t POSIX::Read(int fd, void *buf, size_t count) {
   return reader->Read(buf, count);
 }
 
-ssize_t POSIX::Write(int fd, const void *buf, size_t count) {
+ssize_t POSIX::Write(int fd, const void* buf, size_t count) {
   if (files_.count(fd) == 0) {
     errno = EBADF;
     return -1;
   }
-  Writer *writer = dynamic_cast<Writer *>(files_[fd].get());
+  Writer* writer = dynamic_cast<Writer*>(files_[fd].get());
   if (writer == nullptr) {
     errno = EBADF;
     return -1;
   }
 
   if (writer->IsBlocking()) {
-    vector<Target*> read_targets, write_targets;
+    vector<Target *> read_targets, write_targets;
     write_targets.push_back(writer->target_.get());
     selector_.Select(read_targets, write_targets, nullptr);
   }
@@ -142,7 +140,7 @@ ssize_t POSIX::Write(int fd, const void *buf, size_t count) {
 }
 
 int POSIX::NextFileDescriptor() {
-  for (int fd = 0; ; ++fd) {
+  for (int fd = 0;; ++fd) {
     if (files_.count(fd) == 0) {
       return fd;
     }
@@ -163,8 +161,8 @@ int POSIX::Socket(int domain, int type, int protocol) {
     }
     if (type == SOCK_DGRAM && (protocol == 0 || protocol == IPPROTO_UDP)) {
       file = make_unique<NativeUDP>(instance_handle_);
-    } else if (
-        type == SOCK_STREAM && (protocol == 0 || protocol == IPPROTO_TCP)) {
+    } else if (type == SOCK_STREAM &&
+               (protocol == 0 || protocol == IPPROTO_TCP)) {
       file = make_unique<NativeTCP>(instance_handle_);
     }
   }
@@ -190,7 +188,7 @@ int POSIX::Dup(int oldfd) {
     return -1;
   }
   // Currently can only dup UDP sockets.
-  UDP *udp = dynamic_cast<UDP *>(files_[oldfd].get());
+  UDP* udp = dynamic_cast<UDP*>(files_[oldfd].get());
   if (udp == nullptr) {
     errno = EBADF;
     return -1;
@@ -200,19 +198,15 @@ int POSIX::Dup(int oldfd) {
   return Socket(AF_INET, SOCK_DGRAM, 0);
 }
 
-int POSIX::PSelect(
-    int nfds,
-    fd_set *readfds,
-    fd_set *writefds,
-    fd_set *exceptfds,
-    const struct timespec *timeout,
-    __attribute__((unused)) const sigset_t *sigmask) {
+int POSIX::PSelect(int nfds, fd_set* readfds, fd_set* writefds,
+                   fd_set* exceptfds, const struct timespec* timeout,
+                   __attribute__((unused)) const sigset_t* sigmask) {
   int result = 0;
   fd_set new_readfds, new_writefds;
   FD_ZERO(&new_readfds);
   FD_ZERO(&new_writefds);
 
-  vector<Target*> read_targets, write_targets;
+  vector<Target *> read_targets, write_targets;
   for (int fd = 0; fd < nfds; ++fd) {
     if (readfds != nullptr && FD_ISSET(fd, readfds)) {
       read_targets.push_back(files_[fd]->target_.get());
@@ -227,8 +221,8 @@ int POSIX::PSelect(
     read_targets.push_back(signal_->target_.get());
   }
 
-  vector<Target*> ready_targets = selector_.Select(
-      read_targets, write_targets, timeout);
+  vector<Target*> ready_targets =
+      selector_.Select(read_targets, write_targets, timeout);
 
   for (const auto* target : ready_targets) {
     const int fd = target->id();
@@ -273,8 +267,8 @@ int POSIX::PSelect(
   return result;
 }
 
-int POSIX::Select(int nfds, fd_set *readfds, fd_set *writefds,
-    fd_set *exceptfds, struct timeval *timeout) {
+int POSIX::Select(int nfds, fd_set* readfds, fd_set* writefds,
+                  fd_set* exceptfds, struct timeval* timeout) {
   if (timeout != nullptr) {
     struct timespec ts;
     ts.tv_sec = timeout->tv_sec;
@@ -284,7 +278,7 @@ int POSIX::Select(int nfds, fd_set *readfds, fd_set *writefds,
   return PSelect(nfds, readfds, writefds, exceptfds, nullptr, nullptr);
 }
 
-int POSIX::Poll(struct pollfd *fds, nfds_t nfds, int timeout) {
+int POSIX::Poll(struct pollfd* fds, nfds_t nfds, int timeout) {
   // Poll() is used infrequently, so just wrap PSelect(). This is an imperfect
   // implementation, but suffices.
   fd_set readfds, writefds, exceptfds;
@@ -317,8 +311,8 @@ int POSIX::Poll(struct pollfd *fds, nfds_t nfds, int timeout) {
   ts.tv_sec = timeout / 1000;
   ts.tv_nsec = (timeout % 1000) * 1000000;
 
-  int result = PSelect(
-      pselect_nfds, &readfds, &writefds, &exceptfds, &ts, nullptr);
+  int result =
+      PSelect(pselect_nfds, &readfds, &writefds, &exceptfds, &ts, nullptr);
 
   for (int i = 0; i < nfds; ++i) {
     const auto& fd = fds[i].fd;
@@ -339,19 +333,19 @@ int POSIX::Poll(struct pollfd *fds, nfds_t nfds, int timeout) {
   return result;
 }
 
-ssize_t POSIX::Recv(int sockfd, void *buf, size_t len, int flags) {
+ssize_t POSIX::Recv(int sockfd, void* buf, size_t len, int flags) {
   if (files_.count(sockfd) == 0) {
     errno = EBADF;
     return -1;
   }
-  TCP *tcp = dynamic_cast<TCP *>(files_[sockfd].get());
+  TCP* tcp = dynamic_cast<TCP*>(files_[sockfd].get());
   if (tcp == nullptr) {
     errno = EBADF;
     return -1;
   }
 
   if (tcp->IsBlocking() && !(flags & MSG_DONTWAIT)) {
-    vector<Target*> read_targets, write_targets;
+    vector<Target *> read_targets, write_targets;
     read_targets.push_back(tcp->target_.get());
     selector_.Select(read_targets, write_targets, nullptr);
   }
@@ -359,19 +353,19 @@ ssize_t POSIX::Recv(int sockfd, void *buf, size_t len, int flags) {
   return tcp->Receive(buf, len, flags);
 }
 
-ssize_t POSIX::RecvMsg(int sockfd, struct msghdr *msg, int flags) {
+ssize_t POSIX::RecvMsg(int sockfd, struct msghdr* msg, int flags) {
   if (files_.count(sockfd) == 0) {
     errno = EBADF;
     return -1;
   }
-  UDP *udp = dynamic_cast<UDP *>(files_[sockfd].get());
+  UDP* udp = dynamic_cast<UDP*>(files_[sockfd].get());
   if (udp == nullptr) {
     errno = EBADF;
     return -1;
   }
 
   if (udp->IsBlocking() && !(flags & MSG_DONTWAIT)) {
-    vector<Target*> read_targets, write_targets;
+    vector<Target *> read_targets, write_targets;
     read_targets.push_back(udp->target_.get());
     selector_.Select(read_targets, write_targets, nullptr);
   }
@@ -379,55 +373,53 @@ ssize_t POSIX::RecvMsg(int sockfd, struct msghdr *msg, int flags) {
   return udp->Receive(msg, flags);
 }
 
-pp::NetAddress POSIX::MakeAddress(
-    const struct sockaddr *addr, socklen_t addrlen) const {
+pp::NetAddress POSIX::MakeAddress(const struct sockaddr* addr,
+                                  socklen_t addrlen) const {
   switch (addr->sa_family) {
-   case AF_INET:
-     {
-       assert(addrlen >= sizeof(sockaddr_in));
-       PP_NetAddress_IPv4 pp_addr;
-       const struct sockaddr_in *in_addr = (struct sockaddr_in*)addr;
-       uint32_t a = in_addr->sin_addr.s_addr;
-       for (int i = 0; i < 4; ++i) {
-         pp_addr.addr[i] = a & 0xff;
-         a >>= 8;
-       }
-       pp_addr.port = in_addr->sin_port;
-       return pp::NetAddress(instance_handle_, pp_addr);
-     }
+    case AF_INET: {
+      assert(addrlen >= sizeof(sockaddr_in));
+      PP_NetAddress_IPv4 pp_addr;
+      const struct sockaddr_in* in_addr = (struct sockaddr_in*)addr;
+      uint32_t a = in_addr->sin_addr.s_addr;
+      for (int i = 0; i < 4; ++i) {
+        pp_addr.addr[i] = a & 0xff;
+        a >>= 8;
+      }
+      pp_addr.port = in_addr->sin_port;
+      return pp::NetAddress(instance_handle_, pp_addr);
+    }
 
-   case AF_INET6:
-     {
-       assert(addrlen >= sizeof(sockaddr_in6));
-       PP_NetAddress_IPv6 pp_addr;
-       const struct sockaddr_in6 *in6_addr = (struct sockaddr_in6*)addr;
-       memcpy(pp_addr.addr, in6_addr->sin6_addr.s6_addr, sizeof(pp_addr.addr));
-       pp_addr.port = in6_addr->sin6_port;
-       return pp::NetAddress(instance_handle_, pp_addr);
-     }
+    case AF_INET6: {
+      assert(addrlen >= sizeof(sockaddr_in6));
+      PP_NetAddress_IPv6 pp_addr;
+      const struct sockaddr_in6* in6_addr = (struct sockaddr_in6*)addr;
+      memcpy(pp_addr.addr, in6_addr->sin6_addr.s6_addr, sizeof(pp_addr.addr));
+      pp_addr.port = in6_addr->sin6_port;
+      return pp::NetAddress(instance_handle_, pp_addr);
+    }
 
-   default:
-     // Unsupported address family.
-     assert(false);
-     break;
+    default:
+      // Unsupported address family.
+      assert(false);
+      break;
   }
 
   // Should not get here.
   return pp::NetAddress();
 }
 
-ssize_t POSIX::Send(int sockfd, const void *buf, size_t len, int flags) {
+ssize_t POSIX::Send(int sockfd, const void* buf, size_t len, int flags) {
   if (files_.count(sockfd) == 0) {
     return EBADF;
   }
-  TCP *tcp = dynamic_cast<TCP *>(files_[sockfd].get());
+  TCP* tcp = dynamic_cast<TCP*>(files_[sockfd].get());
   if (tcp == nullptr) {
     errno = EBADF;
     return -1;
   }
 
   if (tcp->IsBlocking() && !(flags & MSG_DONTWAIT)) {
-    vector<Target*> read_targets, write_targets;
+    vector<Target *> read_targets, write_targets;
     write_targets.push_back(tcp->target_.get());
     selector_.Select(read_targets, write_targets, nullptr);
   }
@@ -435,24 +427,24 @@ ssize_t POSIX::Send(int sockfd, const void *buf, size_t len, int flags) {
   return tcp->Send(buf, len, flags);
 }
 
-ssize_t POSIX::SendTo(int sockfd, const void *buf, size_t len, int flags,
-    const struct sockaddr *dest_addr, socklen_t addrlen) {
+ssize_t POSIX::SendTo(int sockfd, const void* buf, size_t len, int flags,
+                      const struct sockaddr* dest_addr, socklen_t addrlen) {
   if (files_.count(sockfd) == 0) {
     return EBADF;
   }
-  UDP *udp = dynamic_cast<UDP *>(files_[sockfd].get());
+  UDP* udp = dynamic_cast<UDP*>(files_[sockfd].get());
   if (udp == nullptr) {
     errno = EBADF;
     return -1;
   }
 
   if (udp->IsBlocking() && !(flags & MSG_DONTWAIT)) {
-    vector<Target*> read_targets, write_targets;
+    vector<Target *> read_targets, write_targets;
     write_targets.push_back(udp->target_.get());
     selector_.Select(read_targets, write_targets, nullptr);
   }
 
-  vector<char> buffer((const char*)buf, (const char*)buf+len);
+  vector<char> buffer((const char*)buf, (const char*)buf + len);
   return udp->Send(move(buffer), flags, MakeAddress(dest_addr, addrlen));
 }
 
@@ -492,19 +484,18 @@ int POSIX::FCntl(int fd, int cmd, va_list arg) {
   return -1;
 }
 
-int POSIX::Connect(
-    int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
+int POSIX::Connect(int sockfd, const struct sockaddr* addr, socklen_t addrlen) {
   if (files_.count(sockfd) == 0) {
     return EBADF;
   }
-  File *file = files_[sockfd].get();
+  File* file = files_[sockfd].get();
 
-  TCP *tcp = dynamic_cast<TCP *>(file);
+  TCP* tcp = dynamic_cast<TCP*>(file);
   if (tcp != nullptr) {
     return tcp->Connect(MakeAddress(addr, addrlen));
   }
 
-  UnixSocketStream *unix_socket = dynamic_cast<UnixSocketStream *>(file);
+  UnixSocketStream* unix_socket = dynamic_cast<UnixSocketStream*>(file);
   if (unix_socket != nullptr) {
     const struct sockaddr_un* addr_un = (const struct sockaddr_un*)addr;
     if (addr_un->sun_family != AF_UNIX) {
@@ -518,12 +509,12 @@ int POSIX::Connect(
   return -1;
 }
 
-int POSIX::GetSockOpt(int sockfd, int level, int optname,
-    void *optval, socklen_t *optlen) {
+int POSIX::GetSockOpt(int sockfd, int level, int optname, void* optval,
+                      socklen_t* optlen) {
   if (files_.count(sockfd) == 0) {
     return EBADF;
   }
-  TCP *tcp = dynamic_cast<TCP *>(files_[sockfd].get());
+  TCP* tcp = dynamic_cast<TCP*>(files_[sockfd].get());
   if (tcp == nullptr) {
     errno = EBADF;
     return -1;
@@ -536,7 +527,7 @@ int POSIX::GetSockOpt(int sockfd, int level, int optname,
       errno = EINVAL;
       return -1;
     }
-    *(int *)optval = tcp->connection_errno_;
+    *(int*)optval = tcp->connection_errno_;
     return 0;
   }
 
@@ -546,4 +537,4 @@ int POSIX::GetSockOpt(int sockfd, int level, int optname,
   return -1;
 }
 
-} // namespace PepperPOSIX
+}  // namespace PepperPOSIX

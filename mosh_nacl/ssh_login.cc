@@ -21,7 +21,7 @@
 #include "mosh_nacl.h"
 #include "sshfp_record.h"
 
-#include <string.h> // TODO: Eliminate use of strlen().
+#include <string.h>  // TODO: Eliminate use of strlen().
 #include <algorithm>
 #include <functional>
 #include <future>
@@ -44,7 +44,7 @@ const string kServerCommandDefault(
 
 namespace {
 
-void GetKeyboardLine(char *buf, size_t len, bool echo) {
+void GetKeyboardLine(char* buf, size_t len, bool echo) {
   int i = 0;
   while (i < len) {
     char in = getchar();
@@ -57,7 +57,7 @@ void GetKeyboardLine(char *buf, size_t len, bool echo) {
       if (i > 0) {
         if (echo == true) {
           // '\b' doesn't "rub out" on its own.
-          const char *backspace = "\b\x1b[K";
+          const char* backspace = "\b\x1b[K";
           write(STDOUT_FILENO, backspace, strlen(backspace));
         }
         --i;
@@ -73,9 +73,9 @@ void GetKeyboardLine(char *buf, size_t len, bool echo) {
   buf[i] = 0;
 }
 
-} // anonymous namespace
+}  // anonymous namespace
 
-bool SSHLogin::AskYesNo(const string &prompt) {
+bool SSHLogin::AskYesNo(const string& prompt) {
   for (int i = 0; i < RETRIES; ++i) {
     printf("%s (Yes/No): ", prompt.c_str());
     char input_buf[INPUT_SIZE];
@@ -95,21 +95,22 @@ bool SSHLogin::AskYesNo(const string &prompt) {
 }
 
 bool SSHLogin::Start() {
-  setenv("HOME", "dummy", 1); // To satisfy libssh.
+  setenv("HOME", "dummy", 1);  // To satisfy libssh.
 
   if (Resolve() == false) {
     return false;
   }
 
   session_ =
-    make_unique<ssh::Session>(resolved_addr_, atoi(port_.c_str()), user_);
-  session_->SetOption(SSH_OPTIONS_TIMEOUT, 30); // Extend connection timeout to 30s.
+      make_unique<ssh::Session>(resolved_addr_, atoi(port_.c_str()), user_);
+  // Extend connection timeout to 30s.
+  session_->SetOption(SSH_OPTIONS_TIMEOUT, 30);
   // Uncomment below for lots of debugging output.
-  //session_->SetOption(SSH_OPTIONS_LOG_VERBOSITY, 30);
+  // session_->SetOption(SSH_OPTIONS_LOG_VERBOSITY, 30);
 
   if (session_->Connect() == false) {
     fprintf(stderr, "Could not connect via ssh: %s\r\n",
-        session_->GetLastError().c_str());
+            session_->GetLastError().c_str());
     return false;
   }
 
@@ -125,9 +126,9 @@ bool SSHLogin::Start() {
   bool authenticated = false;
   for (const auto& auth : *auths_ptr) {
     printf("Trying authentication type %s\r\n",
-        ssh::GetAuthenticationTypeName(auth).c_str());
+           ssh::GetAuthenticationTypeName(auth).c_str());
 
-    switch(auth) {
+    switch (auth) {
       case ssh::kPassword:
         authenticated = DoPasswordAuth();
         break;
@@ -152,7 +153,7 @@ bool SSHLogin::Start() {
 
   if (authenticated == false) {
     fprintf(stderr, "ssh authentication failed: %s\r\n",
-        session_->GetLastError().c_str());
+            session_->GetLastError().c_str());
     return false;
   }
 
@@ -167,42 +168,37 @@ bool SSHLogin::Resolve() {
   // Lookup the address.
   promise<string> addr_promise;
   promise<Resolver::Authenticity> addr_auth_promise;
-  resolver_->Resolve(
-      host_,
-      type_,
-      [&addr_promise, &addr_auth_promise](
-          Resolver::Error error,
-          Resolver::Authenticity authenticity,
-          vector<string> results) {
-        addr_auth_promise.set_value(authenticity);
-        if (error == Resolver::Error::NOT_RESOLVED) {
-          fprintf(stderr, "Could not resolve the hostname. "
-            "Check the spelling and the address family.\r\n");
-          addr_promise.set_value("");
-          return;
-        }
-        if (error != Resolver::Error::OK) {
-          fprintf(
-              stderr,
+  resolver_->Resolve(host_, type_, [&addr_promise, &addr_auth_promise](
+                                       Resolver::Error error,
+                                       Resolver::Authenticity authenticity,
+                                       vector<string> results) {
+    addr_auth_promise.set_value(authenticity);
+    if (error == Resolver::Error::NOT_RESOLVED) {
+      fprintf(stderr,
+              "Could not resolve the hostname. "
+              "Check the spelling and the address family.\r\n");
+      addr_promise.set_value("");
+      return;
+    }
+    if (error != Resolver::Error::OK) {
+      fprintf(stderr,
               "Name resolution failed with unexpected error code: %d\r\n",
               error);
-          addr_promise.set_value("");
-          return;
-        }
-        // Only using first address.
-        addr_promise.set_value(move(results[0]));
-      });
+      addr_promise.set_value("");
+      return;
+    }
+    // Only using first address.
+    addr_promise.set_value(move(results[0]));
+  });
 
   // Simultaneously lookup the SSHFP record.
   promise<vector<string>> fp_promise;
   promise<Resolver::Authenticity> fp_auth_promise;
   resolver_->Resolve(
-      host_,
-      Resolver::Type::SSHFP,
-      [&fp_promise, &fp_auth_promise](
-          Resolver::Error error,
-          Resolver::Authenticity authenticity,
-          vector<string> results) {
+      host_, Resolver::Type::SSHFP,
+      [&fp_promise, &fp_auth_promise](Resolver::Error error,
+                                      Resolver::Authenticity authenticity,
+                                      vector<string> results) {
         fp_auth_promise.set_value(authenticity);
         if (error == Resolver::Error::OK) {
           fp_promise.set_value(move(results));
@@ -235,8 +231,9 @@ bool SSHLogin::Resolve() {
         printf("Found authentic SSHFP fingerprint record(s) in DNS.\r\n");
         break;
       case Resolver::Authenticity::INSECURE:
-        printf("Unauthenticated SSHFP fingerprint record(s) in DNS;"
-            " ignoring.\r\n");
+        printf(
+            "Unauthenticated SSHFP fingerprint record(s) in DNS; "
+            "ignoring.\r\n");
         resolved_fp_.clear();
         break;
     }
@@ -274,7 +271,8 @@ bool SSHLogin::CheckFingerprint() {
       // records will not validate, so this is OK.
     }
     if (!sshfp.IsValid(host_key)) {
-      fprintf(stderr,
+      fprintf(
+          stderr,
           "Authenticated SSHFP DNS record(s) do not validate the host key!\r\n"
           "Likely man-in-the-middle attack or misconfiguration.\r\n"
           "SSHFP records(s) are:\r\n");
@@ -294,7 +292,7 @@ bool SSHLogin::CheckFingerprint() {
   // No SSHFP records. Use sync'd database of fingerprints to validate host.
   const string server_fp = host_key.MD5();
   printf("%s key fingerprint of remote ssh host (MD5):\r\n  %s\r\n",
-      host_key.GetKeyType().AsString().c_str(), server_fp.c_str());
+         host_key.GetKeyType().AsString().c_str(), server_fp.c_str());
   const pp::Var stored_fp_var = known_hosts_.Get(server_name);
   if (stored_fp_var.is_undefined()) {
     // No stored fingerprint.
@@ -307,8 +305,8 @@ bool SSHLogin::CheckFingerprint() {
             "Fingerprints are now stored by hostname, but an old matching\r\n"
             "fingerprint for this host's IP address (%s) was found.\r\n",
             resolved_addr_.c_str());
-        bool result = AskYesNo(
-            "Would you like to use this fingerprint for this host?");
+        bool result =
+            AskYesNo("Would you like to use this fingerprint for this host?");
         if (result == true) {
           known_hosts_.Set(server_name, legacy_stored_fp.c_str());
           return true;
@@ -326,9 +324,11 @@ bool SSHLogin::CheckFingerprint() {
     if (stored_fp == server_fp) {
       return true;
     }
-    printf("WARNING!!! Server fingerprint differs for this host! "
+    printf(
+        "WARNING!!! Server fingerprint differs for this host! "
         "Possible man-in-the-middle attack.\r\n"
-        "Stored fingerprint (MD5):\r\n  %s\r\n", stored_fp.c_str());
+        "Stored fingerprint (MD5):\r\n  %s\r\n",
+        stored_fp.c_str());
     bool result = AskYesNo("Connect anyway, and store new fingerprint?");
     if (result == true) {
       result = AskYesNo("Don't take this lightly. Are you really sure?");
@@ -352,10 +352,10 @@ unique_ptr<vector<ssh::AuthenticationType>> SSHLogin::GetAuthTypes() {
 
   printf("Authentication types supported by server:\r\n");
   vector<ssh::AuthenticationType> server_auths =
-    session_->GetAuthenticationTypes();
+      session_->GetAuthenticationTypes();
   if (server_auths.size() == 0) {
     fprintf(stderr, "Failed to get authentication types: %s\r\n",
-        session_->GetLastError().c_str());
+            session_->GetLastError().c_str());
     return nullptr;
   }
 
@@ -401,7 +401,7 @@ bool SSHLogin::DoPasswordAuth() {
     if (tries == 1) {
       // Only display error on last try.
       fprintf(stderr, "Password authentication failed: %s\r\n",
-          session_->GetLastError().c_str());
+              session_->GetLastError().c_str());
     }
   }
   return false;
@@ -451,7 +451,7 @@ bool SSHLogin::DoInteractiveAuth() {
       }
       status = kbd.GetStatus();
     }
-    const char *error = nullptr;
+    const char* error = nullptr;
     switch (status) {
       case ssh::KeyboardInteractive::kAuthenticated:
         return true;
@@ -459,7 +459,7 @@ bool SSHLogin::DoInteractiveAuth() {
         error = "Keyboard interactive succeeded but insufficient.";
         tries = 0;
         break;
-      case ssh::KeyboardInteractive::kFailed: // fallthrough
+      case ssh::KeyboardInteractive::kFailed:  // fallthrough
       default:
         error = "Keyboard interactive auth failed.";
         break;
@@ -499,7 +499,9 @@ bool SSHLogin::DoPublicKeyAuth() {
       if (result == false) {
         if (tries == 1) {
           // Only display error on the last try.
-          fprintf(stderr, "Error reading key. This could be due to the wrong "
+          fprintf(
+              stderr,
+              "Error reading key. This could be due to the wrong "
               "passphrase, the key type being unsupported, or the key format "
               "being incorrect or corrupt.\r\n");
         }
@@ -508,7 +510,7 @@ bool SSHLogin::DoPublicKeyAuth() {
     }
     if (session_->AuthUsingKey(key) == false) {
       fprintf(stderr, "Key auth failed: %s\r\n",
-          session_->GetLastError().c_str());
+              session_->GetLastError().c_str());
       return false;
     }
     // If we got here, auth succeeded.
@@ -533,13 +535,13 @@ bool SSHLogin::DoConversation() {
   ssh::Channel& c = session_->NewChannel();
   if (c.Execute(command) == false) {
     fprintf(stderr, "Failed to execute mosh-server: %s\r\n",
-        session_->GetLastError().c_str());
+            session_->GetLastError().c_str());
     return false;
   }
   string buf;
   if (c.Read(&buf, nullptr) == false) {
     fprintf(stderr, "Error reading from remote ssh server: %s\r\n",
-        session_->GetLastError().c_str());
+            session_->GetLastError().c_str());
     return false;
   }
 
@@ -550,7 +552,7 @@ bool SSHLogin::DoConversation() {
 
   size_t left_pos = 0;
   while (true) {
-    const char *newline = "\r\n";
+    const char* newline = "\r\n";
     size_t right_pos = buf.find(newline, left_pos);
     if (right_pos == string::npos) {
       break;
@@ -561,7 +563,7 @@ bool SSHLogin::DoConversation() {
       char port[6];
       if (sscanf(substr.c_str(), "MOSH CONNECT %5s %22s", port, key) != 2) {
         fprintf(stderr, "Badly formatted MOSH CONNECT line: %s\r\n",
-            substr.c_str());
+                substr.c_str());
         return false;
       }
       mosh_key_ = key;
@@ -579,7 +581,7 @@ bool SSHLogin::DoConversation() {
 
   if (mosh_key_.size() == 0 || mosh_port_.size() == 0) {
     fprintf(stderr, "Bad response when running mosh-server: '%s'\r\n",
-        buf.c_str());
+            buf.c_str());
     return false;
   }
   return true;

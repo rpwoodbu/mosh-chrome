@@ -61,13 +61,13 @@ KeyboardInteractive::Status KeyboardInteractive::GetStatus() {
 
 string KeyboardInteractive::GetNextPrompt() {
   char echo = 0;
-  const char *prompt = ssh_userauth_kbdint_getprompt(
-      s_, current_prompt_, &echo);
+  const char* prompt =
+      ssh_userauth_kbdint_getprompt(s_, current_prompt_, &echo);
   echo_answer_ = echo > 0;
   return prompt;
 }
 
-bool KeyboardInteractive::Answer(const char *answer) {
+bool KeyboardInteractive::Answer(const char* answer) {
   int result = ssh_userauth_kbdint_setanswer(s_, current_prompt_, answer);
   if (result < 0) {
     return false;
@@ -79,8 +79,8 @@ bool KeyboardInteractive::Answer(const char *answer) {
   return true;
 }
 
-Session::Session(const string &host, int port, const string &user) :
-    s_(ssh_new()), user_(user) {
+Session::Session(const string& host, int port, const string& user)
+    : s_(ssh_new()), user_(user) {
   SetOption(SSH_OPTIONS_HOST, host);
   SetOption(SSH_OPTIONS_PORT, port);
   SetOption(SSH_OPTIONS_USER, user);
@@ -90,9 +90,11 @@ Session::Session(const string &host, int port, const string &user) :
   // issue by removing ed25519 from the list of host keys libssh will prefer.
   // This list is from libssh's HOSTKEYS (kex.c), with ssh-ed25519 removed.
   //
-  // TODO: Eliminate this workaround once ed25519 host key verification is fixed.
+  // TODO: Eliminate this workaround once ed25519 host key verification is
+  // fixed.
   SetOption(SSH_OPTIONS_HOSTKEYS,
-      "ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,ssh-rsa,ssh-dss");
+            "ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,"
+            "ssh-rsa,ssh-dss");
 }
 
 Session::~Session() {
@@ -177,7 +179,7 @@ KeyboardInteractive& Session::AuthUsingKeyboardInteractive() {
   return *keyboard_interactive_;
 }
 
-bool Session::AuthUsingKey(const Key &key) {
+bool Session::AuthUsingKey(const Key& key) {
   int result = ssh_userauth_publickey(s_, nullptr, key.key_);
   return ParseCode(result, SSH_AUTH_SUCCESS);
 }
@@ -279,9 +281,7 @@ KeyType::KeyTypeEnum KeyType::type() const {
 #endif
 }
 
-string KeyType::AsString() const {
-  return string(ssh_key_type_to_char(type_));
-}
+string KeyType::AsString() const { return string(ssh_key_type_to_char(type_)); }
 
 Key::Key() {}
 
@@ -291,26 +291,25 @@ Key::~Key() {
   }
 }
 
-bool Key::ImportPrivateKey(const string &key, const char *passphrase) {
+bool Key::ImportPrivateKey(const string& key, const char* passphrase) {
   if (key_ != nullptr) {
     ssh_key_free(key_);
     key_ = nullptr;
   }
-  int result = ssh_pki_import_privkey_base64(
-      key.c_str(), passphrase, nullptr, nullptr, &key_);
+  int result = ssh_pki_import_privkey_base64(key.c_str(), passphrase, nullptr,
+                                             nullptr, &key_);
   if (result != SSH_OK) {
     return false;
   }
   return true;
 }
 
-bool Key::ImportPublicKey(const string &key, KeyType type) {
+bool Key::ImportPublicKey(const string& key, KeyType type) {
   if (key_ != nullptr) {
     ssh_key_free(key_);
     key_ = nullptr;
   }
-  int result = ssh_pki_import_pubkey_base64(
-      key.c_str(), type.type_, &key_);
+  int result = ssh_pki_import_pubkey_base64(key.c_str(), type.type_, &key_);
   if (result != SSH_OK) {
     return false;
   }
@@ -331,23 +330,18 @@ unique_ptr<Key> Key::GetPublicKey() const {
   return key;
 }
 
-string Key::MD5() const {
-  return Hash(SSH_PUBLICKEY_HASH_MD5);
-}
+string Key::MD5() const { return Hash(SSH_PUBLICKEY_HASH_MD5); }
 
-string Key::SHA1() const {
-  return Hash(SSH_PUBLICKEY_HASH_SHA1);
-}
+string Key::SHA1() const { return Hash(SSH_PUBLICKEY_HASH_SHA1); }
 
 string Key::Hash(const ssh_publickey_hash_type type) const {
   if (key_ == nullptr) {
     return string();
   }
-  unsigned char *hash_buf = nullptr;
+  unsigned char* hash_buf = nullptr;
   size_t hash_len = 0;
-  int result = ssh_get_publickey_hash(
-      key_, type, &hash_buf, &hash_len);
-  if (result != 0 ) {
+  int result = ssh_get_publickey_hash(key_, type, &hash_buf, &hash_len);
+  if (result != 0) {
     return string();
   }
   unique_ptr<char[]> hash_hex(ssh_get_hexa(hash_buf, hash_len));
@@ -356,9 +350,7 @@ string Key::Hash(const ssh_publickey_hash_type type) const {
   return hash;
 }
 
-KeyType Key::GetKeyType() const {
-  return KeyType(ssh_key_type(key_));
-}
+KeyType Key::GetKeyType() const { return KeyType(ssh_key_type(key_)); }
 
 Channel::Channel(ssh_channel c) : c_(c) {}
 
@@ -377,7 +369,7 @@ bool Channel::Close() {
   return true;
 }
 
-bool Channel::Execute(const string &command) {
+bool Channel::Execute(const string& command) {
   if (OpenSession() == false) {
     return false;
   }
@@ -389,7 +381,7 @@ bool Channel::Execute(const string &command) {
   return ParseCode(ssh_channel_request_exec(c_, command.c_str()));
 }
 
-bool Channel::Read(string *out, string *err) {
+bool Channel::Read(string* out, string* err) {
   if (session_open_ == false) {
     return false;
   }
@@ -398,7 +390,7 @@ bool Channel::Read(string *out, string *err) {
   char buffer[256];
 
   // First read all of stdout.
-  unsigned int bytes_read = 1; // Prime the pump.
+  unsigned int bytes_read = 1;  // Prime the pump.
   if (out != nullptr) {
     while (bytes_read > 0 && bytes_read != ssh_error) {
       bytes_read = ssh_channel_read(c_, buffer, sizeof(buffer), 0);
@@ -411,7 +403,7 @@ bool Channel::Read(string *out, string *err) {
 
   // Now read all of stderr.
   if (err != nullptr) {
-    bytes_read = 1; // Prime the pump.
+    bytes_read = 1;  // Prime the pump.
     while (bytes_read > 0 && bytes_read != ssh_error) {
       bytes_read = ssh_channel_read(c_, buffer, sizeof(buffer), 1);
       err->append(buffer, bytes_read);
@@ -434,4 +426,4 @@ bool Channel::OpenSession() {
   return true;
 }
 
-} // namespace ssh
+}  // namespace ssh

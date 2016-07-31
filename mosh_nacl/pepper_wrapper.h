@@ -27,4 +27,4 @@
 // support multiple Pepper Instances.
 PepperPOSIX::POSIX& GetPOSIX();
 
-#endif // PEPPER_WRAPPER
+#endif  // PEPPER_WRAPPER

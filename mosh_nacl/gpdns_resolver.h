@@ -44,21 +44,19 @@ class GPDNSResolver : public Resolver {
   bool IsValidating() const override { return true; }
 
  private:
-  // Encapsulates data and processing for a single query. Class is self-deleting.
+  // Encapsulates data and processing for a single query. Class is
+  // self-deleting.
   class Query {
    public:
-    Query(
-        pp::InstanceHandle handle,
-        std::string domain_name,
-        Type type,
-        CallbackCaller caller) :
-      caller_(std::move(caller)),
-      request_(handle),
-      loader_(handle),
-      buffer_(kBufferSize),
-      domain_name_(std::move(domain_name)),
-      type_(type),
-      cc_factory_(this) {}
+    Query(pp::InstanceHandle handle, std::string domain_name, Type type,
+          CallbackCaller caller)
+        : caller_(std::move(caller)),
+          request_(handle),
+          loader_(handle),
+          buffer_(kBufferSize),
+          domain_name_(std::move(domain_name)),
+          type_(type),
+          cc_factory_(this) {}
 
     // Do the query.
     void Run();
@@ -86,7 +84,7 @@ class GPDNSResolver : public Resolver {
     void ProcessResponse(std::unique_ptr<Query> deleter);
 
     // Buffer size for reading data from GPDNS.
-    static const size_t kBufferSize = 16 * 1024; // 16 kB
+    static const size_t kBufferSize = 16 * 1024;  // 16 kB
 
     CallbackCaller caller_;
     pp::URLRequestInfo request_;
@@ -101,4 +99,4 @@ class GPDNSResolver : public Resolver {
   const pp::InstanceHandle instance_handle_;
 };
 
-#endif // GPDNS_RESOLVER_H
+#endif  // GPDNS_RESOLVER_H

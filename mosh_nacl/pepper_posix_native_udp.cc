@@ -19,12 +19,12 @@
 
 #include "make_unique.h"
 
-#include <memory>
 #include <errno.h>
 #include <netinet/in.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/uio.h>
+#include <memory>
 
 #include "ppapi/c/pp_errors.h"
 #include "ppapi/cpp/completion_callback.h"
@@ -36,13 +36,14 @@ namespace PepperPOSIX {
 using std::vector;
 using util::make_unique;
 
-NativeUDP::NativeUDP(const pp::InstanceHandle instance_handle) :
-    socket_(new pp::UDPSocket(instance_handle)),
-    instance_handle_(instance_handle), factory_(this) {}
+NativeUDP::NativeUDP(const pp::InstanceHandle instance_handle)
+    : socket_(new pp::UDPSocket(instance_handle)),
+      instance_handle_(instance_handle),
+      factory_(this) {}
 
 NativeUDP::~NativeUDP() {}
 
-int NativeUDP::Bind(const pp::NetAddress &address) {
+int NativeUDP::Bind(const pp::NetAddress& address) {
   pp::Var string_address = address.DescribeAsString(true);
   if (string_address.is_undefined()) {
     Log("NativeUDP::Bind() Address is bogus.");
@@ -60,10 +61,9 @@ int NativeUDP::Bind(const pp::NetAddress &address) {
   return result;
 }
 
-ssize_t NativeUDP::Send(
-    const vector<char> &buf,
-    __attribute__((unused)) int flags,
-    const pp::NetAddress &address) {
+ssize_t NativeUDP::Send(const vector<char>& buf,
+                        __attribute__((unused)) int flags,
+                        const pp::NetAddress& address) {
   if (!bound_) {
     const auto family = address.GetFamily();
     int result;
@@ -87,8 +87,8 @@ ssize_t NativeUDP::Send(
     }
   }
 
-  int32_t result = socket_->SendTo(
-      buf.data(), buf.size(), address, pp::CompletionCallback());
+  int32_t result = socket_->SendTo(buf.data(), buf.size(), address,
+                                   pp::CompletionCallback());
   if (result < 0) {
     switch (result) {
       case PP_ERROR_ADDRESS_UNREACHABLE:
@@ -107,9 +107,9 @@ ssize_t NativeUDP::Send(
 // StartReceive prepares to receive another packet, and returns without
 // blocking.
 void NativeUDP::StartReceive(__attribute__((unused)) int32_t unused) {
-  int32_t result = socket_->RecvFrom(
-      receive_buffer_, sizeof(receive_buffer_),
-      factory_.NewCallbackWithOutput(&NativeUDP::Received));
+  int32_t result =
+      socket_->RecvFrom(receive_buffer_, sizeof(receive_buffer_),
+                        factory_.NewCallbackWithOutput(&NativeUDP::Received));
   if (result != PP_OK_COMPLETIONPENDING) {
     Log("NativeUDP::StartReceive(): RecvFrom returned %d", result);
     // TODO: Perhaps crash here?
@@ -117,7 +117,7 @@ void NativeUDP::StartReceive(__attribute__((unused)) int32_t unused) {
 }
 
 // Received is the callback result of StartReceive().
-void NativeUDP::Received(int32_t result, const pp::NetAddress &address) {
+void NativeUDP::Received(int32_t result, const pp::NetAddress& address) {
   if (result < 0) {
     Log("NativeUDP::Received(%d, ...): Negative result; bailing.", result);
     return;
@@ -134,4 +134,4 @@ int NativeUDP::Close() {
   return 0;
 }
 
-} // namespace PepperPOSIX
+}  // namespace PepperPOSIX

@@ -36,7 +36,7 @@ window.onload = function() {
 
 function onSaveClick(e) {
   var field = document.querySelector('#key');
-  if (field.value === "") {
+  if (field.value === '') {
     chrome.storage.local.remove(kSSHKey);
   } else {
     var o = {};

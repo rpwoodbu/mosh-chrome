@@ -23,22 +23,22 @@
 
 #include "pepper_posix_selector.h"
 
-#include <functional>
-#include <map>
-#include <memory>
-#include <string>
 #include <poll.h>
 #include <stdarg.h>
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <functional>
+#include <map>
+#include <memory>
+#include <string>
 
 #include "ppapi/c/ppb_net_address.h"
 #include "ppapi/cpp/instance_handle.h"
 #include "ppapi/cpp/net_address.h"
 
 // Implement this to plumb logging from Pepper functions to your app.
-void Log(const char *format, ...);
+void Log(const char* format, ...);
 
 namespace PepperPOSIX {
 
@@ -67,20 +67,20 @@ class File {
   bool blocking_ = true;
 
   // Disable copy and assignment.
-  File(const File &) = delete;
-  File &operator=(const File &) = delete;
+  File(const File&) = delete;
+  File& operator=(const File&) = delete;
 };
 
 // Abstract class defining a file that is read-only.
 class Reader : public virtual File {
  public:
-  virtual ssize_t Read(void *buf, size_t count) = 0;
+  virtual ssize_t Read(void* buf, size_t count) = 0;
 };
 
 // Abstract class defining a file that is write-only.
 class Writer : public virtual File {
  public:
-  virtual ssize_t Write(const void *buf, size_t count) = 0;
+  virtual ssize_t Write(const void* buf, size_t count) = 0;
 };
 
 // Abstract class defining a file that is read/write.
@@ -108,20 +108,17 @@ class POSIX {
   // will be called from PSelect().
   //
   // Set any of these to the default unique_ptr (nullptr) if not used.
-  POSIX(
-      const pp::InstanceHandle instance_handle,
-      std::unique_ptr<Reader> std_in,
-      std::unique_ptr<Writer> std_out,
-      std::unique_ptr<Writer> std_err,
-      std::unique_ptr<Signal> signal);
+  POSIX(const pp::InstanceHandle instance_handle,
+        std::unique_ptr<Reader> std_in, std::unique_ptr<Writer> std_out,
+        std::unique_ptr<Writer> std_err, std::unique_ptr<Signal> signal);
 
-  ~POSIX() {};
+  ~POSIX(){};
 
-  int Open(const char *pathname, int flags, mode_t mode);
+  int Open(const char* pathname, int flags, mode_t mode);
 
-  ssize_t Read(int fd, void *buf, size_t count);
+  ssize_t Read(int fd, void* buf, size_t count);
 
-  ssize_t Write(int fd, const void *buf, size_t count);
+  ssize_t Write(int fd, const void* buf, size_t count);
 
   int Close(int fd);
 
@@ -129,41 +126,41 @@ class POSIX {
 
   int Dup(int oldfd);
 
-  int PSelect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
-      const struct timespec *timeout, const sigset_t *sigmask);
+  int PSelect(int nfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfds,
+              const struct timespec* timeout, const sigset_t* sigmask);
 
-  int Select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
-      struct timeval *timeout);
+  int Select(int nfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfds,
+             struct timeval* timeout);
 
-  int Poll(struct pollfd *fds, nfds_t nfds, int timeout);
+  int Poll(struct pollfd* fds, nfds_t nfds, int timeout);
 
-  ssize_t Recv(int sockfd, void *buf, size_t len, int flags);
+  ssize_t Recv(int sockfd, void* buf, size_t len, int flags);
 
-  ssize_t RecvMsg(int sockfd, struct msghdr *msg, int flags);
+  ssize_t RecvMsg(int sockfd, struct msghdr* msg, int flags);
 
-  ssize_t Send(int sockfd, const void *buf, size_t len, int flags);
+  ssize_t Send(int sockfd, const void* buf, size_t len, int flags);
 
-  ssize_t SendTo(int sockfd, const void *buf, size_t len, int flags,
-      const struct sockaddr *dest_addr, socklen_t addrlen);
+  ssize_t SendTo(int sockfd, const void* buf, size_t len, int flags,
+                 const struct sockaddr* dest_addr, socklen_t addrlen);
 
   int FCntl(int fd, int cmd, va_list args);
 
-  int Connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+  int Connect(int sockfd, const struct sockaddr* addr, socklen_t addrlen);
 
-  int GetSockOpt(int sockfd, int level, int optname,
-      void *optval, socklen_t *optlen);
+  int GetSockOpt(int sockfd, int level, int optname, void* optval,
+                 socklen_t* optlen);
 
   // Register a filename and File factory to be used when that file is
   // opened.
-  void RegisterFile(
-      std::string filename, std::function<std::unique_ptr<File> ()> factory) {
+  void RegisterFile(std::string filename,
+                    std::function<std::unique_ptr<File>()> factory) {
     factories_[filename] = factory;
   }
 
   // Register a File factory to be called every time a Unix domain socket of
   // type SOCK_STREAM is created by calling Socket().
   void RegisterUnixSocketStream(
-      std::function<std::unique_ptr<File> ()> factory) {
+      std::function<std::unique_ptr<File>()> factory) {
     unix_socket_stream_factory_ = factory;
   }
 
@@ -172,24 +169,24 @@ class POSIX {
   int NextFileDescriptor();
 
   // Makes a pp::NetAddress from a sockaddr.
-  pp::NetAddress MakeAddress(
-    const struct sockaddr *addr, socklen_t addrlen) const;
+  pp::NetAddress MakeAddress(const struct sockaddr* addr,
+                             socklen_t addrlen) const;
 
   // Map of file descriptors and the File objects they represent.
   std::map<int, std::unique_ptr<File>> files_;
   // Map of registered files and their File factories.
-  std::map<std::string, std::function<std::unique_ptr<File> ()>> factories_;
+  std::map<std::string, std::function<std::unique_ptr<File>()>> factories_;
   // Factory function for creating Unix domain sockets of type SOCK_STREAM.
-  std::function<std::unique_ptr<File> ()> unix_socket_stream_factory_;
+  std::function<std::unique_ptr<File>()> unix_socket_stream_factory_;
   std::unique_ptr<Signal> signal_;
   Selector selector_;
   const pp::InstanceHandle instance_handle_;
 
   // Disable copy and assignment.
-  POSIX(const POSIX &) = delete;
-  POSIX &operator=(const POSIX &) = delete;
+  POSIX(const POSIX&) = delete;
+  POSIX& operator=(const POSIX&) = delete;
 };
 
-} // namespace PepperPOSIX
+}  // namespace PepperPOSIX
 
-#endif // PEPPER_POSIX
+#endif  // PEPPER_POSIX

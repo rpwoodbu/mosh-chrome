@@ -26,11 +26,11 @@ window.onload = function() {
     // Create a local hterm instance so people can see their changes live.
     var term = new hterm.Terminal();
     term.onTerminalReady = function() {
-        var io = term.io.push();
-        io.onVTKeystroke = io.print;
-        io.println('# Welcome! ' + manifest.name + ' '  + manifest.version);
-        io.print('$ ./configure && make && make install');
-      };  
+      var io = term.io.push();
+      io.onVTKeystroke = io.print;
+      io.println('# Welcome! ' + manifest.name + ' ' + manifest.version);
+      io.print('$ ./configure && make && make install');
+    };
     term.decorate(document.querySelector('#terminal'));
     term.installKeyboard();
 
@@ -51,9 +51,9 @@ window.onload = function() {
 
     // Allow people to reset individual fields by pressing escape.
     document.onkeyup = function(e) {
-        if (document.activeElement.name == 'settings' && e.keyCode == 27)
-          prefsEditor.reset(document.activeElement);
-      };
+      if (document.activeElement.name == 'settings' && e.keyCode == 27)
+        prefsEditor.reset(document.activeElement);
+    };
   }
 
   lib.init(setupPreferences);
@@ -83,9 +83,9 @@ nassh.PreferencesEditor = function(opt_profileId) {
 nassh.PreferencesEditor.debounce = function(input, callback, opt_timeout) {
   clearTimeout(input.timeout);
   input.timeout = setTimeout(function() {
-      callback(input);
-      input.timeout = null;
-    }, opt_timeout || 500);
+    callback(input);
+    input.timeout = null;
+  }, opt_timeout || 500);
 };
 
 /**
@@ -101,9 +101,9 @@ nassh.PreferencesEditor.prototype.selectProfile = function(profileId) {
   var prefs = new hterm.PreferenceManager(profileId);
   this.prefs_ = prefs;
   prefs.readStorage(function() {
-      prefs.notifyAll();
-      prefsEditor.syncPage();
-    });
+    prefs.notifyAll();
+    prefsEditor.syncPage();
+  });
 };
 
 /**
@@ -131,8 +131,7 @@ nassh.PreferencesEditor.prototype.colorSave = function(key) {
  */
 nassh.PreferencesEditor.prototype.save = function(input) {
   // Skip ones we don't yet handle.
-  if (input.disabled)
-    return;
+  if (input.disabled) return;
 
   var keys = input.id.split(':');
   var key = keys[0];
@@ -246,15 +245,15 @@ nassh.PreferencesEditor.prototype.onInputChange = function(input) {
  */
 nassh.PreferencesEditor.prototype.onInputChangeTristate = function(input) {
   switch (input.data % 3) {
-    case 0: // unchecked -> indeterminate
-       input.indeterminate = true;
-       break;
-    case 1: // indeterminate -> checked
-       input.checked = true;
-       break;
-    case 2: // checked -> unchecked
-       input.checked = false;
-       break;
+    case 0:  // unchecked -> indeterminate
+      input.indeterminate = true;
+      break;
+    case 1:  // indeterminate -> checked
+      input.checked = true;
+      break;
+    case 2:  // checked -> unchecked
+      input.checked = false;
+      break;
   }
   ++input.data;
   this.onInputChange(input);
@@ -287,34 +286,31 @@ nassh.PreferencesEditor.prototype.syncPage = function() {
     var pref = this.prefs_.get(key);
 
     var onchangeCursorReset = function() {
-        nassh.PreferencesEditor.debounce(this, function(input) {
-            // Chrome has a bug where it resets cursor position on us when
-            // we debounce the input.  So manually save & restore cursor.
-            var i = input.selectionStart;
-            prefsEditor.onInputChange(input);
-            if (document.activeElement === input)
-              input.setSelectionRange(i, i);
-          });
-      };
+      nassh.PreferencesEditor.debounce(this, function(input) {
+        // Chrome has a bug where it resets cursor position on us when
+        // we debounce the input.  So manually save & restore cursor.
+        var i = input.selectionStart;
+        prefsEditor.onInputChange(input);
+        if (document.activeElement === input) input.setSelectionRange(i, i);
+      });
+    };
     var onchange = function() {
-        nassh.PreferencesEditor.debounce(this, function(input) {
-            prefsEditor.onInputChange(input);
-          });
-      };
+      nassh.PreferencesEditor.debounce(
+          this, function(input) { prefsEditor.onInputChange(input); });
+    };
     var oninput = null;
 
-    var keyParts = key.split('-')
-    if (key == 'enable-bold' ||
-        key == 'mouse-paste-button') {
+    var keyParts = key.split(
+        '-') if (key == 'enable-bold' || key == 'mouse-paste-button') {
       input.indeterminate = true;
       input.type = 'checkbox';
       input.data = 1;
-      onchange = function() {
-          prefsEditor.onInputChangeTristate(this);
-        };
-    } else if (keyParts[keyParts.length - 1] == 'color') {
+      onchange = function() { prefsEditor.onInputChangeTristate(this); };
+    }
+    else if (keyParts[keyParts.length - 1] == 'color') {
       input.type = 'color';
-    } else {
+    }
+    else {
       var type = typeof pref;
       switch (type) {
         case 'object':
@@ -388,8 +384,9 @@ nassh.PreferencesEditor.prototype.resetAll = function() {
   var settings = document.getElementsByName('settings');
 
   this.prefs_.resetAll();
-  for (var i = 0; i < settings.length; ++i)
+  for (var i = 0; i < settings.length; ++i) {
     this.sync(settings[i]);
+  }
   this.notify('Preferences reset');
 };
 
@@ -417,6 +414,6 @@ nassh.PreferencesEditor.prototype.notify = function(msg, opt_timeout) {
   var status = document.getElementById('label_status');
   status.innerText = msg;
   this.notifyTimeout_ = setTimeout(function() {
-      status.innerHTML = '&nbsp;';
-    }, opt_timeout || 1000);
+    status.innerHTML = '&nbsp;';
+  }, opt_timeout || 1000);
 };

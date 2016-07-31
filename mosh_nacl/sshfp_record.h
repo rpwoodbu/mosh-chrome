@@ -98,4 +98,4 @@ class SSHFPRecord {
   std::map<Fingerprint::Algorithm, std::vector<Fingerprint>> fingerprints_;
 };
 
-#endif // SSHFP_RECORD_H
+#endif  // SSHFP_RECORD_H

@@ -17,11 +17,11 @@
 
 #include "gpdns_resolver.h"
 
+#include <arpa/inet.h>
+#include <sys/socket.h>
 #include <functional>
 #include <string>
 #include <vector>
-#include <arpa/inet.h>
-#include <sys/socket.h>
 
 #include "json/reader.h"
 #include "json/value.h"
@@ -74,27 +74,26 @@ string TypeToRRtypeStr(Resolver::Type type) {
     case Resolver::Type::AAAA:
       return "AAAA";
     case Resolver::Type::SSHFP:
-      return "44"; // SSHFP (Mnemonic not yet supported by DNS-over-HTTPS.)
+      return "44";  // SSHFP (Mnemonic not yet supported by DNS-over-HTTPS.)
   }
 }
 
-} // anonymous namespace
+}  // anonymous namespace
 
 void GPDNSResolver::Resolve(string domain_name, Type type, Callback callback) {
   // Query is self-deleting.
-  auto* query = new Query(
-      instance_handle_, move(domain_name), type, CallbackCaller(callback));
+  auto* query = new Query(instance_handle_, move(domain_name), type,
+                          CallbackCaller(callback));
   query->Run();
 }
 
 void GPDNSResolver::Query::Run() {
   pp::Module::Get()->core()->CallOnMainThread(
-      0,
-      cc_factory_.NewCallback(&GPDNSResolver::Query::RunOnMainThread));
+      0, cc_factory_.NewCallback(&GPDNSResolver::Query::RunOnMainThread));
 }
 
-void GPDNSResolver::Query::RunOnMainThread(
-    __attribute__((unused)) uint32_t unused) {
+void GPDNSResolver::Query::RunOnMainThread(__attribute__((unused))
+                                           uint32_t unused) {
   unique_ptr<Query> deleter(this);
 
   if (IsNetworkAddress(domain_name_)) {
@@ -133,8 +132,8 @@ void GPDNSResolver::Query::ReadMore(unique_ptr<Query> deleter) {
 
   int32_t read_result;
   do {
-    read_result = loader_.ReadResponseBody(
-        buffer_.data(), buffer_.size(), read_callback);
+    read_result =
+        loader_.ReadResponseBody(buffer_.data(), buffer_.size(), read_callback);
     if (read_result > 0) {
       // Things were fast, so we already have data.
       AppendDataBytes(read_result);
@@ -179,8 +178,8 @@ void GPDNSResolver::Query::ProcessResponse(
   }
 
   auto authenticity = parsed_json.get("AD", false).asBool()
-      ? Authenticity::AUTHENTIC
-      : Authenticity::INSECURE;
+                          ? Authenticity::AUTHENTIC
+                          : Authenticity::INSECURE;
 
   const Json::Value answers = parsed_json["Answer"];
   if (answers.isNull()) {

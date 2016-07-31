@@ -53,10 +53,10 @@ using util::make_unique;
 // lifecycle of the backing memory.
 class BadInterning {
  public:
-  char* Get(const string &str) {
+  char* Get(const string& str) {
     if (strings_.count(str) == 0) {
       int size = str.size();
-      auto buf = make_unique<char[]>(size+1);
+      auto buf = make_unique<char[]>(size + 1);
       str.copy(buf.get(), size);
       buf.get()[size] = '\0';
       strings_[str] = move(buf);
@@ -80,7 +80,7 @@ extern "C" {
 // cannot be created. This does not seem to be an issue on x86_64 nor with
 // newlib (which doesn't have RLIMIT_STACK in the headers).
 #ifndef USE_NEWLIB
-int getrlimit(int resource, UNUSED struct rlimit *rlim) {
+int getrlimit(int resource, UNUSED struct rlimit* rlim) {
   if (resource == RLIMIT_STACK) {
     errno = EAGAIN;
     return -1;
@@ -88,16 +88,14 @@ int getrlimit(int resource, UNUSED struct rlimit *rlim) {
   return 0;
 }
 #else
-int getrlimit(UNUSED int resource, UNUSED struct rlimit *rlim) {
-  return 0;
-}
+int getrlimit(UNUSED int resource, UNUSED struct rlimit* rlim) { return 0; }
 #endif
-int setrlimit(UNUSED int resource, UNUSED const struct rlimit *rlim) {
+int setrlimit(UNUSED int resource, UNUSED const struct rlimit* rlim) {
   return 0;
 }
 
 // sigprocmask() isn't meaningful in NaCl; stubbing out.
-int sigprocmask(int how, UNUSED const sigset_t *set, UNUSED sigset_t *oldset) {
+int sigprocmask(int how, UNUSED const sigset_t* set, UNUSED sigset_t* oldset) {
   Log("sigprocmask(%d, ...)", how);
   return 0;
 }
@@ -121,12 +119,12 @@ pid_t getpid(void) {
 // nl_langinfo(). This will do for both cases (although no UTF-8 in glibc can
 // cause a bit of a mess).
 #ifndef USE_NEWLIB
-char *setlocale(int category, const char *locale) {
+char* setlocale(int category, const char* locale) {
   Log("setlocale(%d, \"%s\")", category, locale);
   return strings.Get("NaCl");
 }
 #endif
-char *nl_langinfo(nl_item item) {
+char* nl_langinfo(nl_item item) {
   switch (item) {
     case CODESET:
       Log("nl_langinfo(CODESET)");
@@ -138,12 +136,12 @@ char *nl_langinfo(nl_item item) {
 }
 
 // We don't really care about terminal attributes.
-int tcgetattr(int fd, UNUSED struct termios *termios_p) {
+int tcgetattr(int fd, UNUSED struct termios* termios_p) {
   Log("tcgetattr(%d, ...)", fd);
   return 0;
 }
-int tcsetattr(
-    int fd, int optional_actions, UNUSED const struct termios *termios_p) {
+int tcsetattr(int fd, int optional_actions,
+              UNUSED const struct termios* termios_p) {
   Log("tcsetattr(%d, %d, ...)", fd, optional_actions);
   return 0;
 }
@@ -152,7 +150,7 @@ int tcsetattr(
 // Wrap fopen() and friends to capture access to stderr and /dev/urandom.
 //
 
-FILE *fopen(const char *path, const char *mode) {
+FILE* fopen(const char* path, const char* mode) {
   int flags = 0;
   if (mode[1] == '+') {
     flags = O_RDWR;
@@ -165,9 +163,9 @@ FILE *fopen(const char *path, const char *mode) {
     return nullptr;
   }
 
-  FILE *stream = new FILE;
+  FILE* stream = new FILE;
   memset(stream, 0, sizeof(*stream));
-  // TODO: Consider the mode param of open().
+// TODO: Consider the mode param of open().
 #ifdef USE_NEWLIB
   stream->_file = open(path, flags);
 #else
@@ -176,25 +174,25 @@ FILE *fopen(const char *path, const char *mode) {
   return stream;
 }
 
-size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
+size_t fread(void* ptr, size_t size, size_t nmemb, FILE* stream) {
 #ifdef USE_NEWLIB
   int fd = stream->_file;
 #else
   int fd = stream->_fileno;
 #endif
-  return read(fd, ptr, size*nmemb);
+  return read(fd, ptr, size * nmemb);
 }
 
-size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream) {
+size_t fwrite(const void* ptr, size_t size, size_t nmemb, FILE* stream) {
 #ifdef USE_NEWLIB
   int fd = stream->_file;
 #else
   int fd = stream->_fileno;
 #endif
-  return write(fd, ptr, size*nmemb);
+  return write(fd, ptr, size * nmemb);
 }
 
-int fileno(FILE *stream) {
+int fileno(FILE* stream) {
 #ifdef USE_NEWLIB
   return stream->_file;
 #else
@@ -218,41 +216,41 @@ int fileno(FILE *stream) {
 
 // Fake getaddrinfo(), as we expect it will always be an IP address and numeric
 // port.
-int getaddrinfo(const char *node, const char *service,
-    const struct addrinfo *hints, struct addrinfo **res) {
+int getaddrinfo(const char* node, const char* service,
+                const struct addrinfo* hints, struct addrinfo** res) {
   if (hints->ai_flags & AI_CANONNAME) {
     Log("getaddrinfo(): AI_CANONNAME not implemented.");
     return EAI_FAIL;
   }
 
-  struct sockaddr *addr;
+  struct sockaddr* addr;
   size_t addr_size;
   uint32_t ip4_addr;
   unsigned char ip6_addr[16];
 
   if (inet_pton(AF_INET, node, &ip4_addr) == 1) {
-    struct sockaddr_in *addr_in = new sockaddr_in;
+    struct sockaddr_in* addr_in = new sockaddr_in;
     memset(addr_in, 0, sizeof(*addr_in));
     addr_in->sin_family = AF_INET;
     addr_in->sin_addr.s_addr = ip4_addr;
     addr_in->sin_port = htons(atoi(service));
-    addr = (struct sockaddr *)addr_in;
+    addr = (struct sockaddr*)addr_in;
     addr_size = sizeof(*addr_in);
   } else if (inet_pton(AF_INET6, node, &ip6_addr) == 1) {
-    struct sockaddr_in6 *addr_in = new sockaddr_in6;
+    struct sockaddr_in6* addr_in = new sockaddr_in6;
     memset(addr_in, 0, sizeof(*addr_in));
     addr_in->sin6_family = AF_INET6;
     memcpy(addr_in->sin6_addr.s6_addr, ip6_addr,
-        sizeof(addr_in->sin6_addr.s6_addr));
+           sizeof(addr_in->sin6_addr.s6_addr));
     addr_in->sin6_port = htons(atoi(service));
-    addr = (struct sockaddr *)addr_in;
+    addr = (struct sockaddr*)addr_in;
     addr_size = sizeof(*addr_in);
   } else {
     Log("getaddrinfo(): Cannot parse address.");
     return EAI_FAIL;
   }
 
-  struct addrinfo *ai = new struct addrinfo;
+  struct addrinfo* ai = new struct addrinfo;
   memset(ai, 0, sizeof(*ai));
   ai->ai_addr = addr;
   ai->ai_addrlen = addr_size;
@@ -266,9 +264,9 @@ int getaddrinfo(const char *node, const char *service,
   return 0;
 }
 
-void freeaddrinfo(struct addrinfo *res) {
+void freeaddrinfo(struct addrinfo* res) {
   while (res != nullptr) {
-    struct addrinfo *last = res;
+    struct addrinfo* last = res;
     delete res->ai_addr;
     res = res->ai_next;
     delete last;
@@ -276,9 +274,9 @@ void freeaddrinfo(struct addrinfo *res) {
 }
 
 #ifdef USE_NEWLIB
-char *gai_strerror(UNUSED int errcode) {
+char* gai_strerror(UNUSED int errcode) {
 #else
-const char *gai_strerror(UNUSED int errcode) {
+const char* gai_strerror(UNUSED int errcode) {
 #endif
   Log("gai_strerror(): Not implemented.");
   return strings.Get("gai_strerror not implemented");
@@ -289,29 +287,27 @@ const char *gai_strerror(UNUSED int errcode) {
 //
 
 // There is a pseudo-overload that includes a third param |mode_t|.
-int open(const char *pathname, int flags, ...) {
+int open(const char* pathname, int flags, ...) {
   // TODO: For now, ignoring |mode_t| param.
   return GetPOSIX().Open(pathname, flags, 0);
 }
 
-ssize_t read(int fd, void *buf, size_t count) {
+ssize_t read(int fd, void* buf, size_t count) {
   return GetPOSIX().Read(fd, buf, count);
 }
 
-ssize_t write(int fd, const void *buf, size_t count) {
+ssize_t write(int fd, const void* buf, size_t count) {
   return GetPOSIX().Write(fd, buf, count);
 }
 
-int close(int fd) {
-  return GetPOSIX().Close(fd);
-}
+int close(int fd) { return GetPOSIX().Close(fd); }
 
 int socket(int domain, int type, int protocol) {
   return GetPOSIX().Socket(domain, type, protocol);
 }
 
-int bind(
-    int sockfd, UNUSED const struct sockaddr *addr, UNUSED socklen_t addrlen) {
+int bind(int sockfd, UNUSED const struct sockaddr* addr,
+         UNUSED socklen_t addrlen) {
   Log("bind(%d, ...): Not implemented", sockfd);
   errno = ENOMEM;
   return -1;
@@ -319,49 +315,47 @@ int bind(
 
 // Most socket options aren't supported by PPAPI, so just stubbing out.
 int setsockopt(UNUSED int sockfd, UNUSED int level, UNUSED int optname,
-    UNUSED const void *optval, UNUSED socklen_t optlen) {
+               UNUSED const void* optval, UNUSED socklen_t optlen) {
   return 0;
 }
 
 // This is needed to return TCP connection status.
-int getsockopt(int sockfd, int level, int optname,
-    void *optval, socklen_t *optlen) {
+int getsockopt(int sockfd, int level, int optname, void* optval,
+               socklen_t* optlen) {
   return GetPOSIX().GetSockOpt(sockfd, level, optname, optval, optlen);
 }
 
-int dup(int oldfd) {
-  return GetPOSIX().Dup(oldfd);
+int dup(int oldfd) { return GetPOSIX().Dup(oldfd); }
+
+int pselect(int nfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfds,
+            const struct timespec* timeout, const sigset_t* sigmask) {
+  return GetPOSIX().PSelect(nfds, readfds, writefds, exceptfds, timeout,
+                            sigmask);
 }
 
-int pselect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
-    const struct timespec *timeout, const sigset_t *sigmask) {
-  return GetPOSIX().PSelect(
-     nfds, readfds, writefds, exceptfds, timeout, sigmask);
-}
-
-int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
-    struct timeval *timeout) {
+int select(int nfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfds,
+           struct timeval* timeout) {
   return GetPOSIX().Select(nfds, readfds, writefds, exceptfds, timeout);
 }
 
-int poll(struct pollfd *fds, nfds_t nfds, int timeout) {
+int poll(struct pollfd* fds, nfds_t nfds, int timeout) {
   return GetPOSIX().Poll(fds, nfds, timeout);
 }
 
-ssize_t recv(int sockfd, void *buf, size_t len, int flags) {
+ssize_t recv(int sockfd, void* buf, size_t len, int flags) {
   return GetPOSIX().Recv(sockfd, buf, len, flags);
 }
 
-ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags) {
+ssize_t recvmsg(int sockfd, struct msghdr* msg, int flags) {
   return GetPOSIX().RecvMsg(sockfd, msg, flags);
 }
 
-ssize_t send(int sockfd, const void *buf, size_t len, int flags){
+ssize_t send(int sockfd, const void* buf, size_t len, int flags) {
   return GetPOSIX().Send(sockfd, buf, len, flags);
 }
 
-ssize_t sendto(int sockfd, const void *buf, size_t len, int flags,
-    const struct sockaddr *dest_addr, socklen_t addrlen) {
+ssize_t sendto(int sockfd, const void* buf, size_t len, int flags,
+               const struct sockaddr* dest_addr, socklen_t addrlen) {
   return GetPOSIX().SendTo(sockfd, buf, len, flags, dest_addr, addrlen);
 }
 
@@ -373,8 +367,8 @@ int fcntl(int fd, int cmd, ...) {
   return result;
 }
 
-int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
+int connect(int sockfd, const struct sockaddr* addr, socklen_t addrlen) {
   return GetPOSIX().Connect(sockfd, addr, addrlen);
 }
 
-} // extern "C"
+}  // extern "C"

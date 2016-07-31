@@ -31,8 +31,15 @@ class Mutex {
   Mutex() { pthread_mutex_init(&mutex_, nullptr); }
   ~Mutex() { pthread_mutex_destroy(&mutex_); }
 
-  bool Lock() { err_ = pthread_mutex_lock(&mutex_); return err_ == 0; }
-  bool Unlock() { err_ = pthread_mutex_unlock(&mutex_); return err_ == 0; }
+  bool Lock() {
+    err_ = pthread_mutex_lock(&mutex_);
+    return err_ == 0;
+  }
+
+  bool Unlock() {
+    err_ = pthread_mutex_unlock(&mutex_);
+    return err_ == 0;
+  }
 
   int GetLastError() const { return err_; }
 
@@ -41,8 +48,8 @@ class Mutex {
   int err_ = 0;
 
   // Disable copy and assignment.
-  Mutex(const Mutex &) = delete;
-  Mutex &operator=(const Mutex &) = delete;
+  Mutex(const Mutex&) = delete;
+  Mutex& operator=(const Mutex&) = delete;
 };
 
 // Use this class to aquire a Mutex and release it automatically via scoping.
@@ -55,8 +62,8 @@ class MutexLock {
   Mutex& m_;
 
   // Disable copy and assignment.
-  MutexLock(const MutexLock &) = delete;
-  MutexLock &operator=(const MutexLock &) = delete;
+  MutexLock(const MutexLock&) = delete;
+  MutexLock& operator=(const MutexLock&) = delete;
 };
 
 class Conditional {
@@ -64,15 +71,22 @@ class Conditional {
   Conditional() { pthread_cond_init(&cv_, nullptr); }
   ~Conditional() { pthread_cond_destroy(&cv_); }
 
-  bool Signal() { err_ = pthread_cond_signal(&cv_); return err_ == 0; }
-  bool Broadcast() { err_ = pthread_cond_broadcast(&cv_); return err_ == 0; }
- 
-  bool Wait(Mutex *m) {
+  bool Signal() {
+    err_ = pthread_cond_signal(&cv_);
+    return err_ == 0;
+  }
+
+  bool Broadcast() {
+    err_ = pthread_cond_broadcast(&cv_);
+    return err_ == 0;
+  }
+
+  bool Wait(Mutex* m) {
     err_ = pthread_cond_wait(&cv_, &m->mutex_);
     return err_ == 0;
   }
 
-  bool TimedWait(Mutex *m, const struct timespec &abstime) {
+  bool TimedWait(Mutex* m, const struct timespec& abstime) {
     err_ = pthread_cond_timedwait(&cv_, &m->mutex_, &abstime);
     return err_ == 0;
   }
@@ -84,10 +98,10 @@ class Conditional {
   int err_ = 0;
 
   // Disable copy and assignment.
-  Conditional(const Conditional &) = delete;
-  Conditional &operator=(const Conditional &) = delete;
+  Conditional(const Conditional&) = delete;
+  Conditional& operator=(const Conditional&) = delete;
 };
 
-} // namespace pthread
+}  // namespace pthread
 
-#endif // PTHREAD_LOCKS_H
+#endif  // PTHREAD_LOCKS_H
