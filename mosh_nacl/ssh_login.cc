@@ -20,7 +20,7 @@
 #include <string.h>  // TODO(rpwoodbu): Eliminate use of strlen().
 #include <algorithm>
 #include <functional>
-#include <future>
+#include <future>  // NOLINT(build/c++11)
 #include <memory>
 #include <string>
 #include <utility>
