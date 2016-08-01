@@ -256,11 +256,11 @@ class SSHAgentPacketizer {
 class UnixSocketStreamImpl : public PepperPOSIX::UnixSocketStream {
  public:
   UnixSocketStreamImpl() = default;
-  explicit UnixSocketStreamImpl(MoshClientInstance& instance)
+  explicit UnixSocketStreamImpl(MoshClientInstance* instance)
       : instance_(instance) {}
   ~UnixSocketStreamImpl() override {
     if (file_type_ == FileType::SSH_AUTH_SOCK) {
-      instance_.set_ssh_agent_socket(nullptr);
+      instance_->set_ssh_agent_socket(nullptr);
     }
   }
 
@@ -278,7 +278,7 @@ class UnixSocketStreamImpl : public PepperPOSIX::UnixSocketStream {
         agent_packetizer_.AddData(string(bytes, count));
         if (agent_packetizer_.IsPacketAvailable()) {
           auto packet = agent_packetizer_.ConsumePacket();
-          instance_.Output(MoshClientInstance::TYPE_SSH_AGENT, packet);
+          instance_->Output(MoshClientInstance::TYPE_SSH_AGENT, packet);
         }
         return count;
       }
@@ -308,7 +308,7 @@ class UnixSocketStreamImpl : public PepperPOSIX::UnixSocketStream {
     // JavaScript, or agent support will be disabled.
     file_type_ = names_to_file_types_.at(path);
     if (file_type_ == FileType::SSH_AUTH_SOCK) {
-      instance_.set_ssh_agent_socket(this);
+      instance_->set_ssh_agent_socket(this);
     }
     target_->UpdateWrite(true);
     return 0;
@@ -334,7 +334,7 @@ class UnixSocketStreamImpl : public PepperPOSIX::UnixSocketStream {
   static const map<string, FileType> names_to_file_types_;
   FileType file_type_ = FileType::UNSET;
   SSHAgentPacketizer agent_packetizer_;
-  MoshClientInstance& instance_;
+  MoshClientInstance* const instance_;
 };
 
 const map<string, UnixSocketStreamImpl::FileType>
@@ -536,7 +536,7 @@ bool MoshClientInstance::Init(uint32_t argc, const char* argn[],
   posix_->RegisterFile("/dev/urandom",
                        []() { return make_unique<DevURandom>(); });
   posix_->RegisterUnixSocketStream(
-      [this]() { return make_unique<UnixSocketStreamImpl>(*this); });
+      [this]() { return make_unique<UnixSocketStreamImpl>(this); });
 
   if (resolver_ == nullptr) {
     // Use default resolver.
