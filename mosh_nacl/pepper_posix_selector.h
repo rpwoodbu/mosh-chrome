@@ -129,6 +129,6 @@ class Target {
   Target& operator=(const Target&) = delete;
 };
 
-}  // namespace PepperPosix
+}  // namespace PepperPOSIX
 
 #endif  // MOSH_NACL_PEPPER_POSIX_SELECTOR_H_
