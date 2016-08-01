@@ -531,7 +531,7 @@ int POSIX::GetSockOpt(int sockfd, int level, int optname, void* optval,
       errno = EINVAL;
       return -1;
     }
-    *(int*)optval = tcp->connection_errno_;
+    *reinterpret_cast<int*>(optval) = tcp->connection_errno_;
     return 0;
   }
 

@@ -48,7 +48,7 @@ ssize_t Stream::Receive(void* buf, size_t count, int flags) {
     errno = EWOULDBLOCK;
     return -1;
   }
-  char* cbuf = (char*)buf;
+  char* cbuf = reinterpret_cast<char*>(buf);
   int read_count = 0;
   if (peek) {
     for (; read_count < count && read_count < buffer_.size(); ++read_count) {

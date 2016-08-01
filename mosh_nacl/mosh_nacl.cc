@@ -73,7 +73,7 @@ class Keyboard : public PepperPOSIX::Reader {
     pthread::MutexLock m(keypresses_lock_);
 
     while (keypresses_.size() > 0 && num_read < count) {
-      ((char*)buf)[num_read] = keypresses_.front();
+      reinterpret_cast<char*>(buf)[num_read] = keypresses_.front();
       keypresses_.pop_front();
       ++num_read;
     }
