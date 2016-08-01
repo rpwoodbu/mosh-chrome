@@ -20,11 +20,11 @@
 
 #include "mosh_nacl/pepper_posix_udp.h"
 
+#include <memory>
+
 #include "ppapi/cpp/instance_handle.h"
 #include "ppapi/cpp/udp_socket.h"
 #include "ppapi/utility/completion_callback_factory.h"
-
-#include <memory>
 
 const int UDP_RECEIVE_BUFFER_SIZE = 1500;  // Typical MTU.
 

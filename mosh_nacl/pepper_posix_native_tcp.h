@@ -20,11 +20,11 @@
 
 #include "mosh_nacl/pepper_posix_tcp.h"
 
+#include <memory>
+
 #include "ppapi/cpp/instance_handle.h"
 #include "ppapi/cpp/tcp_socket.h"
 #include "ppapi/utility/completion_callback_factory.h"
-
-#include <memory>
 
 const int TCP_RECEIVE_BUFFER_SIZE = 64 * 1024;  // 64 kB, a decent window size.
 

@@ -16,13 +16,14 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "mosh_nacl/sshfp_record.h"
-#include "mosh_nacl/ssh.h"
 
 #include <cstdio>
 #include <cstdlib>
 #include <functional>
 #include <string>
 #include <vector>
+
+#include "mosh_nacl/ssh.h"
 
 using std::move;
 using std::string;

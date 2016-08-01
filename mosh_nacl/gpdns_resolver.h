@@ -18,11 +18,11 @@
 #ifndef MOSH_NACL_GPDNS_RESOLVER_H_
 #define MOSH_NACL_GPDNS_RESOLVER_H_
 
-#include "mosh_nacl/resolver.h"
-
 #include <memory>
 #include <string>
 #include <vector>
+
+#include "mosh_nacl/resolver.h"
 
 #include "ppapi/cpp/instance_handle.h"
 #include "ppapi/cpp/url_loader.h"

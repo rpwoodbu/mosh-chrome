@@ -17,14 +17,14 @@
 
 #include "mosh_nacl/pepper_posix_native_udp.h"
 
-#include "mosh_nacl/make_unique.h"
-
 #include <errno.h>
 #include <netinet/in.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/uio.h>
 #include <memory>
+
+#include "mosh_nacl/make_unique.h"
 
 #include "ppapi/c/pp_errors.h"
 #include "ppapi/cpp/completion_callback.h"

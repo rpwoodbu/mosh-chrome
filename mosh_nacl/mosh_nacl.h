@@ -21,13 +21,13 @@
 #ifndef MOSH_NACL_MOSH_NACL_H_
 #define MOSH_NACL_MOSH_NACL_H_
 
-#include "mosh_nacl/pepper_wrapper.h"
-#include "mosh_nacl/resolver.h"
-#include "mosh_nacl/ssh_login.h"
-
 #include <pthread.h>
 #include <memory>
 #include <string>
+
+#include "mosh_nacl/pepper_wrapper.h"
+#include "mosh_nacl/resolver.h"
+#include "mosh_nacl/ssh_login.h"
 
 #include "ppapi/cpp/instance.h"
 #include "ppapi/cpp/instance_handle.h"

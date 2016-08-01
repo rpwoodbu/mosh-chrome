@@ -18,11 +18,11 @@
 #ifndef MOSH_NACL_PEPPER_RESOLVER_H_
 #define MOSH_NACL_PEPPER_RESOLVER_H_
 
-#include "mosh_nacl/resolver.h"
-
 #include <functional>
 #include <string>
 #include <vector>
+
+#include "mosh_nacl/resolver.h"
 
 #include "ppapi/cpp/host_resolver.h"
 #include "ppapi/cpp/instance_handle.h"

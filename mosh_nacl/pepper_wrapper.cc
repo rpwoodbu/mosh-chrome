@@ -17,8 +17,6 @@
 
 #include "mosh_nacl/pepper_wrapper.h"
 
-#include "mosh_nacl/make_unique.h"
-
 #include <arpa/inet.h>
 #include <assert.h>
 #include <errno.h>
@@ -39,6 +37,8 @@
 #include <map>
 #include <memory>
 #include <string>
+
+#include "mosh_nacl/make_unique.h"
 
 using std::map;
 using std::move;

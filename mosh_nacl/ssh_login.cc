@@ -17,10 +17,6 @@
 
 #include "mosh_nacl/ssh_login.h"
 
-#include "mosh_nacl/make_unique.h"
-#include "mosh_nacl/mosh_nacl.h"
-#include "mosh_nacl/sshfp_record.h"
-
 #include <string.h>  // TODO: Eliminate use of strlen().
 #include <algorithm>
 #include <functional>
@@ -28,6 +24,10 @@
 #include <memory>
 #include <string>
 #include <vector>
+
+#include "mosh_nacl/make_unique.h"
+#include "mosh_nacl/mosh_nacl.h"
+#include "mosh_nacl/sshfp_record.h"
 
 using std::future;
 using std::move;

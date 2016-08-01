@@ -25,9 +25,9 @@
 #include <string>
 #include <vector>
 
+#include "mosh_nacl/resolver.h"
 #include "ppapi/cpp/var.h"
 #include "ppapi/cpp/var_dictionary.h"
-#include "mosh_nacl/resolver.h"
 
 // SSHLogin takes care of the SSH connection and conversation to initiate the
 // Mosh session.

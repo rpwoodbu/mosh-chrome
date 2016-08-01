@@ -20,12 +20,6 @@
 
 #include "mosh_nacl/pepper_posix.h"
 
-#include "mosh_nacl/pepper_posix_native_tcp.h"
-#include "mosh_nacl/pepper_posix_native_udp.h"
-#include "mosh_nacl/pepper_posix_tcp.h"
-
-#include "mosh_nacl/make_unique.h"
-
 #include <errno.h>
 #include <fcntl.h>
 #include <netinet/in.h>
@@ -34,6 +28,12 @@
 #include <sys/un.h>
 #include <unistd.h>
 #include <memory>
+
+#include "mosh_nacl/pepper_posix_native_tcp.h"
+#include "mosh_nacl/pepper_posix_native_udp.h"
+#include "mosh_nacl/pepper_posix_tcp.h"
+
+#include "mosh_nacl/make_unique.h"
 
 namespace PepperPOSIX {
 

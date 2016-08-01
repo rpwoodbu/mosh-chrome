@@ -21,16 +21,16 @@
 #ifndef MOSH_NACL_PEPPER_POSIX_UDP_H_
 #define MOSH_NACL_PEPPER_POSIX_UDP_H_
 
-#include "mosh_nacl/pepper_posix.h"
-#include "mosh_nacl/pepper_posix_selector.h"
-#include "mosh_nacl/pthread_locks.h"
-
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <deque>
 #include <memory>
 #include <vector>
+
+#include "mosh_nacl/pepper_posix.h"
+#include "mosh_nacl/pepper_posix_selector.h"
+#include "mosh_nacl/pthread_locks.h"
 
 #include "ppapi/cpp/net_address.h"
 

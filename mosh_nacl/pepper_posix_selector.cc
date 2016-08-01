@@ -17,13 +17,13 @@
 
 #include "mosh_nacl/pepper_posix_selector.h"
 
-#include "mosh_nacl/make_unique.h"
-
 #include <assert.h>
 #include <errno.h>
 #include <unistd.h>
 #include <algorithm>
 #include <memory>
+
+#include "mosh_nacl/make_unique.h"
 
 namespace PepperPOSIX {
 
