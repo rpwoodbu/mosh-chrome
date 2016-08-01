@@ -32,6 +32,7 @@
 #include <deque>
 #include <functional>
 #include <map>
+#include <utility>
 #include <vector>
 
 #include "mosh_nacl/gpdns_resolver.h"

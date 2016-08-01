@@ -24,6 +24,7 @@
 #include <pthread.h>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "mosh_nacl/pepper_wrapper.h"
 #include "mosh_nacl/resolver.h"

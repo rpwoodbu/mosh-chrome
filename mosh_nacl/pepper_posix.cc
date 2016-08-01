@@ -28,6 +28,8 @@
 #include <sys/un.h>
 #include <unistd.h>
 #include <memory>
+#include <utility>
+#include <vector>
 
 #include "mosh_nacl/pepper_posix_native_tcp.h"
 #include "mosh_nacl/pepper_posix_native_udp.h"

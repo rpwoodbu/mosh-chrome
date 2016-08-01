@@ -25,6 +25,7 @@
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <deque>
+#include <string>
 #include <vector>
 
 #include "mosh_nacl/pepper_posix.h"

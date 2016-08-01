@@ -23,6 +23,7 @@
 #include <string.h>
 #include <sys/uio.h>
 #include <memory>
+#include <vector>
 
 #include "mosh_nacl/make_unique.h"
 

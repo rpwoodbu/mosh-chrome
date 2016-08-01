@@ -23,6 +23,7 @@
 #include <future>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "mosh_nacl/make_unique.h"

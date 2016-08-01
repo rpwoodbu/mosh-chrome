@@ -21,6 +21,7 @@
 #include "mosh_nacl/pepper_posix_udp.h"
 
 #include <memory>
+#include <vector>
 
 #include "ppapi/cpp/instance_handle.h"
 #include "ppapi/cpp/udp_socket.h"

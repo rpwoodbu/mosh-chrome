@@ -21,6 +21,7 @@
 #include <sys/socket.h>
 #include <functional>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "json/reader.h"

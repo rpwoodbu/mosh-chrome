@@ -21,6 +21,7 @@
 #include <cstdlib>
 #include <functional>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "mosh_nacl/ssh.h"

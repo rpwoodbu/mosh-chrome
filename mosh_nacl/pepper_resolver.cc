@@ -19,6 +19,7 @@
 
 #include <functional>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "ppapi/cpp/host_resolver.h"

@@ -37,6 +37,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <utility>
 
 #include "mosh_nacl/make_unique.h"
 
