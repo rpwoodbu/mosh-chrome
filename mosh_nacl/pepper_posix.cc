@@ -460,7 +460,7 @@ int POSIX::FCntl(int fd, int cmd, va_list arg) {
 
   if (cmd == F_SETFL) {
     bool blocking = true;
-    long long_arg = va_arg(arg, long);
+    long long_arg = va_arg(arg, long);  // NOLINT(runtime/int)
     if (long_arg & O_NONBLOCK) {
       blocking = false;
       long_arg &= ~O_NONBLOCK;
@@ -474,7 +474,7 @@ int POSIX::FCntl(int fd, int cmd, va_list arg) {
   }
 
   if (cmd == F_SETFD) {
-    long long_arg = va_arg(arg, long);
+    long long_arg = va_arg(arg, long);  // NOLINT(runtime/int)
     if (long_arg && FD_CLOEXEC) {
       // We don't support exec() anyway, so just ignore this.
       return 0;
