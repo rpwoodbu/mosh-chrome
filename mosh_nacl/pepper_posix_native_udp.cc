@@ -48,7 +48,7 @@ int NativeUDP::Bind(const pp::NetAddress& address) {
   pp::Var string_address = address.DescribeAsString(true);
   if (string_address.is_undefined()) {
     Log("NativeUDP::Bind() Address is bogus.");
-    // TODO: Return something appropriate.
+    // TODO(rpwoodbu): Return something appropriate.
     return false;
   }
 
@@ -58,7 +58,7 @@ int NativeUDP::Bind(const pp::NetAddress& address) {
     pp::Module::Get()->core()->CallOnMainThread(
         0, factory_.NewCallback(&NativeUDP::StartReceive));
   }
-  // TODO: Flesh out error mapping.
+  // TODO(rpwoodbu): Flesh out error mapping.
   return result;
 }
 
@@ -113,7 +113,7 @@ void NativeUDP::StartReceive(__attribute__((unused)) int32_t unused) {
                         factory_.NewCallbackWithOutput(&NativeUDP::Received));
   if (result != PP_OK_COMPLETIONPENDING) {
     Log("NativeUDP::StartReceive(): RecvFrom returned %d", result);
-    // TODO: Perhaps crash here?
+    // TODO(rpwoodbu): Perhaps crash here?
   }
 }
 

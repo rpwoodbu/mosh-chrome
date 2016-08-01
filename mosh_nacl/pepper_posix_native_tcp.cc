@@ -69,9 +69,9 @@ void NativeTCP::ConnectOnMainThread(__attribute__((unused)) int32_t unused) {
     Log("NativeTCP::ConnectOnMainThread(): "
         "socket_->Connect() returned %d",
         result);
-    // TODO: Perhaps crash here?
+    // TODO(rpwoodbu): Perhaps crash here?
   }
-  // TODO: Flesh out error mapping.
+  // TODO(rpwoodbu): Flesh out error mapping.
 }
 
 void NativeTCP::Connected(int32_t result) {
@@ -122,7 +122,7 @@ void NativeTCP::StartReceive() {
                                  factory_.NewCallback(&NativeTCP::Received));
   if (result != PP_OK_COMPLETIONPENDING) {
     Log("NativeTCP::StartReceive(): Read unexpectedly returned %d", result);
-    // TODO: Perhaps crash here?
+    // TODO(rpwoodbu): Perhaps crash here?
   }
 }
 

@@ -166,7 +166,7 @@ FILE* fopen(const char* path, const char* mode) {
 
   FILE* stream = new FILE;
   memset(stream, 0, sizeof(*stream));
-// TODO: Consider the mode param of open().
+// TODO(rpwoodbu): Consider the mode param of open().
 #ifdef USE_NEWLIB
   stream->_file = open(path, flags);
 #else
@@ -289,7 +289,7 @@ const char* gai_strerror(UNUSED int errcode) {
 
 // There is a pseudo-overload that includes a third param |mode_t|.
 int open(const char* pathname, int flags, ...) {
-  // TODO: For now, ignoring |mode_t| param.
+  // TODO(rpwoodbu): For now, ignoring |mode_t| param.
   return GetPOSIX().Open(pathname, flags, 0);
 }
 

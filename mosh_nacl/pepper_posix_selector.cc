@@ -107,7 +107,8 @@ vector<Target*> Selector::Select(const vector<Target*>& read_targets,
       clock_gettime(CLOCK_REALTIME, &now);
       if (now.tv_sec < abstime.tv_sec) {
         // Premature timeout. Retry.
-        // TODO: Remove this hack once the NaCl bug that causes this is fixed.
+        // TODO(rpwoodbu): Remove this hack once the NaCl bug that causes this
+        // is fixed.
         wait_errno = 0;
         usleep(100000);
       } else {

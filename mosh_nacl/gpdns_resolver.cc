@@ -121,7 +121,7 @@ void GPDNSResolver::Query::OpenCallback(int32_t result) {
 
   pp::URLResponseInfo response = loader_.GetResponseInfo();
   if (response.GetStatusCode() != 200) {
-    // TODO: Consider improving the error reporting.
+    // TODO(rpwoodbu): Consider improving the error reporting.
     return;
   }
 

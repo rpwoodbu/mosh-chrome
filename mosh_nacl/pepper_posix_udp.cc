@@ -127,9 +127,10 @@ ssize_t UDP::Receive(struct ::msghdr* message,
     memcpy(message->msg_iov[i].iov_base, latest->msg_iov->iov_base, to_copy);
     size += to_copy;
   }
-  assert(size == input_len);  // TODO: Return a real error, or handle better.
+  assert(size ==
+         input_len);  // TODO(rpwoodbu): Return a real error, or handle better.
 
-  // TODO: Ignoring flags, msg_flags, and msg_control for now.
+  // TODO(rpwoodbu): Ignoring flags, msg_flags, and msg_control for now.
 
   return size;
 }

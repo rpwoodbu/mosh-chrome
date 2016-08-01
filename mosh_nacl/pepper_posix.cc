@@ -82,7 +82,8 @@ int POSIX::Open(const char* pathname, __attribute__((unused)) int flags,
     errno = EACCES;
     return -1;
   }
-  // TODO: Error out if |file|'s type doesn't match |flags| (i.e., Reader
+  // TODO(rpwoodbu): Error out if |file|'s type doesn't match |flags| (i.e.,
+  // Reader
   // cannot be O_WRONLY).
   int fd = NextFileDescriptor();
   files_[fd] = factories_iter->second();
@@ -466,7 +467,7 @@ int POSIX::FCntl(int fd, int cmd, va_list arg) {
     }
     if (long_arg != 0) {
       Log("POSIX::FCntl(): Got F_SETFL, but unsupported arg: 0%lo", long_arg);
-      // TODO: Consider this an error?
+      // TODO(rpwoodbu): Consider this an error?
     }
     file->SetBlocking(blocking);
     return 0;

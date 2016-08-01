@@ -238,7 +238,7 @@ bool SSHFPRecord::Fingerprint::IsValid(const ssh::Key& key) const {
   switch (type_) {
     case Type::SHA1:
       return ParseHex(key.SHA1()) == fingerprint_;
-    // TODO: Support SHA256 (libssh doesn't have it).
+    // TODO(rpwoodbu): Support SHA256 (libssh doesn't have it).
     default:
       return false;
   }

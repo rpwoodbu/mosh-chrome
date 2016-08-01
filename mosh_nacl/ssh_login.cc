@@ -17,7 +17,7 @@
 
 #include "mosh_nacl/ssh_login.h"
 
-#include <string.h>  // TODO: Eliminate use of strlen().
+#include <string.h>  // TODO(rpwoodbu): Eliminate use of strlen().
 #include <algorithm>
 #include <functional>
 #include <future>
@@ -251,7 +251,8 @@ bool SSHLogin::CheckFingerprint() {
   }
   printf("Remote ssh host name/address:\r\n  %s\r\n", server_name.c_str());
 
-  // TODO: Remove |legacy_server_name| and all the legacy fingerprint handling
+  // TODO(rpwoodbu): Remove |legacy_server_name| and all the legacy fingerprint
+  // handling
   // code around it, enough time has passed that most users' fingerprints have
   // been migrated.
   string legacy_server_name;
