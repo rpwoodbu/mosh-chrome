@@ -35,7 +35,7 @@ using std::string;
 using std::unique_ptr;
 using std::vector;
 
-static const string kGPDNSURL = "https://dns.google.com/resolve";
+static const char kGPDNSURL[] = "https://dns.google.com/resolve";
 
 namespace {
 
@@ -102,8 +102,8 @@ void GPDNSResolver::Query::RunOnMainThread(__attribute__((unused))
     return;
   }
 
-  const string url =
-      kGPDNSURL + "?name=" + domain_name_ + "&type=" + TypeToRRtypeStr(type_);
+  const string url = string(kGPDNSURL) + "?name=" + domain_name_ + "&type=" +
+                     TypeToRRtypeStr(type_);
 
   request_.SetURL(url);
   request_.SetMethod("GET");
