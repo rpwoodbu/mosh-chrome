@@ -283,7 +283,7 @@ class UnixSocketStreamImpl : public PepperPOSIX::UnixSocketStream {
       }
 
       default:;  // Fallthrough.
-    };
+    }
 
     Log("UnixSocketStreamImpl::Send(): Unhandled file type.");
     errno = EBADF;
@@ -567,7 +567,7 @@ void MoshClientInstance::LaunchManual(Resolver::Error error,
       case Resolver::Authenticity::INSECURE:
         Output(TYPE_DISPLAY, "Could NOT authenticate DNS lookup.\r\n");
         break;
-    };
+    }
   }
   if (error == Resolver::Error::NOT_RESOLVED) {
     Error(

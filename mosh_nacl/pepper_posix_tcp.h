@@ -101,8 +101,8 @@ class UnixSocketStream : public Stream {
 // StubTCP is an instantiatable stubbed subclass of TCP for debugging.
 class StubTCP : public TCP {
  public:
-  StubTCP(){};
-  ~StubTCP() override{};
+  StubTCP() {}
+  ~StubTCP() override {}
 
   ssize_t Send(const void* buf, size_t count, int flags) override;
   int Bind(const pp::NetAddress& address) override;
