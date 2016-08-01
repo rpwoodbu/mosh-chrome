@@ -31,7 +31,7 @@
 class PepperResolver : public Resolver {
  public:
   PepperResolver() = delete;
-  PepperResolver(pp::InstanceHandle handle)
+  explicit PepperResolver(pp::InstanceHandle handle)
       : resolver_(handle), cc_factory_(this) {}
   PepperResolver(const PepperResolver&) = delete;
   PepperResolver& operator=(const PepperResolver&) = delete;

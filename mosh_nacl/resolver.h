@@ -79,7 +79,7 @@ class Resolver {
   class CallbackCaller {
    public:
     CallbackCaller() = default;
-    CallbackCaller(Callback callback) : callback_(callback) {}
+    explicit CallbackCaller(Callback callback) : callback_(callback) {}
     CallbackCaller(const CallbackCaller&) = delete;
     CallbackCaller& operator=(const CallbackCaller&) = delete;
 

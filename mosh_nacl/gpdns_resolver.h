@@ -34,7 +34,8 @@
 class GPDNSResolver : public Resolver {
  public:
   GPDNSResolver() = delete;
-  GPDNSResolver(pp::InstanceHandle handle) : instance_handle_(handle) {}
+  explicit GPDNSResolver(pp::InstanceHandle handle)
+      : instance_handle_(handle) {}
   GPDNSResolver(const GPDNSResolver&) = delete;
   GPDNSResolver& operator=(const GPDNSResolver&) = delete;
   GPDNSResolver(GPDNSResolver&&) = default;

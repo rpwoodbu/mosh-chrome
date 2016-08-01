@@ -107,7 +107,7 @@ class Keyboard : public PepperPOSIX::Reader {
 // Implements the plumbing to get stdout to the terminal.
 class Terminal : public PepperPOSIX::Writer {
  public:
-  Terminal(MoshClientInstance& instance) : instance_(instance) {}
+  explicit Terminal(MoshClientInstance& instance) : instance_(instance) {}
   ~Terminal() override = default;
 
   // This has to be defined below MoshClientInstance due to dependence on it.
@@ -120,7 +120,7 @@ class Terminal : public PepperPOSIX::Writer {
 // Implements the plumbing to get stderr to Javascript.
 class ErrorLog : public PepperPOSIX::Writer {
  public:
-  ErrorLog(MoshClientInstance& instance) : instance_(instance) {}
+  explicit ErrorLog(MoshClientInstance& instance) : instance_(instance) {}
   ~ErrorLog() override = default;
 
   // This has to be defined below MoshClientInstance due to dependence on it.
@@ -256,7 +256,8 @@ class SSHAgentPacketizer {
 class UnixSocketStreamImpl : public PepperPOSIX::UnixSocketStream {
  public:
   UnixSocketStreamImpl() = default;
-  UnixSocketStreamImpl(MoshClientInstance& instance) : instance_(instance) {}
+  explicit UnixSocketStreamImpl(MoshClientInstance& instance)
+      : instance_(instance) {}
   ~UnixSocketStreamImpl() override {
     if (file_type_ == FileType::SSH_AUTH_SOCK) {
       instance_.set_ssh_agent_socket(nullptr);

@@ -33,7 +33,7 @@ namespace PepperPOSIX {
 // NativeTCP implements TCP using the native Pepper TCPSockets API.
 class NativeTCP : public TCP {
  public:
-  NativeTCP(const pp::InstanceHandle& instance_handle);
+  explicit NativeTCP(const pp::InstanceHandle& instance_handle);
   ~NativeTCP() override;
 
   // Bind replaces bind().

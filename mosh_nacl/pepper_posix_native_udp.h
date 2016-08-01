@@ -34,7 +34,7 @@ namespace PepperPOSIX {
 // NativeUDP implements UDP using the native Pepper UDPSockets API.
 class NativeUDP : public UDP {
  public:
-  NativeUDP(const pp::InstanceHandle instance_handle);
+  explicit NativeUDP(const pp::InstanceHandle instance_handle);
   ~NativeUDP() override;
 
   // Bind replaces bind().
