@@ -15,8 +15,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef GPDNS_RESOLVER_H
-#define GPDNS_RESOLVER_H
+#ifndef MOSH_NACL_GPDNS_RESOLVER_H_
+#define MOSH_NACL_GPDNS_RESOLVER_H_
 
 #include "resolver.h"
 
@@ -99,4 +99,4 @@ class GPDNSResolver : public Resolver {
   const pp::InstanceHandle instance_handle_;
 };
 
-#endif  // GPDNS_RESOLVER_H
+#endif  // MOSH_NACL_GPDNS_RESOLVER_H_

@@ -15,8 +15,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef MAKE_UNIQUE_H
-#define MAKE_UNIQUE_H
+#ifndef MOSH_NACL_MAKE_UNIQUE_H_
+#define MOSH_NACL_MAKE_UNIQUE_H_
 
 // The following is copied from the C++14 implementation. It is tweaked to be
 // placed in a different namespace, so that when we move to C++14, there is no
@@ -61,4 +61,4 @@ typename _Unique_if<T>::_Known_bound make_unique(Args&&...) = delete;
 
 }  // namespace util
 
-#endif  // MAKE_UNIQUE_H
+#endif  // MOSH_NACL_MAKE_UNIQUE_H_

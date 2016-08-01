@@ -15,8 +15,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef PEPPER_RESOLVER_H
-#define PEPPER_RESOLVER_H
+#ifndef MOSH_NACL_PEPPER_RESOLVER_H_
+#define MOSH_NACL_PEPPER_RESOLVER_H_
 
 #include "resolver.h"
 
@@ -54,4 +54,4 @@ class PepperResolver : public Resolver {
   pp::CompletionCallbackFactory<PepperResolver> cc_factory_;
 };
 
-#endif  // PEPPER_RESOLVER_H
+#endif  // MOSH_NACL_PEPPER_RESOLVER_H_

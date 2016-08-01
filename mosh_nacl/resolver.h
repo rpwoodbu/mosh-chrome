@@ -15,8 +15,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef RESOLVER_H
-#define RESOLVER_H
+#ifndef MOSH_NACL_RESOLVER_H_
+#define MOSH_NACL_RESOLVER_H_
 
 #include <functional>
 #include <string>
@@ -120,4 +120,4 @@ class Resolver {
   };
 };
 
-#endif  // RESOLVER_H
+#endif  // MOSH_NACL_RESOLVER_H_

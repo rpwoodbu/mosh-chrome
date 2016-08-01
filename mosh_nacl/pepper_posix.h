@@ -18,8 +18,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef PEPPER_POSIX
-#define PEPPER_POSIX
+#ifndef MOSH_NACL_PEPPER_POSIX_H_
+#define MOSH_NACL_PEPPER_POSIX_H_
 
 #include "pepper_posix_selector.h"
 
@@ -189,4 +189,4 @@ class POSIX {
 
 }  // namespace PepperPOSIX
 
-#endif  // PEPPER_POSIX
+#endif  // MOSH_NACL_PEPPER_POSIX_H_

@@ -18,8 +18,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef MOSH_NACL_H
-#define MOSH_NACL_H
+#ifndef MOSH_NACL_MOSH_NACL_H_
+#define MOSH_NACL_MOSH_NACL_H_
 
 #include "pepper_wrapper.h"
 #include "resolver.h"
@@ -133,4 +133,4 @@ class MoshClientInstance : public pp::Instance {
   MoshClientInstance& operator=(const MoshClientInstance&) = delete;
 };
 
-#endif  // MOSH_NACL_H
+#endif  // MOSH_NACL_MOSH_NACL_H_

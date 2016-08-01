@@ -18,8 +18,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef PEPPER_POSIX_SELECTOR_HPP
-#define PEPPER_POSIX_SELECTOR_HPP
+#ifndef MOSH_NACL_PEPPER_POSIX_SELECTOR_H_
+#define MOSH_NACL_PEPPER_POSIX_SELECTOR_H_
 
 #include <memory>
 #include <vector>
@@ -131,4 +131,4 @@ class Target {
 
 }  // namespace PepperPosix
 
-#endif  // PEPPER_POSIX_SELECTOR_HPP
+#endif  // MOSH_NACL_PEPPER_POSIX_SELECTOR_H_

@@ -15,8 +15,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef SSHFP_RECORD_H
-#define SSHFP_RECORD_H
+#ifndef MOSH_NACL_SSHFP_RECORD_H_
+#define MOSH_NACL_SSHFP_RECORD_H_
 
 #include <map>
 #include <string>
@@ -98,4 +98,4 @@ class SSHFPRecord {
   std::map<Fingerprint::Algorithm, std::vector<Fingerprint>> fingerprints_;
 };
 
-#endif  // SSHFP_RECORD_H
+#endif  // MOSH_NACL_SSHFP_RECORD_H_

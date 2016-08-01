@@ -17,8 +17,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef PTHREAD_LOCKS_H
-#define PTHREAD_LOCKS_H
+#ifndef MOSH_NACL_PTHREAD_LOCKS_H_
+#define MOSH_NACL_PTHREAD_LOCKS_H_
 
 #include <pthread.h>
 
@@ -104,4 +104,4 @@ class Conditional {
 
 }  // namespace pthread
 
-#endif  // PTHREAD_LOCKS_H
+#endif  // MOSH_NACL_PTHREAD_LOCKS_H_

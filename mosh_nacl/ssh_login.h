@@ -15,8 +15,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef SSH_LOGIN_H
-#define SSH_LOGIN_H
+#ifndef MOSH_NACL_SSH_LOGIN_H_
+#define MOSH_NACL_SSH_LOGIN_H_
 
 #include "ssh.h"
 
@@ -135,4 +135,4 @@ class SSHLogin {
   std::unique_ptr<ssh::Session> session_;
 };
 
-#endif  // SSH_LOGIN_H
+#endif  // MOSH_NACL_SSH_LOGIN_H_

@@ -17,8 +17,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef PEPPER_WRAPPER
-#define PEPPER_WRAPPER
+#ifndef MOSH_NACL_PEPPER_WRAPPER_H_
+#define MOSH_NACL_PEPPER_WRAPPER_H_
 
 #include "pepper_posix.h"
 
@@ -27,4 +27,4 @@
 // support multiple Pepper Instances.
 PepperPOSIX::POSIX& GetPOSIX();
 
-#endif  // PEPPER_WRAPPER
+#endif  // MOSH_NACL_PEPPER_WRAPPER_H_

@@ -20,8 +20,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef SSH_H
-#define SSH_H
+#ifndef MOSH_NACL_SSH_H_
+#define MOSH_NACL_SSH_H_
 
 #include <libssh/libssh.h>
 
@@ -327,4 +327,4 @@ class Channel : public ResultCode {
 
 }  // namespace ssh
 
-#endif  // SSH_H
+#endif  // MOSH_NACL_SSH_H_

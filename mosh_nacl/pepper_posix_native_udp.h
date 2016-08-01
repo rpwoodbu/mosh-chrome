@@ -15,8 +15,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef PEPPER_POSIX_NATIVE_UDP_HPP
-#define PEPPER_POSIX_NATIVE_UDP_HPP
+#ifndef MOSH_NACL_PEPPER_POSIX_NATIVE_UDP_H_
+#define MOSH_NACL_PEPPER_POSIX_NATIVE_UDP_H_
 
 #include "pepper_posix_udp.h"
 
@@ -63,4 +63,4 @@ class NativeUDP : public UDP {
 
 }  // namespace PepperPOSIX
 
-#endif  // PEPPER_POSIX_NATIVE_UDP_HPP
+#endif  // MOSH_NACL_PEPPER_POSIX_NATIVE_UDP_H_

@@ -15,8 +15,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef PEPPER_POSIX_NATIVE_TCP_HPP
-#define PEPPER_POSIX_NATIVE_TCP_HPP
+#ifndef MOSH_NACL_PEPPER_POSIX_NATIVE_TCP_H_
+#define MOSH_NACL_PEPPER_POSIX_NATIVE_TCP_H_
 
 #include "pepper_posix_tcp.h"
 
@@ -66,4 +66,4 @@ class NativeTCP : public TCP {
 
 }  // namespace PepperPOSIX
 
-#endif  // PEPPER_POSIX_NATIVE_TCP_HPP
+#endif  // MOSH_NACL_PEPPER_POSIX_NATIVE_TCP_H_
