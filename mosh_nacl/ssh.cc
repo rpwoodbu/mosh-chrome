@@ -15,9 +15,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#include "ssh.h"
+#include "mosh_nacl/ssh.h"
 
-#include "make_unique.h"
+#include <utility>
+
+#include "mosh_nacl/make_unique.h"
 
 namespace ssh {
 
@@ -25,7 +27,7 @@ using std::string;
 using std::unique_ptr;
 using util::make_unique;
 
-KeyboardInteractive::KeyboardInteractive(ssh_session& s) : s_(s) {}
+KeyboardInteractive::KeyboardInteractive(ssh_session const s) : s_(s) {}
 
 KeyboardInteractive::Status KeyboardInteractive::GetStatus() {
   while (true) {
@@ -90,8 +92,8 @@ Session::Session(const string& host, int port, const string& user)
   // issue by removing ed25519 from the list of host keys libssh will prefer.
   // This list is from libssh's HOSTKEYS (kex.c), with ssh-ed25519 removed.
   //
-  // TODO: Eliminate this workaround once ed25519 host key verification is
-  // fixed.
+  // TODO(rpwoodbu): Eliminate this workaround once ed25519 host key
+  // verification is fixed.
   SetOption(SSH_OPTIONS_HOSTKEYS,
             "ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,"
             "ssh-rsa,ssh-dss");
@@ -271,7 +273,7 @@ KeyType::KeyTypeEnum KeyType::type() const {
       return ECDSA_SHA2_NISTP521_CERT01;
     case SSH_KEYTYPE_UNKNOWN:
       return UNKNOWN;
-  };
+  }
 #ifndef __clang__
   // Should be unreachable, but GCC doesn't understand that all enum cases
   // above are covered. GCC is useful for unit tests, as it is usually the
@@ -373,7 +375,7 @@ bool Channel::Execute(const string& command) {
   if (OpenSession() == false) {
     return false;
   }
-  // TODO: Make PTY optional.
+  // TODO(rpwoodbu): Make PTY optional.
   bool result = ParseCode(ssh_channel_request_pty(c_));
   if (result == false) {
     return false;

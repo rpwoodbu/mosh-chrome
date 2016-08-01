@@ -83,7 +83,7 @@ class KeyboardInteractive {
   };
 
   KeyboardInteractive() = delete;
-  explicit KeyboardInteractive(ssh_session& s);
+  explicit KeyboardInteractive(ssh_session s);
   KeyboardInteractive(const KeyboardInteractive&) = delete;
   KeyboardInteractive& operator=(const KeyboardInteractive&) = delete;
   ~KeyboardInteractive() = default;
@@ -118,7 +118,7 @@ class KeyboardInteractive {
   bool Answer(const char* answer);
 
  private:
-  ssh_session& s_;
+  ssh_session const s_;
   int num_prompts_ = 0;
   int current_prompt_ = 0;
   bool echo_answer_ = false;
@@ -195,7 +195,9 @@ class Session : public ResultCode {
   bool SetOption(enum ssh_options_e type, const char* option) {
     return ParseCode(ssh_options_set(s_, type, option));
   }
-  bool SetOption(enum ssh_options_e type, long int option) {
+  // Using "long int" because that's how libssh defines it.
+  bool SetOption(enum ssh_options_e type,
+                 long int option) {  // NOLINT(runtime/int)
     return ParseCode(ssh_options_set(s_, type, &option));
   }
   bool SetOption(enum ssh_options_e type, void* option) {
