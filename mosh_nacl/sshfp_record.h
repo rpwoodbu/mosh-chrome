@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 
-#include "ssh.h"
+#include "mosh_nacl/ssh.h"
 
 // Represents the SSHFP record from DNS in a way that is useful, e.g., for use
 // by SSH login code.

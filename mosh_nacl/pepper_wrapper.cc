@@ -15,9 +15,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#include "pepper_wrapper.h"
+#include "mosh_nacl/pepper_wrapper.h"
 
-#include "make_unique.h"
+#include "mosh_nacl/make_unique.h"
 
 #include <arpa/inet.h>
 #include <assert.h>

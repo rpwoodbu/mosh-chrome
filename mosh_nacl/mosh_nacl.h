@@ -21,9 +21,9 @@
 #ifndef MOSH_NACL_MOSH_NACL_H_
 #define MOSH_NACL_MOSH_NACL_H_
 
-#include "pepper_wrapper.h"
-#include "resolver.h"
-#include "ssh_login.h"
+#include "mosh_nacl/pepper_wrapper.h"
+#include "mosh_nacl/resolver.h"
+#include "mosh_nacl/ssh_login.h"
 
 #include <pthread.h>
 #include <memory>

@@ -15,9 +15,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#include "pepper_posix_selector.h"
+#include "mosh_nacl/pepper_posix_selector.h"
 
-#include "make_unique.h"
+#include "mosh_nacl/make_unique.h"
 
 #include <assert.h>
 #include <errno.h>

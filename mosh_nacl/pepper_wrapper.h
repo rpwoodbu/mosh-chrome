@@ -20,7 +20,7 @@
 #ifndef MOSH_NACL_PEPPER_WRAPPER_H_
 #define MOSH_NACL_PEPPER_WRAPPER_H_
 
-#include "pepper_posix.h"
+#include "mosh_nacl/pepper_posix.h"
 
 // Implement this to return an appropriate instance of PepperPOSIX::POSIX.
 // You may want to return a particular one based on the calling thread to

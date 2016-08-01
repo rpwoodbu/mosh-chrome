@@ -18,7 +18,7 @@
 #ifndef MOSH_NACL_PEPPER_POSIX_NATIVE_TCP_H_
 #define MOSH_NACL_PEPPER_POSIX_NATIVE_TCP_H_
 
-#include "pepper_posix_tcp.h"
+#include "mosh_nacl/pepper_posix_tcp.h"
 
 #include "ppapi/cpp/instance_handle.h"
 #include "ppapi/cpp/tcp_socket.h"

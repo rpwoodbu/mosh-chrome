@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#include "sshfp_record.h"
+#include "mosh_nacl/sshfp_record.h"
 
 #include <assert.h>
 
@@ -23,7 +23,7 @@
 #include <vector>
 
 #include "gtest/gtest.h"
-#include "ssh.h"
+#include "mosh_nacl/ssh.h"
 
 using std::string;
 using std::vector;

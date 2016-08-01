@@ -15,11 +15,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#include "ssh_login.h"
+#include "mosh_nacl/ssh_login.h"
 
-#include "make_unique.h"
-#include "mosh_nacl.h"
-#include "sshfp_record.h"
+#include "mosh_nacl/make_unique.h"
+#include "mosh_nacl/mosh_nacl.h"
+#include "mosh_nacl/sshfp_record.h"
 
 #include <string.h>  // TODO: Eliminate use of strlen().
 #include <algorithm>

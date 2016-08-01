@@ -21,9 +21,9 @@
 #ifndef MOSH_NACL_PEPPER_POSIX_TCP_H_
 #define MOSH_NACL_PEPPER_POSIX_TCP_H_
 
-#include "pepper_posix.h"
-#include "pepper_posix_selector.h"
-#include "pthread_locks.h"
+#include "mosh_nacl/pepper_posix.h"
+#include "mosh_nacl/pepper_posix_selector.h"
+#include "mosh_nacl/pthread_locks.h"
 
 #include <sys/socket.h>
 #include <sys/types.h>

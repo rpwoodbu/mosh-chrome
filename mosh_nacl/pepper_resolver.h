@@ -18,7 +18,7 @@
 #ifndef MOSH_NACL_PEPPER_RESOLVER_H_
 #define MOSH_NACL_PEPPER_RESOLVER_H_
 
-#include "resolver.h"
+#include "mosh_nacl/resolver.h"
 
 #include <functional>
 #include <string>

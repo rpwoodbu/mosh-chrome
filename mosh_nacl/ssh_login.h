@@ -18,7 +18,7 @@
 #ifndef MOSH_NACL_SSH_LOGIN_H_
 #define MOSH_NACL_SSH_LOGIN_H_
 
-#include "ssh.h"
+#include "mosh_nacl/ssh.h"
 
 #include <stddef.h>
 #include <memory>
@@ -27,7 +27,7 @@
 
 #include "ppapi/cpp/var.h"
 #include "ppapi/cpp/var_dictionary.h"
-#include "resolver.h"
+#include "mosh_nacl/resolver.h"
 
 // SSHLogin takes care of the SSH connection and conversation to initiate the
 // Mosh session.

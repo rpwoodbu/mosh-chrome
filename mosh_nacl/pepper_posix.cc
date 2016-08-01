@@ -18,12 +18,13 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#include "pepper_posix.h"
-#include "pepper_posix_native_tcp.h"
-#include "pepper_posix_native_udp.h"
-#include "pepper_posix_tcp.h"
+#include "mosh_nacl/pepper_posix.h"
 
-#include "make_unique.h"
+#include "mosh_nacl/pepper_posix_native_tcp.h"
+#include "mosh_nacl/pepper_posix_native_udp.h"
+#include "mosh_nacl/pepper_posix_tcp.h"
+
+#include "mosh_nacl/make_unique.h"
 
 #include <errno.h>
 #include <fcntl.h>

@@ -24,7 +24,7 @@
 #include <memory>
 #include <vector>
 
-#include "pthread_locks.h"
+#include "mosh_nacl/pthread_locks.h"
 
 namespace PepperPOSIX {
 

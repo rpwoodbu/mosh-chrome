@@ -18,13 +18,13 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#include "mosh_nacl.h"
+#include "mosh_nacl/mosh_nacl.h"
 
-#include "gpdns_resolver.h"
-#include "make_unique.h"
-#include "pepper_posix_tcp.h"
-#include "pepper_resolver.h"
-#include "pthread_locks.h"
+#include "mosh_nacl/gpdns_resolver.h"
+#include "mosh_nacl/make_unique.h"
+#include "mosh_nacl/pepper_posix_tcp.h"
+#include "mosh_nacl/pepper_resolver.h"
+#include "mosh_nacl/pthread_locks.h"
 
 #include <errno.h>
 #include <signal.h>
@@ -40,7 +40,7 @@
 #include <map>
 #include <vector>
 
-#include "irt.h"
+#include "irt.h"  // NOLINT(build/include)
 #include "ppapi/cpp/module.h"
 
 using std::back_inserter;
