@@ -282,7 +282,7 @@ class UnixSocketStreamImpl : public PepperPOSIX::UnixSocketStream {
         return count;
       }
 
-      default:;  // Fallthrough.
+      default: {}  // Fallthrough.
     }
 
     Log("UnixSocketStreamImpl::Send(): Unhandled file type.");
