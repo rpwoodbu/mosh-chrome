@@ -15,6 +15,9 @@
 # To run unit tests:
 #   $ ./build.sh test
 #
+# To lint all C++ files:
+#   $ ./build.sh lint
+#
 # To do a clang-format pass over the code:
 #   $ ./build.sh format
 
@@ -35,6 +38,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 MODE="${1}"
+GIT_ROOT="$(git rev-parse --show-toplevel)"
 
 format() {
   CLANG_FORMAT="clang-format-4.0"
@@ -42,7 +46,7 @@ format() {
     echo "${CLANG_FORMAT} not in the path. Get it at: http://apt.llvm.org/" 1>&2
     exit 1
   fi
-  cd "$(git rev-parse --show-toplevel)" # Go to root of git repo.
+  cd "${GIT_ROOT}"
   find . -name '*.cc' -or -name '*.h' -or -name '*.js' | xargs "${CLANG_FORMAT}" -i
 }
 
@@ -65,6 +69,11 @@ case "${MODE}" in
     TARGET="..."
     FLAGS=""
     ;;
+  "lint")
+    ACTION="run"
+    TARGET="@styleguide//:cpp_lint"
+    FLAGS="-- $(find ${GIT_ROOT} -name '*.cc' -or -name '*.h')"
+    ;;
   "format")
     format
     exit 0
@@ -72,7 +81,7 @@ case "${MODE}" in
   *)
     echo "Unrecognized running mode." 1>&2
     echo "Usage: ${0} ( dev | release | debug | test ) [ bazel options ... ]" 1>&2
-    echo "       ${0} format" 1>&2
+    echo "       ${0} ( lint | format )" 1>&2
     exit 1
 esac
 

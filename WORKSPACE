@@ -93,5 +93,13 @@ new_git_repository(
 git_repository(
     name = "io_bazel",
     remote = "https://github.com/bazelbuild/bazel.git",
-    commit = "e671d2950fb56c499db2c99a3d6dad2d291ed873", # tag = "0.3.0",
+    commit = "e671d2950fb56c499db2c99a3d6dad2d291ed873", # tag = "0.3.0"
+)
+
+# Google Style Guide includes cpplint.
+new_git_repository(
+    name = "styleguide",
+    remote = "https://github.com/google/styleguide.git",
+    commit = "6d3a7d8a229e189f7a5bb7c3923363356625ece5", # From branch "gh-pages"
+    build_file = "external_builds/BUILD.styleguide",
 )

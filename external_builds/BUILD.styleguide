@@ -1,0 +1,9 @@
+package(default_visibility = ["//visibility:public"])
+
+py_binary(
+    # Due to an apparent bug in Bazel, the name must be different than main,
+    # when it is buried in a subdirectory like this. Threw in an underscore to "fix".
+    name = "cpp_lint",
+    srcs = ["cpplint/cpplint.py"],
+    main = "cpplint.py",
+)
