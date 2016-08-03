@@ -1,21 +1,30 @@
 workspace(name = "mosh_chrome")
 
-new_http_archive(
+# There are hardlinks in the stock NaCl SDK archive, and Bazel can't handle
+# them. It just creates files of zero size. To work around this, I've hacked
+# together a custom repository rule that just shells out to "tar". This isn't
+# portable, but neither is the SDK.
+#
+# In the event that Bazel fixes this bug, here is the native rule:
+#
+# new_http_archive(
+#     name = "nacl_sdk",
+#     url = "https://storage.googleapis.com/nativeclient-mirror/nacl/nacl_sdk/49.0.2623.87/naclsdk_linux.tar.bz2",
+#     sha256 = "c53c14e5eaf6858e5b4a4e964c84d7774f03490be7986ab07c6792e807e05f14",
+#     strip_prefix = "pepper_49",
+#     build_file = "external_builds/BUILD.nacl_sdk",
+# )
+
+load(
+    "//:external_builds/new_http_tar_archive_hardlinks.bzl",
+    "new_http_tar_archive_hardlinks",
+)
+new_http_tar_archive_hardlinks(
     name = "nacl_sdk",
-    # There are hardlinks in the stock archive, and Bazel can't handle them. It
-    # just creates files of zero size. To work around this, I've published a
-    # copy of the tarball without hardlinks. I did so by untarring the archive,
-    # and tarring it back up like so:
-    #     $ tar -czf naclsdk_linux.tar.gz --hard-dereference pepper_49/
-    url = "https://storage.googleapis.com/mosh-chrome/naclsdk_linux_49.0.2623.87_no_hardlinks.tar.gz",
-    sha256 = "d966fac06a4c3c978ac3904734aff2ea447b77b5280dd0d73a7ca2d776f8c426",
-
-    # Here is the original config for reference.
-    #url = "https://storage.googleapis.com/nativeclient-mirror/nacl/nacl_sdk/49.0.2623.87/naclsdk_linux.tar.bz2",
-    #sha256 = "c53c14e5eaf6858e5b4a4e964c84d7774f03490be7986ab07c6792e807e05f14",
-
-    strip_prefix = "pepper_49",
-    build_file = "external_builds/BUILD.nacl_sdk",
+    url = "https://storage.googleapis.com/nativeclient-mirror/nacl/nacl_sdk/49.0.2623.87/naclsdk_linux.tar.bz2",
+    sha256 = "c53c14e5eaf6858e5b4a4e964c84d7774f03490be7986ab07c6792e807e05f14",
+    strip_components = 1,
+    build_file = "//:external_builds/BUILD.nacl_sdk",
 )
 
 new_http_archive(
