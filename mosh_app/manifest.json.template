@@ -4,7 +4,7 @@
   "name": "${NAME}",
   "description": "${DESCRIPTION}",
   "offline_enabled": true,
-  "version": "0.3.5",
+  "version": "0.3.6",
   "app": {
     "background": {
       "scripts": ["background.js"]
