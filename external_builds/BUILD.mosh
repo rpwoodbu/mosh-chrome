@@ -16,7 +16,6 @@ cc_library(
     # No headers are exported. The only function of interest is mosh_main().
     deps = [
         ":network_lib",
-        ":networktransport_hdr_lib",
         ":state_sync_lib",
         ":terminal_lib",
         ":version_lib",
@@ -50,8 +49,11 @@ genrule(
 #define HAVE_GETTIMEOFDAY 1
 #define HAVE_CLOCK_GETTIME 1
 #define HAVE_LANGINFO_H 1
+#define HAVE_MEMORY 1
+#define HAVE_STD_SHARED_PTR 1
 #define HAVE_SYS_UIO_H 1
 #define HAVE_PSELECT 1
+#define USE_OPENSSL_AES 1
 EOF
 
         echo "#define PACKAGE_STRING \\\"$$(cat $(SRCS))\\\"" >> $(OUTS)
@@ -88,19 +90,6 @@ cc_library(
     includes = ["."], # This makes it a "system include" (angle-brackets).
 )
 
-# Insanely, a few files include .cc files instead of building and linking. Make
-# these available as "headers libraries".
-cc_library(
-    name = "networktransport_hdr_lib",
-    hdrs = ["src/network/networktransport.cc"],
-    includes = ["src/network"],
-)
-cc_library(
-    name = "transportsender_hdr_lib",
-    hdrs = ["src/network/transportsender.cc"],
-    includes = ["src/network"],
-)
-
 cc_library(
     name = "crypto_lib",
     srcs = glob(["src/crypto/*.cc"]),
@@ -121,7 +110,6 @@ cc_library(
     deps = [
         ":crypto_lib",
         ":protos_lib",
-        ":transportsender_hdr_lib",
         "@zlib//:zlib",
     ],
     includes = ["src/network"],
