@@ -112,3 +112,39 @@ new_git_repository(
     commit = "6d3a7d8a229e189f7a5bb7c3923363356625ece5", # From branch "gh-pages"
     build_file = "external_builds/BUILD.styleguide",
 )
+
+#
+# Stuff to build a "native" Windows app.
+#
+
+new_http_archive(
+    name = "msitools",
+    url = "http://ftp.gnome.org/pub/GNOME/sources/msitools/0.95/msitools-0.95.tar.xz",
+    sha256 = "977ea3744cf091a19a8d06eae149fa9ab0d5cd078cc224e8da92bc05dcba66da",
+    strip_prefix = "msitools-0.95",
+    build_file = "external_builds/BUILD.msitools",
+)
+
+new_http_archive(
+    name = "libgcab",
+    url = "http://ftp.gnome.org/pub/GNOME/sources/gcab/0.7/gcab-0.7.tar.xz",
+    sha256 = "a16e5ef88f1c547c6c8c05962f684ec127e078d302549f3dfd2291e167d4adef",
+    strip_prefix = "gcab-0.7",
+    build_file = "external_builds/BUILD.libgcab",
+)
+
+new_http_archive(
+    name = "nwjs_win_x64",
+    url = "https://dl.nwjs.io/v0.16.1/nwjs-sdk-v0.16.1-win-x64.zip",
+    sha256 = "ceaab5e221bb1503626cfee05de3564c406a350b43ee16f97130a3f25b8fd6ce",
+    strip_prefix = "nwjs-sdk-v0.16.1-win-x64",
+    build_file = "external_builds/BUILD.nwjs_win",
+)
+
+new_http_archive(
+    name = "nwjs_win_ia32",
+    url = "https://dl.nwjs.io/v0.16.1/nwjs-sdk-v0.16.1-win-ia32.zip",
+    sha256 = "0e43f5e699e83cf0ab51ebfd6ba62b7424a71ec4151949e60fbdc126745cc139",
+    strip_prefix = "nwjs-sdk-v0.16.1-win-ia32",
+    build_file = "external_builds/BUILD.nwjs_win",
+)

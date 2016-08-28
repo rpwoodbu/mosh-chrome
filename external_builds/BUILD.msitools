@@ -1,0 +1,174 @@
+package(default_visibility = ["//visibility:private"])
+
+# NB: This is non-hermetic, as it requires these packages to be installed on
+# the build system:
+#   - libglib2.0-dev
+#   - libgsf-1-dev
+#   - libxml2-dev
+#   - uuid-dev
+#   - ... and possibly (transitively) others.
+
+SYSTEM_INCLUDES = [
+    "-I/usr/include/glib-2.0",
+    "-I/usr/include/libgsf-1",
+    "-I/usr/include/libxml2",
+]
+
+cc_binary(
+    name = "wixl",
+    srcs = ["tools/wixl/wixl.c"],
+    deps = [":wixl_lib"],
+    copts = SYSTEM_INCLUDES + [
+        # These C files are generated from Vala, so they have some
+        # transgressions. Disable all warnings.
+        "-w",
+    ],
+    linkopts = [
+        "-lglib-2.0",
+        "-lgsf-1",
+        "-luuid",
+        "-lxml2",
+        "-lz",
+    ],
+    defines = [
+        "PKGDATADIR=\\\"foobar\\\"", # Not being used; set to garbage.
+    ],
+    visibility = ["//visibility:public"],
+)
+
+cc_binary(
+    name = "wixl_heat",
+    srcs = ["tools/wixl/wixl-heat.c"],
+    deps = [":wixl_lib"],
+    copts = SYSTEM_INCLUDES + [
+        # These C files are generated from Vala, so they have some
+        # transgressions. Disable all warnings.
+        "-w",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+cc_binary(
+    name = "msiextract",
+    srcs = ["tools/msiextract.c"],
+    deps = [
+        ":libmsi",
+        "@libgcab//:libgcab",
+    ],
+    copts = SYSTEM_INCLUDES + [
+        # These C files are generated from Vala, so they have some
+        # transgressions. Disable all warnings.
+        "-w",
+    ],
+    linkopts = [
+        "-lglib-2.0",
+        "-lgsf-1",
+        "-lz",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+cc_binary(
+    name = "msiinfo",
+    srcs = ["tools/msiinfo.c"],
+    deps = [
+        ":config_lib",
+        ":libmsi",
+        "@libgcab//:libgcab",
+    ],
+    copts = SYSTEM_INCLUDES,
+    linkopts = [
+        "-lglib-2.0",
+        "-lgsf-1",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+sh_binary(
+    name = "msidump",
+    srcs = [":msidump_sh"],
+    visibility = ["//visibility:public"],
+)
+
+genrule(
+    name = "msidump_sh",
+    srcs = ["tools/msidump.in"],
+    outs = ["msidump.sh"],
+    cmd = "cp $(SRCS) $(OUTS) && chmod +x $(OUTS)",
+)
+
+cc_library(
+    name = "wixl_lib",
+    srcs = glob(
+        include = ["tools/wixl/*.c"],
+        exclude = [
+            "tools/wixl/wixl.c",
+            "tools/wixl/wixl-heat.c",
+        ],
+    ) + [
+        "libcommon.h",
+        "wixl.h",
+    ],
+    deps = [
+        ":libmsi",
+        ":glibconfig",
+        "@libgcab//:libgcab",
+    ],
+    copts = SYSTEM_INCLUDES + [
+        # These C files are generated from Vala, so they have some
+        # transgressions. Disable all warnings.
+        "-w",
+    ],
+)
+
+cc_library(
+    name = "libmsi",
+    srcs = glob([
+        "libmsi/*.c",
+        "libmsi/*.h",
+    ]),
+    hdrs = glob(["include/libmsi*.h"]),
+    includes = ["include"],
+    deps = [
+        ":config_lib",
+        ":glibconfig",
+    ],
+    copts = SYSTEM_INCLUDES + [
+        "-Wno-unused-variable",
+    ],
+)
+
+genrule(
+    name = "config_file",
+    outs = ["config.h"],
+    cmd = """
+        cat > $@ << EOF
+#define GETTEXT_PACKAGE "msitools"
+#define PACKAGE_NAME GETTEXT_PACKAGE
+#define PACKAGE_VERSION "0.95"
+#define PACKAGE_STRING (GETTEXT_PACKAGE " " PACKAGE_VERSION)
+#define PACKAGE PACKAGE_NAME
+#define VERSION PACKAGE_VERSION
+EOF
+    """,
+)
+
+cc_library(
+    name = "config_lib",
+    hdrs = [":config_file"],
+    includes = ["."],
+)
+
+# This is an awful hack to break out of the execution root to get at
+# glibconfig.h.
+genrule(
+    name = "glibconfig_h",
+    outs = ["glibconfig.h"],
+    cmd = "ln -s /usr/lib/x86_64-linux-gnu/glib-2.0/include/glibconfig.h $(OUTS)",
+)
+
+cc_library(
+    name = "glibconfig",
+    hdrs = [":glibconfig_h"],
+    includes = ["."],
+)

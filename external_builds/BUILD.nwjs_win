@@ -1,0 +1,16 @@
+package(default_visibility = ["//visibility:public"])
+
+filegroup(
+    name = "nwjs_distrib",
+    srcs = glob(
+        include = ["**"],
+        exclude = [
+            "BUILD",
+            "WORKSPACE",
+            "chromedriver.exe",
+            "nwjc.exe",
+            "payload.exe",
+            "*.zip", # Downloaded package.
+        ],
+    ),
+)

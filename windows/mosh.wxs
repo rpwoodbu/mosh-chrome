@@ -1,0 +1,91 @@
+<?xml version='1.0' encoding='windows-1252'?>
+<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
+  <Product
+    Name='Mosh for Windows'
+    Id='b9d674ad-2e23-483a-8886-a291b0627d13'
+    UpgradeCode='8482aebe-ce1c-4409-87bd-b871c4b812b4'
+    Language='1033'
+    Codepage='1252'
+    Version='$(var.Version)'
+    Manufacturer='rpwoodbu'>
+
+    <Upgrade Id='8482aebe-ce1c-4409-87bd-b871c4b812b4'>
+      <UpgradeVersion
+        OnlyDetect='no'
+        Minimum='0.0.0'
+        IncludeMinimum='yes'
+        Maximum='$(var.Version)'
+        IncludeMaximum='no'
+        Property='PREVIOUSFOUND'
+      />
+    </Upgrade>
+
+    <Package
+      Id='*'
+      Keywords='Installer'
+      Description="Mosh for Windows Installer"
+      Comments='Semi-native Mosh for Windows (based on Mosh for Chrome)'
+      Manufacturer='rpwoodbu'
+      InstallerVersion='200'
+      Languages='1033'
+      Compressed='yes'
+      SummaryCodepage='1252'
+    />
+
+    <Media Id='1' Cabinet='cabinet.cab' EmbedCab='yes' />
+    <Property Id='DiskPrompt' Value="Mosh for Windows Installation [1]" />
+
+    <Directory Id='TARGETDIR' Name='SourceDir'>
+      <Directory Id='ProgramFilesFolder' Name='PFiles'>
+        <Directory Id='INSTALLDIR' Name='Mosh for Windows'>
+
+          <Component Id='ChromeApp' Guid='*'>
+            <File
+              Id='MoshChrome'
+              Name='package.nw'
+              Source='$(var.MoshChrome)'
+              KeyPath='yes'
+            />
+          </Component>
+
+        </Directory>
+      </Directory>
+
+      <Directory Id='ProgramMenuFolder'>
+        <Component Id='ShortcutComponent' Guid='*'>
+          <Shortcut
+            Id='Shortcut'
+            Name='Mosh for Windows'
+            Description='Mosh client for Windows'
+            WorkingDirectory='[INSTALLDIR]'
+            Target='[INSTALLDIR]/nw.exe'
+            Icon='mosh.ico'
+            Advertise='yes'
+          />
+          <!--
+            For some reason, it appears that there needs to be something else
+            tangible to satisfy the installer. A useless registry value will do.
+          -->
+          <RegistryValue
+            Root="HKCU"
+            Key="Software\MoshForWindows\shortcut"
+            Name="installed"
+            Type="integer"
+            Value="1"
+            KeyPath="yes"
+          />
+        </Component>
+      </Directory>
+
+    </Directory>
+
+    <Feature Id='Complete' Level='1'>
+      <ComponentRef Id='ChromeApp' />
+      <ComponentRef Id='ShortcutComponent' />
+      <ComponentGroupRef Id='NW.js' />
+    </Feature>
+
+    <Icon Id='mosh.ico' SourceFile='$(var.MoshIcon)' />
+
+  </Product>
+</Wix>

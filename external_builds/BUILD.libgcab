@@ -1,0 +1,42 @@
+package(default_visibility = ["//visibility:private"])
+
+# NB: This is non-hermetic, as it requires these packages to be installed on
+# the build system:
+#   - libglib2.0-dev
+
+cc_library(
+    name = "libgcab",
+    srcs = glob([
+        "libgcab/*.c",
+        "libgcab/*.h",
+    ]),
+    hdrs = ["libgcab.h"],
+    deps = [":glibconfig"],
+    copts = [
+        "-I/usr/include/glib-2.0",
+    ],
+    linkopts = [
+        "-lgio-2.0",
+        "-lglib-2.0",
+        "-lgobject-2.0",
+    ],
+    defines = [
+        "GETTEXT_PACKAGE=\\\"gcab\\\"",
+        "LOCALEDIR=\\\"foo\\\"", # Not being used; set to garbage.
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# This is an awful hack to break out of the execution root to get at
+# glibconfig.h.
+genrule(
+    name = "glibconfig_h",
+    outs = ["glibconfig.h"],
+    cmd = "ln -s /usr/lib/x86_64-linux-gnu/glib-2.0/include/glibconfig.h $(OUTS)",
+)
+
+cc_library(
+    name = "glibconfig",
+    hdrs = [":glibconfig_h"],
+    includes = ["."],
+)

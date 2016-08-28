@@ -3,6 +3,7 @@
   "minimum_chrome_version": "42",
   "name": "${NAME}",
   "description": "${DESCRIPTION}",
+  ${KEY}
   "offline_enabled": true,
   "version": "${VERSION}",
   "app": {

@@ -34,6 +34,21 @@ nacl_manifest_js(
     out = "all_architectures/mosh_manifest.js",
 )
 
+# Builds versions suitable for packaging for Windows.
+# TODO: Build seperate ones for x64 and ia32 to reduce the size.
+genrule(
+    name = "mosh_chrome_windows",
+    srcs = base_package_srcs + [
+        ":mosh_chrome_all_architectures_manifest_js",
+        "//mosh_app:manifest_windows",
+        "//mosh_nacl:mosh_client_all_architectures",
+        "//mosh_nacl:mosh_client_manifest_all_architectures",
+    ],
+    outs = ["mosh_chrome_windows.zip"],
+    cmd = "/usr/bin/zip --quiet --junk-paths $(OUTS) $(SRCS)",
+    message = "Packaging Windows Chrome App",
+)
+
 # This is a convenience rule which only builds the x86_64 translation, saving
 # build time while testing.
 genrule(

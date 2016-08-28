@@ -9,6 +9,10 @@
 # To build the release track:
 #   $ ./build.sh release
 #
+# To build the Windows "native" installers:
+#   $ ./build.sh windows-x64
+#   $ ./build.sh windows-ia32
+#
 # To build an unoptimized debug version of the dev track (for use with gdb):
 #   $ ./build.sh debug
 #
@@ -60,6 +64,12 @@ case "${MODE}" in
   "release")
     TARGET="//:mosh_chrome"
     ;;
+  "windows-x64")
+    TARGET="//windows:mosh_windows_x64"
+    ;;
+  "windows-ia32")
+    TARGET="//windows:mosh_windows_ia32"
+    ;;
   "debug")
     TARGET="//:mosh_chrome_dev"
     FLAGS="-c dbg"
@@ -80,7 +90,7 @@ case "${MODE}" in
     ;;
   *)
     echo "Unrecognized running mode." 1>&2
-    echo "Usage: ${0} ( dev | release | debug | test ) [ bazel options ... ]" 1>&2
+    echo "Usage: ${0} ( dev | release | windows-(x64|ia32) | debug | test ) [ bazel options ... ]" 1>&2
     echo "       ${0} ( lint | format )" 1>&2
     exit 1
 esac
