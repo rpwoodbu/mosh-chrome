@@ -78,6 +78,8 @@ nacl_manifest_js(
     out = "pexe/mosh_manifest.js",
 )
 
+exports_files(["version.txt"])
+
 #
 # The following are rules for the PNaCl and local compiler.
 #

@@ -40,28 +40,36 @@ filegroup(
 
 genrule(
     name = "manifest",
-    srcs = ["manifest.json.template"],
+    srcs = [
+        ":manifest.json.template",
+        "//:version.txt",
+    ],
     outs = ["manifest.json"],
     cmd = """
         export NAME="Mosh"
         export DESCRIPTION="Mosh (mobile shell) for Chrome"
+        export VERSION="$$(cat $(location //:version.txt))"
         /usr/bin/envsubst \
-            '$$$$NAME $$$$DESCRIPTION' \
-            < $(SRCS) > $(OUTS)
+            '$$$$NAME $$$$DESCRIPTION $$$$VERSION' \
+            < $(location :manifest.json.template) > $(OUTS)
     """,
     message = "Building Chrome App manifest",
 )
 
 genrule(
     name = "manifest_dev",
-    srcs = ["manifest.json.template"],
+    srcs = [
+        ":manifest.json.template",
+        "//:version.txt",
+    ],
     outs = ["dev/manifest.json"],
     cmd = """
         export NAME="Mosh (dev)"
         export DESCRIPTION="Mosh (mobile shell) for Chrome (dev track)"
+        export VERSION="$$(cat $(location //:version.txt))"
         /usr/bin/envsubst \
-            '$$$$NAME $$$$DESCRIPTION' \
-            < $(SRCS) > $(OUTS)
+            '$$$$NAME $$$$DESCRIPTION $$$$VERSION' \
+            < $(location :manifest.json.template) > $(OUTS)
     """,
     message = "Building dev Chrome App manifest",
 )
