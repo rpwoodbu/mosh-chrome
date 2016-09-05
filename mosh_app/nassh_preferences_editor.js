@@ -300,17 +300,15 @@ nassh.PreferencesEditor.prototype.syncPage = function() {
     };
     var oninput = null;
 
-    var keyParts = key.split(
-        '-') if (key == 'enable-bold' || key == 'mouse-paste-button') {
+    var keyParts = key.split('-');
+    if (key == 'enable-bold' || key == 'mouse-paste-button') {
       input.indeterminate = true;
       input.type = 'checkbox';
       input.data = 1;
       onchange = function() { prefsEditor.onInputChangeTristate(this); };
-    }
-    else if (keyParts[keyParts.length - 1] == 'color') {
+    } else if (keyParts[keyParts.length - 1] == 'color') {
       input.type = 'color';
-    }
-    else {
+    } else {
       var type = typeof pref;
       switch (type) {
         case 'object':
