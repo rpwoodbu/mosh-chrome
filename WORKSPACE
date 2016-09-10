@@ -94,7 +94,7 @@ new_git_repository(
 new_git_repository(
     name = "libapps",
     remote = "https://github.com/rpwoodbu/libapps.git",
-    commit = "2e1688583443d80e4e512c41847eb9fd29fb0cb2", # hterm 1.54
+    commit = "b601b7bce68d18c6fa491c39f6c06c548de7ff7c", # hterm 1.57
     build_file = "external_builds/BUILD.libapps",
 )
 
