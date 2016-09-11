@@ -73,7 +73,7 @@ class Keyboard : public PepperPOSIX::Reader {
     pthread::MutexLock m(keypresses_lock_);
 
     while (keypresses_.size() > 0 && num_read < count) {
-      reinterpret_cast<char*>(buf)[num_read] = keypresses_.front();
+      reinterpret_cast<unsigned char*>(buf)[num_read] = keypresses_.front();
       keypresses_.pop_front();
       ++num_read;
     }
@@ -84,15 +84,15 @@ class Keyboard : public PepperPOSIX::Reader {
   }
 
   // Handle input from the keyboard.
-  void HandleInput(const string& input) {
-    if (input.size() == 0) {
+  void HandleInput(const pp::VarArray& input) {
+    if (input.GetLength() == 0) {
       // Nothing to see here.
       return;
     }
     {
       pthread::MutexLock m(keypresses_lock_);
-      for (int i = 0; i < input.size(); ++i) {
-        keypresses_.push_back(input[i]);
+      for (int i = 0; i < input.GetLength(); ++i) {
+        keypresses_.push_back(input.Get(i).AsInt());
       }
     }
     target_->UpdateRead(true);
@@ -100,7 +100,7 @@ class Keyboard : public PepperPOSIX::Reader {
 
  private:
   // Queue of keyboard keypresses.
-  deque<char> keypresses_;  // Guard with keypresses_lock_.
+  deque<unsigned char> keypresses_;  // Guard with keypresses_lock_.
   pthread::Mutex keypresses_lock_;
 };
 
@@ -365,8 +365,7 @@ void MoshClientInstance::HandleMessage(const pp::Var& var) {
   pp::VarDictionary dict(var);
 
   if (dict.HasKey("keyboard")) {
-    string s = dict.Get("keyboard").AsString();
-    keyboard_->HandleInput(s);
+    keyboard_->HandleInput(pp::VarArray(dict.Get("keyboard")));
   } else if (dict.HasKey("window_change")) {
     int32_t num = dict.Get("window_change").AsInt();
     window_change_->Update(num >> 16, num & 0xffff);
