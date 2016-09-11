@@ -28,11 +28,11 @@ def pnacl_translated(name, src, arch, visibility=None):
     arch: (str) Mnemonic of one of the supported PNaCl target architectures.
     visibility: (list(str)) Visibilities.
   """
-  threads_flag = ""
+  extra_flags = []
   if arch == "armv7":
-    # Work around a bug in pnacl-translate which creates unreliable and
-    # nondeterministic NEXEs for armv7 when running multithreaded.
-    threads_flag = "-threads=seq"
+    # Work around a bug in pnacl-translate which creates unreliable
+    # NEXEs for armv7.
+    extra_flags.append("-O0")
 
   native.genrule(
     name = name,
@@ -42,10 +42,10 @@ def pnacl_translated(name, src, arch, visibility=None):
     message = "Translating portable bitcode to native code",
     cmd = """
       external/nacl_sdk/toolchain/linux_pnacl/bin/pnacl-translate \
-        -arch {arch} {threads_flag} $(SRCS) -o $(OUTS)
+        -arch {arch} {extra_flags} $(SRCS) -o $(OUTS)
     """.format(
       arch=arch,
-      threads_flag=threads_flag,
+      extra_flags=" ".join(extra_flags),
     ),
     visibility = visibility,
   )
