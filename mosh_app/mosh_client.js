@@ -86,6 +86,16 @@ window.onload = function() {
     loadFields();
     updateMode();
   });
+
+  // Set window to precise dimensions to fit everything perfectly.
+  var margin = parseInt(
+      window.getComputedStyle(document.body).getPropertyValue('margin'));
+  var mainTable = document.querySelector('#main-table');
+  var height = mainTable.scrollHeight + (margin * 2);
+  var width = mainTable.scrollWidth + (margin * 2);
+  var bounds = chrome.app.window.current().innerBounds;
+  bounds.setSize(width, height);
+  bounds.setMinimumSize(width, height);
 };
 
 // Mapping of old chrome.storage.local keys to their new key names.

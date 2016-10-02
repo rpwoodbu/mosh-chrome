@@ -24,7 +24,6 @@ window.state.windows = {};
 
 function newSession() {
   chrome.app.window.create('mosh_client.html', {
-    'bounds': {'width': 450, 'height': 180},
     'id': 'mosh_client',
   });
 };
