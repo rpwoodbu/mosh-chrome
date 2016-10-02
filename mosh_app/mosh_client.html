@@ -26,6 +26,14 @@ td {
   white-space:nowrap;
 }
 
+.help {
+  position: relative;
+  left: 2px;
+  bottom: 1ex;
+  font-size: .8em;
+  font-weight: bold;
+}
+
 </style>
 
 <body>
@@ -91,7 +99,13 @@ td {
             </td>
           </tr>
           <tr>
-            <td>DNS settings:</td>
+            <td>
+              DNS settings:
+              <a
+                href="https://github.com/rpwoodbu/mosh-chrome/wiki/DNS-Settings"
+                class="help"
+                target="_blank">[?]</a>
+            </td>
             <td>
               <label>
                 <input id="google-public-dns" type="checkbox">
