@@ -22,7 +22,7 @@ Building
     $ ./build.sh dev
 
   The first time this is run, this will download and build all dependencies
-  (except Bazel, or course). This can take a while, so be patient. Don't expect
+  (except Bazel, of course). This can take a while, so be patient. Don't expect
   status updates for a minute or two at a time in some cases. Subsequent builds
   will be extremely fast; Bazel excels at doing incremental builds.
 
