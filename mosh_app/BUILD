@@ -6,8 +6,9 @@ filegroup(
         "background.js",
         "mosh_client.js",
         "mosh_window.js",
-        "nassh_preferences_editor.js",
+        "nassh_workarounds.js",
         "ssh_key.js",
+        "@libapps//:nassh_preferences_editor",
     ],
 )
 
@@ -21,11 +22,9 @@ filegroup(
     ],
 )
 
-filegroup(
+alias(
     name = "mosh_css",
-    srcs = [
-        "nassh_preferences.css",
-    ],
+    actual = "@libapps//:nassh_preferences_editor_css",
 )
 
 filegroup(

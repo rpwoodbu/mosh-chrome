@@ -23,6 +23,16 @@ genrule(
 )
 
 filegroup(
+    name = "nassh_preferences_editor",
+    srcs = ["nassh/js/nassh_preferences_editor.js"],
+)
+
+filegroup(
+    name = "nassh_preferences_editor_css",
+    srcs = ["nassh/css/nassh_preferences_editor.css"],
+)
+
+filegroup(
     name = "concat",
     srcs = ["libdot/bin/concat.sh"],
     visibility = ["//visibility:private"],
