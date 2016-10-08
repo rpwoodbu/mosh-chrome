@@ -22,7 +22,7 @@
 'use strict';
 
 // We don't depend on nassh.js, so create an object for everything to hang onto.
-var nassh = {};
+let nassh = {};
 
 // Provides the bare minimum functionality to construct messages actually used
 // by the preferences editor.
@@ -34,6 +34,13 @@ nassh.msg = function(type, data) {
       return 'JSON parse error: ' + data;
     case 'PREFERENCES_RESET':
       return 'Preferences reset.';
+    case 'FIELD_TERMINAL_PROFILE_PLACEHOLDER':
+      // Hack to get the preferences editor to load the desired profile.
+      // nassh.msg() happens to be called right after the oninput() callback is
+      // setup.
+      let profile = document.getElementById('profile');
+      profile.oninput();
+      return "mosh";
     default:
       return 'UNEXPECTED SITUATION';
   }
