@@ -90,8 +90,6 @@ mosh.CommandInstance.prototype.run = function() {
 
   // Mosh has no scrollback buffer (currently).
   this.io.terminal_.prefs_.set('scrollbar-visible', false);
-  // Makes Unicode input work.
-  this.io.terminal_.prefs_.set('send-encoding', 'raw');
 
   this.moshNaCl_ = window.document.createElement('embed');
   this.moshNaCl_.style.cssText =
