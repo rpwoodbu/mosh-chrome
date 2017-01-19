@@ -99,11 +99,11 @@ exports_files(["version.txt"])
 # The following are rules for the PNaCl and local compiler.
 #
 
-filegroup(
+cc_toolchain_suite(
     name = "toolchain",
-    srcs = [
-        ":cc-compiler-pnacl",
-    ],
+    toolchains = {
+        "pnacl|clang": ":cc-compiler-pnacl",
+    },
 )
 
 cc_toolchain(
