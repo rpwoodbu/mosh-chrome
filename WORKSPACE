@@ -85,7 +85,7 @@ new_git_repository(
 new_git_repository(
     name = "mosh",
     remote = "https://github.com/rpwoodbu/mosh.git",
-    commit = "68f91a0b434e0f94cc90b0a51eb4e5123e939bf9", # tag = "mosh-1.2.6"
+    commit = "fafcdc27c59fa199d34b5dd3ce036a4632cb68af", # tag = "mosh-1.3.0"
     build_file = "external_builds/BUILD.mosh",
 )
 
