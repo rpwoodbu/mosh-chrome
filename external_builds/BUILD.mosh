@@ -101,7 +101,6 @@ cc_library(
         "@openssl//:openssl",
     ],
     includes = ["src/crypto"],
-    copts = ["-Wno-c++11-narrowing"], # To get past issues in byteorder.h.
 )
 
 cc_library(
