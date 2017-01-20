@@ -40,6 +40,9 @@ window.onload = function() {
   var manifest = chrome.runtime.getManifest();
   versionDiv.innerText = 'v' + manifest['version'];
 
+  var moshVersionDiv = document.querySelector('#mosh_version');
+  moshVersionDiv.innerText = '(' + moshVersion + ')';
+
   // "Fire" this event in case it came in while this window wasn't open (very
   // likely). The background page is responsible for propagating this.
   onUpdateAvailable();

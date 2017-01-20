@@ -28,6 +28,19 @@ cc_library(
 )
 
 genrule(
+    name = "version",
+    srcs = ["configure.ac"],
+    outs = ["version.txt"],
+    cmd = """
+        grep '^AC_INIT' $(SRCS) | \
+            sed -e 's/.*\\[\\(.*\\)\\], \\[\\(.*\\)\\], \\[\\(.*\\)\\]).*/\\1 \\2/' \
+            > $(OUTS)
+    """,
+    message = "Generating version string",
+    visibility = ["//visibility:public"],
+)
+
+genrule(
     name = "version_h",
     srcs = [":version"],
     outs = ["version.h"],
@@ -59,18 +72,6 @@ EOF
         echo "#define PACKAGE_STRING \\\"$$(cat $(SRCS))\\\"" >> $(OUTS)
     """,
     message = "Generating config.h",
-)
-
-genrule(
-    name = "version",
-    srcs = ["configure.ac"],
-    outs = ["version.txt"],
-    cmd = """
-        grep '^AC_INIT' $(SRCS) | \
-            sed -e 's/.*\\[\\(.*\\)\\], \\[\\(.*\\)\\], \\[\\(.*\\)\\]).*/\\1 \\2/' \
-            > $(OUTS)
-    """,
-    message = "Generating version string",
 )
 
 cc_library(

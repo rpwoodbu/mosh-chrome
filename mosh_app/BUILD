@@ -3,6 +3,7 @@ package(default_visibility = ["//visibility:public"])
 filegroup(
     name = "mosh_js",
     srcs = [
+        ":mosh_version",
         "background.js",
         "mosh_client.js",
         "mosh_window.js",
@@ -32,6 +33,16 @@ filegroup(
     srcs = [
         "laptop_terminal.png",
     ],
+)
+
+genrule(
+    name = "mosh_version",
+    srcs = ["@mosh//:version"],
+    outs = ["mosh_version.js"],
+    cmd = """
+        echo "var moshVersion = \\"$$(cat $(location @mosh//:version))\\";" > $(OUTS)
+    """,
+    message = "Generating mosh_version.js",
 )
 
 # TODO: Dependency on /usr/bin/envsubst (from Debian package gettext-base) is
