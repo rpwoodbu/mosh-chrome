@@ -1,6 +1,6 @@
-// sshfp_record.cc - DNS SSHFP record representation.
+// sshfp_record.cc - DNS SSHFP record set representation.
 
-// Copyright 2016 Richard Woodbury
+// Copyright 2016, 2017 Richard Woodbury
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -32,19 +32,19 @@ using std::vector;
 
 namespace {
 
-SSHFPRecord::Fingerprint::Algorithm ConvertAlgorithm(
+SSHFPRecordSet::Fingerprint::Algorithm ConvertAlgorithm(
     const ssh::KeyType::KeyTypeEnum algorithm) {
   switch (algorithm) {
     case ssh::KeyType::RSA:
-      return SSHFPRecord::Fingerprint::Algorithm::RSA;
+      return SSHFPRecordSet::Fingerprint::Algorithm::RSA;
     case ssh::KeyType::DSS:
-      return SSHFPRecord::Fingerprint::Algorithm::DSA;
+      return SSHFPRecordSet::Fingerprint::Algorithm::DSA;
     case ssh::KeyType::ECDSA:
-      return SSHFPRecord::Fingerprint::Algorithm::ECDSA;
+      return SSHFPRecordSet::Fingerprint::Algorithm::ECDSA;
     case ssh::KeyType::ED25519:
-      return SSHFPRecord::Fingerprint::Algorithm::ED25519;
+      return SSHFPRecordSet::Fingerprint::Algorithm::ED25519;
     default:
-      return SSHFPRecord::Fingerprint::Algorithm::UNSET;
+      return SSHFPRecordSet::Fingerprint::Algorithm::UNSET;
   }
 }
 
@@ -147,7 +147,7 @@ RdataParseResult ParsePresentation(const string& rdata) {
 
 }  // anonymous namespace
 
-bool SSHFPRecord::Parse(const vector<string>& rdata) {
+bool SSHFPRecordSet::Parse(const vector<string>& rdata) {
   fingerprints_.clear();
   for (const auto& r : rdata) {
     Fingerprint fingerprint;
@@ -159,7 +159,7 @@ bool SSHFPRecord::Parse(const vector<string>& rdata) {
   return true;
 }
 
-bool SSHFPRecord::IsValid(const ssh::Key& key) const {
+bool SSHFPRecordSet::IsValid(const ssh::Key& key) const {
   const auto key_algorithm = ConvertAlgorithm(key.GetKeyType().type());
   if (fingerprints_.count(key_algorithm) == 0) {
     // No SSHFP record for this key's algorithm.
@@ -173,7 +173,7 @@ bool SSHFPRecord::IsValid(const ssh::Key& key) const {
   return false;
 }
 
-bool SSHFPRecord::Fingerprint::Parse(const string& rdata) {
+bool SSHFPRecordSet::Fingerprint::Parse(const string& rdata) {
   RdataParseResult parsed;
 
   parsed = ParseGeneric(rdata);
@@ -223,7 +223,7 @@ bool SSHFPRecord::Fingerprint::Parse(const string& rdata) {
   return true;
 }
 
-bool SSHFPRecord::Fingerprint::IsMatchingAlgorithm(const ssh::Key& key) const {
+bool SSHFPRecordSet::Fingerprint::IsMatchingAlgorithm(const ssh::Key& key) const {
   const auto key_algorithm = ConvertAlgorithm(key.GetKeyType().type());
   if (key_algorithm == Algorithm::UNSET) {
     return false;
@@ -231,7 +231,7 @@ bool SSHFPRecord::Fingerprint::IsMatchingAlgorithm(const ssh::Key& key) const {
   return algorithm_ == key_algorithm;
 }
 
-bool SSHFPRecord::Fingerprint::IsValid(const ssh::Key& key) const {
+bool SSHFPRecordSet::Fingerprint::IsValid(const ssh::Key& key) const {
   if (!IsMatchingAlgorithm(key)) {
     return false;
   }

@@ -1,6 +1,6 @@
 // ssh_login.h - SSH Login for Mosh.
 
-// Copyright 2013, 2014, 2015 Richard Woodbury
+// Copyright 2013, 2014, 2015, 2016, 2017 Richard Woodbury
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -126,7 +126,7 @@ class SSHLogin {
   // Resolved address of |host_|.
   std::string resolved_addr_;
   // Resolved fingerprints for |host_|. Empty if none.
-  std::vector<std::string> resolved_fp_;
+  std::vector<std::string> resolved_fingerprints_;
 
   std::string mosh_port_;
   std::string mosh_key_;

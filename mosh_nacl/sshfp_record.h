@@ -1,6 +1,6 @@
-// sshfp_record.h - DNS SSHFP record representation.
+// sshfp_record.h - DNS SSHFP record set representation.
 
-// Copyright 2016 Richard Woodbury
+// Copyright 2016, 2017 Richard Woodbury
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -26,14 +26,14 @@
 
 // Represents the SSHFP record from DNS in a way that is useful, e.g., for use
 // by SSH login code.
-class SSHFPRecord {
+class SSHFPRecordSet {
  public:
-  SSHFPRecord() = default;
-  SSHFPRecord(const SSHFPRecord&) = default;
-  SSHFPRecord& operator=(const SSHFPRecord&) = default;
-  SSHFPRecord(SSHFPRecord&&) = default;
-  SSHFPRecord& operator=(SSHFPRecord&&) = default;
-  ~SSHFPRecord() = default;
+  SSHFPRecordSet() = default;
+  SSHFPRecordSet(const SSHFPRecordSet&) = default;
+  SSHFPRecordSet& operator=(const SSHFPRecordSet&) = default;
+  SSHFPRecordSet(SSHFPRecordSet&&) = default;
+  SSHFPRecordSet& operator=(SSHFPRecordSet&&) = default;
+  ~SSHFPRecordSet() = default;
 
   // Parses the various SSHFP RDATA in either presentation format or "\#"
   // generic format. Returns false on parse error. Erases any previously parsed

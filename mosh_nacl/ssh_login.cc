@@ -1,6 +1,6 @@
 // ssh_login.cc - SSH Login for Mosh.
 
-// Copyright 2013, 2014, 2015 Richard Woodbury
+// Copyright 2013, 2014, 2015, 2016, 2017 Richard Woodbury
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -211,7 +211,7 @@ bool SSHLogin::Resolve() {
 
   // Collect the results.
   resolved_addr_ = addr_promise.get_future().get();
-  resolved_fp_ = fp_promise.get_future().get();
+  resolved_fingerprints_ = fp_promise.get_future().get();
 
   switch (addr_auth_promise.get_future().get()) {
     case Resolver::Authenticity::AUTHENTIC:
@@ -226,7 +226,7 @@ bool SSHLogin::Resolve() {
     return false;
   }
 
-  if (!resolved_fp_.empty()) {
+  if (!resolved_fingerprints_.empty()) {
     switch (fp_auth_promise.get_future().get()) {
       case Resolver::Authenticity::AUTHENTIC:
         printf("Found authentic SSHFP fingerprint record(s) in DNS.\r\n");
@@ -235,7 +235,7 @@ bool SSHLogin::Resolve() {
         printf(
             "Unauthenticated SSHFP fingerprint record(s) in DNS; "
             "ignoring.\r\n");
-        resolved_fp_.clear();
+        resolved_fingerprints_.clear();
         break;
     }
   }
@@ -265,9 +265,9 @@ bool SSHLogin::CheckFingerprint() {
   const ssh::Key& host_key = session_->GetPublicKey();
 
   // First check key against SSHFP record(s) (if any).
-  if (!resolved_fp_.empty()) {
-    SSHFPRecord sshfp;
-    if (!sshfp.Parse(resolved_fp_)) {
+  if (!resolved_fingerprints_.empty()) {
+    SSHFPRecordSet sshfp;
+    if (!sshfp.Parse(resolved_fingerprints_)) {
       fprintf(stderr, "Authenticated SSHFP DNS record(s) are malformed!\r\n");
       // Allow to fallthrough to get the diagnostics at the end. Malformed
       // records will not validate, so this is OK.
@@ -278,7 +278,7 @@ bool SSHLogin::CheckFingerprint() {
           "Authenticated SSHFP DNS record(s) do not validate the host key!\r\n"
           "Likely man-in-the-middle attack or misconfiguration.\r\n"
           "SSHFP records(s) are:\r\n");
-      for (const auto& record : resolved_fp_) {
+      for (const auto& record : resolved_fingerprints_) {
         fprintf(stderr, "  %s\r\n", record.c_str());
       }
       if (trust_sshfp()) {

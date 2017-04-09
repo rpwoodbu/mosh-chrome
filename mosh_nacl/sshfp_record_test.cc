@@ -1,6 +1,6 @@
 // sshfp_record_test.cc - Tests for sshfp_record.{h,cc}.
 
-// Copyright 2016 Richard Woodbury
+// Copyright 2016, 2017 Richard Woodbury
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
 using std::string;
 using std::vector;
 
-class SSHFPRecordTest : public ::testing::Test {
+class SSHFPRecordSetTest : public ::testing::Test {
  protected:
   void SetUp() override {
     ASSERT_TRUE(rsa_key_.ImportPublicKey(
@@ -62,7 +62,7 @@ class SSHFPRecordTest : public ::testing::Test {
   ssh::Key ecdsa_key_;
 };
 
-TEST_F(SSHFPRecordTest, GoodFingerprints) {
+TEST_F(SSHFPRecordSetTest, GoodFingerprints) {
   const vector<string> sshfp_rrset = {
       "1 1 1B9F53A938596DF02086CC972850D50B7C65F645",
       "1 2 10AC3932B45D3C20D2E2B47708E200B0420D3C17E3937B480AAE4173 CD94B79B",
@@ -72,14 +72,14 @@ TEST_F(SSHFPRecordTest, GoodFingerprints) {
       "3 2 9AA5D6A57F6D51ECFDF7AD1C3DB3D00EB86F5CA219CACE43DC09535D 4188B765",
   };
 
-  SSHFPRecord sshfp;
+  SSHFPRecordSet sshfp;
   ASSERT_TRUE(sshfp.Parse(sshfp_rrset));
   EXPECT_TRUE(sshfp.IsValid(rsa_key_));
   EXPECT_TRUE(sshfp.IsValid(dsa_key_));
   EXPECT_TRUE(sshfp.IsValid(ecdsa_key_));
 }
 
-TEST_F(SSHFPRecordTest, BadFingerprints) {
+TEST_F(SSHFPRecordSetTest, BadFingerprints) {
   const vector<string> sshfp_rrset = {
       "1 1 0B9F53A938596DF02086CC972850D50B7C65F645",
       "1 2 00AC3932B45D3C20D2E2B47708E200B0420D3C17E3937B480AAE4173 CD94B79B",
@@ -89,14 +89,14 @@ TEST_F(SSHFPRecordTest, BadFingerprints) {
       "3 2 0AA5D6A57F6D51ECFDF7AD1C3DB3D00EB86F5CA219CACE43DC09535D 4188B765",
   };
 
-  SSHFPRecord sshfp;
+  SSHFPRecordSet sshfp;
   ASSERT_TRUE(sshfp.Parse(sshfp_rrset));
   EXPECT_FALSE(sshfp.IsValid(rsa_key_));
   EXPECT_FALSE(sshfp.IsValid(dsa_key_));
   EXPECT_FALSE(sshfp.IsValid(ecdsa_key_));
 }
 
-TEST_F(SSHFPRecordTest, GoodGenericFingerprints) {
+TEST_F(SSHFPRecordSetTest, GoodGenericFingerprints) {
   const vector<string> sshfp_rrset = {
       // clang-format off
       "\\# 22 01011B9F53A938596DF02086CC972850D50B7C65F645",
@@ -111,14 +111,14 @@ TEST_F(SSHFPRecordTest, GoodGenericFingerprints) {
       // clang-format on
   };
 
-  SSHFPRecord sshfp;
+  SSHFPRecordSet sshfp;
   ASSERT_TRUE(sshfp.Parse(sshfp_rrset));
   EXPECT_TRUE(sshfp.IsValid(rsa_key_));
   EXPECT_TRUE(sshfp.IsValid(dsa_key_));
   EXPECT_TRUE(sshfp.IsValid(ecdsa_key_));
 }
 
-TEST_F(SSHFPRecordTest, BadGenericFingerprints) {
+TEST_F(SSHFPRecordSetTest, BadGenericFingerprints) {
   const vector<string> sshfp_rrset = {
       // clang-format off
       "\\# 22 01010B9F53A938596DF02086CC972850D50B7C65F645",
@@ -133,7 +133,7 @@ TEST_F(SSHFPRecordTest, BadGenericFingerprints) {
       // clang-format on
   };
 
-  SSHFPRecord sshfp;
+  SSHFPRecordSet sshfp;
   ASSERT_TRUE(sshfp.Parse(sshfp_rrset));
   EXPECT_FALSE(sshfp.IsValid(rsa_key_));
   EXPECT_FALSE(sshfp.IsValid(dsa_key_));
