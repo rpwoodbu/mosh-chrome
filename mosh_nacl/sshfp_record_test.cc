@@ -140,13 +140,11 @@ TEST_F(SSHFPRecordSetTest, BadGenericFingerprints) {
   EXPECT_EQ(SSHFPRecordSet::Validity::INVALID, sshfp.IsValid(ecdsa_key_));
 }
 
-// At this time there is no support for SHA-256, so if only those fingerprints
-// are provided, they should be considered insufficient.
-TEST_F(SSHFPRecordSetTest, SHA256Fingerprints) {
+TEST_F(SSHFPRecordSetTest, UnsupportedFingerprints) {
   const vector<string> sshfp_rrset = {
-      "1 2 10AC3932B45D3C20D2E2B47708E200B0420D3C17E3937B480AAE4173 CD94B79B",
-      "2 2 B67C68E6BB1A707DCB4A773FD0DE292FF664271B51A25959C59552B4 73C09153",
-      "3 2 9AA5D6A57F6D51ECFDF7AD1C3DB3D00EB86F5CA219CACE43DC09535D 4188B765",
+      "1 42 1B9F53A938596DF02086CC972850D50B7C65F645",
+      "2 42 15D6EC062C44840BFB283EB910FBAD0B42B3E5B0",
+      "3 42 76C7E674A84723E3B98ED6376903704ECE287BDE",
   };
 
   SSHFPRecordSet sshfp;
@@ -154,4 +152,56 @@ TEST_F(SSHFPRecordSetTest, SHA256Fingerprints) {
   EXPECT_EQ(SSHFPRecordSet::Validity::INSUFFICIENT, sshfp.IsValid(rsa_key_));
   EXPECT_EQ(SSHFPRecordSet::Validity::INSUFFICIENT, sshfp.IsValid(dsa_key_));
   EXPECT_EQ(SSHFPRecordSet::Validity::INSUFFICIENT, sshfp.IsValid(ecdsa_key_));
+}
+
+TEST_F(SSHFPRecordSetTest, GoodSHA1Fingerprints) {
+  const vector<string> sshfp_rrset = {
+      "1 1 1B9F53A938596DF02086CC972850D50B7C65F645",
+      "2 1 15D6EC062C44840BFB283EB910FBAD0B42B3E5B0",
+      "3 1 76C7E674A84723E3B98ED6376903704ECE287BDE",
+  };
+
+  SSHFPRecordSet sshfp;
+  ASSERT_TRUE(sshfp.Parse(sshfp_rrset));
+  EXPECT_EQ(SSHFPRecordSet::Validity::VALID, sshfp.IsValid(rsa_key_));
+  EXPECT_EQ(SSHFPRecordSet::Validity::VALID, sshfp.IsValid(dsa_key_));
+  EXPECT_EQ(SSHFPRecordSet::Validity::VALID, sshfp.IsValid(ecdsa_key_));
+}
+
+// The expectation here is that SHA-256 will be checked first, and will not
+// fall back to SHA1.
+TEST_F(SSHFPRecordSetTest, GoodSHA256BadSHA1Fingerprints) {
+  const vector<string> sshfp_rrset = {
+      "1 1 0B9F53A938596DF02086CC972850D50B7C65F645",
+      "1 2 10AC3932B45D3C20D2E2B47708E200B0420D3C17E3937B480AAE4173 CD94B79B",
+      "2 1 05D6EC062C44840BFB283EB910FBAD0B42B3E5B0",
+      "2 2 B67C68E6BB1A707DCB4A773FD0DE292FF664271B51A25959C59552B4 73C09153",
+      "3 1 06C7E674A84723E3B98ED6376903704ECE287BDE",
+      "3 2 9AA5D6A57F6D51ECFDF7AD1C3DB3D00EB86F5CA219CACE43DC09535D 4188B765",
+  };
+
+  SSHFPRecordSet sshfp;
+  ASSERT_TRUE(sshfp.Parse(sshfp_rrset));
+  EXPECT_EQ(SSHFPRecordSet::Validity::VALID, sshfp.IsValid(rsa_key_));
+  EXPECT_EQ(SSHFPRecordSet::Validity::VALID, sshfp.IsValid(dsa_key_));
+  EXPECT_EQ(SSHFPRecordSet::Validity::VALID, sshfp.IsValid(ecdsa_key_));
+}
+
+// The expectation here is that SHA-256 will be checked first (and fail), and
+// will not fall back to SHA1.
+TEST_F(SSHFPRecordSetTest, BadSHA256GoodSHA1Fingerprints) {
+  const vector<string> sshfp_rrset = {
+      "1 1 1B9F53A938596DF02086CC972850D50B7C65F645",
+      "1 2 00AC3932B45D3C20D2E2B47708E200B0420D3C17E3937B480AAE4173 CD94B79B",
+      "2 1 15D6EC062C44840BFB283EB910FBAD0B42B3E5B0",
+      "2 2 067C68E6BB1A707DCB4A773FD0DE292FF664271B51A25959C59552B4 73C09153",
+      "3 1 76C7E674A84723E3B98ED6376903704ECE287BDE",
+      "3 2 0AA5D6A57F6D51ECFDF7AD1C3DB3D00EB86F5CA219CACE43DC09535D 4188B765",
+  };
+
+  SSHFPRecordSet sshfp;
+  ASSERT_TRUE(sshfp.Parse(sshfp_rrset));
+  EXPECT_EQ(SSHFPRecordSet::Validity::INVALID, sshfp.IsValid(rsa_key_));
+  EXPECT_EQ(SSHFPRecordSet::Validity::INVALID, sshfp.IsValid(dsa_key_));
+  EXPECT_EQ(SSHFPRecordSet::Validity::INVALID, sshfp.IsValid(ecdsa_key_));
 }

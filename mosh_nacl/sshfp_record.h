@@ -102,7 +102,8 @@ class SSHFPRecordSet {
   };
 
  private:
-  std::map<Fingerprint::Algorithm, std::vector<Fingerprint>> fingerprints_;
+  std::map<Fingerprint::Algorithm, std::map<Fingerprint::Type, Fingerprint>>
+      fingerprints_;
 };
 
 #endif  // MOSH_NACL_SSHFP_RECORD_H_

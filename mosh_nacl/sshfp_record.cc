@@ -32,6 +32,14 @@ using std::vector;
 
 namespace {
 
+// The list of all fingerprint types in decreasing order of priority.
+// Fingerprints of higher priority are chosen if they exist.
+// See: https://tools.ietf.org/html/rfc6594#section-4.1
+static const auto kFingerprintPriority = {
+    SSHFPRecordSet::Fingerprint::Type::SHA256,
+    SSHFPRecordSet::Fingerprint::Type::SHA1,
+};
+
 SSHFPRecordSet::Fingerprint::Algorithm ConvertAlgorithm(
     const ssh::KeyType::KeyTypeEnum algorithm) {
   switch (algorithm) {
@@ -154,7 +162,8 @@ bool SSHFPRecordSet::Parse(const vector<string>& rdata) {
     if (!fingerprint.Parse(r)) {
       return false;
     }
-    fingerprints_[fingerprint.algorithm()].push_back(move(fingerprint));
+    fingerprints_[fingerprint.algorithm()].emplace(fingerprint.type(),
+                                                   move(fingerprint));
   }
   return true;
 }
@@ -165,9 +174,14 @@ SSHFPRecordSet::Validity SSHFPRecordSet::IsValid(const ssh::Key& key) const {
     // No SSHFP record for this key's algorithm.
     return Validity::INSUFFICIENT;
   }
-  for (const auto& fingerprint : fingerprints_.at(key_algorithm)) {
-    // TODO(rpwoodbu): There's a pecking order for validation. E.g., don't use
-    // SHA-1 when SHA-256 is present.
+  const auto& fingerprints_by_type = fingerprints_.at(key_algorithm);
+  for (const auto& type : kFingerprintPriority) {
+    const auto& fingerprint_iter = fingerprints_by_type.find(type);
+    if (fingerprint_iter == fingerprints_by_type.end()) {
+      // That fingerprint type doesn't exist. Try the next one in the list.
+      continue;
+    }
+    const auto& fingerprint = fingerprint_iter->second;
     switch (fingerprint.IsValid(key)) {
       case Validity::VALID:
         // Accept the first valid fingerprint.
