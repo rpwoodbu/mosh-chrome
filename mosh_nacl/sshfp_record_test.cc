@@ -74,9 +74,9 @@ TEST_F(SSHFPRecordSetTest, GoodFingerprints) {
 
   SSHFPRecordSet sshfp;
   ASSERT_TRUE(sshfp.Parse(sshfp_rrset));
-  EXPECT_TRUE(sshfp.IsValid(rsa_key_));
-  EXPECT_TRUE(sshfp.IsValid(dsa_key_));
-  EXPECT_TRUE(sshfp.IsValid(ecdsa_key_));
+  EXPECT_EQ(SSHFPRecordSet::Validity::VALID, sshfp.IsValid(rsa_key_));
+  EXPECT_EQ(SSHFPRecordSet::Validity::VALID, sshfp.IsValid(dsa_key_));
+  EXPECT_EQ(SSHFPRecordSet::Validity::VALID, sshfp.IsValid(ecdsa_key_));
 }
 
 TEST_F(SSHFPRecordSetTest, BadFingerprints) {
@@ -91,9 +91,9 @@ TEST_F(SSHFPRecordSetTest, BadFingerprints) {
 
   SSHFPRecordSet sshfp;
   ASSERT_TRUE(sshfp.Parse(sshfp_rrset));
-  EXPECT_FALSE(sshfp.IsValid(rsa_key_));
-  EXPECT_FALSE(sshfp.IsValid(dsa_key_));
-  EXPECT_FALSE(sshfp.IsValid(ecdsa_key_));
+  EXPECT_EQ(SSHFPRecordSet::Validity::INVALID, sshfp.IsValid(rsa_key_));
+  EXPECT_EQ(SSHFPRecordSet::Validity::INVALID, sshfp.IsValid(dsa_key_));
+  EXPECT_EQ(SSHFPRecordSet::Validity::INVALID, sshfp.IsValid(ecdsa_key_));
 }
 
 TEST_F(SSHFPRecordSetTest, GoodGenericFingerprints) {
@@ -113,9 +113,9 @@ TEST_F(SSHFPRecordSetTest, GoodGenericFingerprints) {
 
   SSHFPRecordSet sshfp;
   ASSERT_TRUE(sshfp.Parse(sshfp_rrset));
-  EXPECT_TRUE(sshfp.IsValid(rsa_key_));
-  EXPECT_TRUE(sshfp.IsValid(dsa_key_));
-  EXPECT_TRUE(sshfp.IsValid(ecdsa_key_));
+  EXPECT_EQ(SSHFPRecordSet::Validity::VALID, sshfp.IsValid(rsa_key_));
+  EXPECT_EQ(SSHFPRecordSet::Validity::VALID, sshfp.IsValid(dsa_key_));
+  EXPECT_EQ(SSHFPRecordSet::Validity::VALID, sshfp.IsValid(ecdsa_key_));
 }
 
 TEST_F(SSHFPRecordSetTest, BadGenericFingerprints) {
@@ -135,7 +135,23 @@ TEST_F(SSHFPRecordSetTest, BadGenericFingerprints) {
 
   SSHFPRecordSet sshfp;
   ASSERT_TRUE(sshfp.Parse(sshfp_rrset));
-  EXPECT_FALSE(sshfp.IsValid(rsa_key_));
-  EXPECT_FALSE(sshfp.IsValid(dsa_key_));
-  EXPECT_FALSE(sshfp.IsValid(ecdsa_key_));
+  EXPECT_EQ(SSHFPRecordSet::Validity::INVALID, sshfp.IsValid(rsa_key_));
+  EXPECT_EQ(SSHFPRecordSet::Validity::INVALID, sshfp.IsValid(dsa_key_));
+  EXPECT_EQ(SSHFPRecordSet::Validity::INVALID, sshfp.IsValid(ecdsa_key_));
+}
+
+// At this time there is no support for SHA-256, so if only those fingerprints
+// are provided, they should be considered insufficient.
+TEST_F(SSHFPRecordSetTest, SHA256Fingerprints) {
+  const vector<string> sshfp_rrset = {
+      "1 2 10AC3932B45D3C20D2E2B47708E200B0420D3C17E3937B480AAE4173 CD94B79B",
+      "2 2 B67C68E6BB1A707DCB4A773FD0DE292FF664271B51A25959C59552B4 73C09153",
+      "3 2 9AA5D6A57F6D51ECFDF7AD1C3DB3D00EB86F5CA219CACE43DC09535D 4188B765",
+  };
+
+  SSHFPRecordSet sshfp;
+  ASSERT_TRUE(sshfp.Parse(sshfp_rrset));
+  EXPECT_EQ(SSHFPRecordSet::Validity::INSUFFICIENT, sshfp.IsValid(rsa_key_));
+  EXPECT_EQ(SSHFPRecordSet::Validity::INSUFFICIENT, sshfp.IsValid(dsa_key_));
+  EXPECT_EQ(SSHFPRecordSet::Validity::INSUFFICIENT, sshfp.IsValid(ecdsa_key_));
 }

@@ -159,18 +159,33 @@ bool SSHFPRecordSet::Parse(const vector<string>& rdata) {
   return true;
 }
 
-bool SSHFPRecordSet::IsValid(const ssh::Key& key) const {
+SSHFPRecordSet::Validity SSHFPRecordSet::IsValid(const ssh::Key& key) const {
   const auto key_algorithm = ConvertAlgorithm(key.GetKeyType().type());
   if (fingerprints_.count(key_algorithm) == 0) {
     // No SSHFP record for this key's algorithm.
-    return false;
+    return Validity::INSUFFICIENT;
   }
   for (const auto& fingerprint : fingerprints_.at(key_algorithm)) {
-    if (fingerprint.IsValid(key)) {
-      return true;
+    // TODO(rpwoodbu): There's a pecking order for validation. E.g., don't use
+    // SHA-1 when SHA-256 is present.
+    switch (fingerprint.IsValid(key)) {
+      case Validity::VALID:
+        // Accept the first valid fingerprint.
+        return Validity::VALID;
+      case Validity::INVALID:
+        // Any invalid fingerprint is grounds for concern.
+        return Validity::INVALID;
+      case Validity::INSUFFICIENT:
+        // Do nothing. This fingerprint isn't usable (perhaps because the hash
+        // isn't supported).
+        break;
+        // No default case; compiler will complain if some enum values are
+        // missing.
     }
   }
-  return false;
+  // We didn't actually invalidate anything, perhaps because none of the
+  // advertised hashes were supported.
+  return Validity::INSUFFICIENT;
 }
 
 bool SSHFPRecordSet::Fingerprint::Parse(const string& rdata) {
@@ -223,7 +238,8 @@ bool SSHFPRecordSet::Fingerprint::Parse(const string& rdata) {
   return true;
 }
 
-bool SSHFPRecordSet::Fingerprint::IsMatchingAlgorithm(const ssh::Key& key) const {
+bool SSHFPRecordSet::Fingerprint::IsMatchingAlgorithm(
+    const ssh::Key& key) const {
   const auto key_algorithm = ConvertAlgorithm(key.GetKeyType().type());
   if (key_algorithm == Algorithm::UNSET) {
     return false;
@@ -231,15 +247,23 @@ bool SSHFPRecordSet::Fingerprint::IsMatchingAlgorithm(const ssh::Key& key) const
   return algorithm_ == key_algorithm;
 }
 
-bool SSHFPRecordSet::Fingerprint::IsValid(const ssh::Key& key) const {
+SSHFPRecordSet::Validity SSHFPRecordSet::Fingerprint::IsValid(
+    const ssh::Key& key) const {
   if (!IsMatchingAlgorithm(key)) {
-    return false;
+    return Validity::INSUFFICIENT;
   }
+
   switch (type_) {
     case Type::SHA1:
-      return ParseHex(key.SHA1()) == fingerprint_;
+      if (ParseHex(key.SHA1()) == fingerprint_) {
+        return Validity::VALID;
+      } else {
+        return Validity::INVALID;
+      }
+
     // TODO(rpwoodbu): Support SHA256 (libssh doesn't have it).
+
     default:
-      return false;
+      return Validity::INSUFFICIENT;
   }
 }

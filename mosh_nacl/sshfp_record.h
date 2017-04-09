@@ -40,9 +40,16 @@ class SSHFPRecordSet {
   // data.
   bool Parse(const std::vector<std::string>& rdata);
 
+  enum class Validity {
+    VALID,         // Found an SSHFP record that validates the key.
+    INVALID,       // At least one SSHFP record does not validate the key.
+    INSUFFICIENT,  // None of the SSHFP records could be used (e.g.,
+                   // unsupported hash). Typically the client would continue as
+                   // if no SSHFP record were published.
+  };
   // Checks to see if |key| can be validated with any of the SSHFP RDATA
   // passed to Parse().
-  bool IsValid(const ssh::Key& key) const;
+  Validity IsValid(const ssh::Key& key) const;
 
   // Value type that represents one fingerprint from the SSHFP RRset.
   class Fingerprint {
@@ -85,8 +92,8 @@ class SSHFPRecordSet {
     bool IsMatchingAlgorithm(const ssh::Key& key) const;
 
     // Checks to see if |key| can be validated with this fingerprint. Returns
-    // false if IsMatchingAlgorithm() would return false.
-    bool IsValid(const ssh::Key& key) const;
+    // INSUFFICIENT if IsMatchingAlgorithm() would return false.
+    Validity IsValid(const ssh::Key& key) const;
 
    private:
     Algorithm algorithm_ = Algorithm::UNSET;
