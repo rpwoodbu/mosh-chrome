@@ -266,17 +266,18 @@ SSHFPRecordSet::Validity SSHFPRecordSet::Fingerprint::IsValid(
     return Validity::INSUFFICIENT;
   }
 
+  bool is_valid = false;
   switch (type_) {
     case Type::SHA1:
-      if (ParseHex(key.SHA1()) == fingerprint_) {
-        return Validity::VALID;
-      } else {
-        return Validity::INVALID;
-      }
-
-    // TODO(rpwoodbu): Support SHA256 (libssh doesn't have it).
-
+      is_valid = ParseHex(key.SHA1()) == fingerprint_;
+      break;
+    case Type::SHA256:
+      is_valid = ParseHex(key.SHA256()) == fingerprint_;
+      break;
     default:
+      // No support for the requested type.
       return Validity::INSUFFICIENT;
   }
+
+  return is_valid ? Validity::VALID : Validity::INVALID;
 }

@@ -283,6 +283,9 @@ class Key {
   // Get key as SHA1 hash. Will return an empty string on error.
   std::string SHA1() const;
 
+  // Get key as SHA256 hash. Will return an empty string on error.
+  std::string SHA256() const;
+
   // Get the key type of this key.
   KeyType GetKeyType() const;
 

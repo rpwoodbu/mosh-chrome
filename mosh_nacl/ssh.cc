@@ -336,6 +336,8 @@ string Key::MD5() const { return Hash(SSH_PUBLICKEY_HASH_MD5); }
 
 string Key::SHA1() const { return Hash(SSH_PUBLICKEY_HASH_SHA1); }
 
+string Key::SHA256() const { return Hash(SSH_PUBLICKEY_HASH_SHA256); }
+
 string Key::Hash(const ssh_publickey_hash_type type) const {
   if (key_ == nullptr) {
     return string();

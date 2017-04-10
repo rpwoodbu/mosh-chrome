@@ -78,7 +78,7 @@ new_http_archive(
 new_git_repository(
     name = "libssh",
     remote = "https://github.com/rpwoodbu/libssh.git",
-    commit = "f0a54a34837ad044571b1f9375309f7c0bd19c52",
+    commit = "91fae4ab0dff92aab6b42b140d6fd1d443e5638e", # branch = "mosh-chrome-patches"
     build_file = "external_builds/BUILD.libssh",
 )
 
