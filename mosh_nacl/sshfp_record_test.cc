@@ -205,3 +205,21 @@ TEST_F(SSHFPRecordSetTest, BadSHA256GoodSHA1Fingerprints) {
   EXPECT_EQ(SSHFPRecordSet::Validity::INVALID, sshfp.IsValid(dsa_key_));
   EXPECT_EQ(SSHFPRecordSet::Validity::INVALID, sshfp.IsValid(ecdsa_key_));
 }
+
+// The expectation here is that unknown types will be parsed but ignored.
+TEST_F(SSHFPRecordSetTest, UnknownAndGoodSHA1Fingerprints) {
+  const vector<string> sshfp_rrset = {
+      "1 1 1B9F53A938596DF02086CC972850D50B7C65F645",
+      "1 42 0B9F53A938596DF02086CC972850D50B7C65F645",
+      "2 1 15D6EC062C44840BFB283EB910FBAD0B42B3E5B0",
+      "2 42 05D6EC062C44840BFB283EB910FBAD0B42B3E5B0",
+      "3 1 76C7E674A84723E3B98ED6376903704ECE287BDE",
+      "3 42 06C7E674A84723E3B98ED6376903704ECE287BDE",
+  };
+
+  SSHFPRecordSet sshfp;
+  ASSERT_TRUE(sshfp.Parse(sshfp_rrset));
+  EXPECT_EQ(SSHFPRecordSet::Validity::VALID, sshfp.IsValid(rsa_key_));
+  EXPECT_EQ(SSHFPRecordSet::Validity::VALID, sshfp.IsValid(dsa_key_));
+  EXPECT_EQ(SSHFPRecordSet::Validity::VALID, sshfp.IsValid(ecdsa_key_));
+}

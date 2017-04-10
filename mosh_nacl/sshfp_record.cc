@@ -214,9 +214,6 @@ bool SSHFPRecordSet::Fingerprint::Parse(const string& rdata) {
   }
 
   switch (parsed.algorithm_num) {
-    case 0:
-      algorithm_ = Algorithm::UNSET;
-      break;
     case 1:
       algorithm_ = Algorithm::RSA;
       break;
@@ -230,7 +227,8 @@ bool SSHFPRecordSet::Fingerprint::Parse(const string& rdata) {
       algorithm_ = Algorithm::ED25519;
       break;
     default:
-      return false;
+      algorithm_ = Algorithm::UNSET;
+      break;
   }
 
   switch (parsed.type_num) {
@@ -244,7 +242,8 @@ bool SSHFPRecordSet::Fingerprint::Parse(const string& rdata) {
       type_ = Type::SHA256;
       break;
     default:
-      return false;
+      type_ = Type::UNSET;
+      break;
   }
 
   fingerprint_ = move(parsed.fingerprint);
