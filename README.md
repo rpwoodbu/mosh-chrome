@@ -16,6 +16,9 @@ Building
   [here](http://www.bazel.io/docs/install.html) to get it. There's a Debian
   package, so installation is easy; the only caveat is that it requires Java
   (sorry).
+  
+  NB: For now, **you must use Bazel v0.3.1**. See
+  [Issue #140](https://github.com/rpwoodbu/mosh-chrome/issues/140) for details.
 
   You can build the dev track simply by running:
 
