@@ -455,6 +455,23 @@ void MoshClientInstance::Error(const char* format, ...) {
 
 bool MoshClientInstance::Init(uint32_t argc, const char* argn[],
                               const char* argv[]) {
+  // Setup communications. We keep pointers to |keyboard_| and
+  // |window_change_|, as we need to access their specialized methods. |posix_|
+  // owns them, but we own |posix_|, so it is all good so long as these "files"
+  // are not closed.
+  auto keyboard = make_unique<Keyboard>();
+  auto window_change = make_unique<WindowChange>();
+  keyboard_ = keyboard.get();
+  window_change_ = window_change.get();
+  posix_ = make_unique<PepperPOSIX::POSIX>(
+      this, move(keyboard), make_unique<Terminal>(*this),
+      make_unique<ErrorLog>(*this), move(window_change));
+  posix_->RegisterFile("/dev/urandom",
+                       []() { return make_unique<DevURandom>(); });
+  posix_->RegisterUnixSocketStream(
+      [this]() { return make_unique<UnixSocketStreamImpl>(this); });
+
+  // Parse arguments.
   const char* secret = nullptr;
   string mosh_escape_key;
   for (int i = 0; i < argc; ++i) {
@@ -493,8 +510,8 @@ bool MoshClientInstance::Init(uint32_t argc, const char* argn[],
       if (resolver_name == "google-public-dns") {
         resolver_ = make_unique<GPDNSResolver>(this);
       } else {
-        Log("Unknown resolver '%s'.", resolver_name.c_str());
-        return false;
+        Error("Unknown resolver '%s'.", resolver_name.c_str());
+        return true;
       }
     } else if (name == "trust-sshfp") {
       if (string(argv[i]) == "true") {
@@ -504,14 +521,14 @@ bool MoshClientInstance::Init(uint32_t argc, const char* argn[],
   }
 
   if (host_.size() == 0 || port_ == nullptr) {
-    Log("Must supply addr and port attributes.");
-    return false;
+    Error("Must supply addr and port attributes.");
+    return true;
   }
 
   if (ssh_mode_) {
     if (ssh_login_.user().size() == 0) {
-      Log("Must provide a username for ssh mode.");
-      return false;
+      Error("Must provide a username for ssh mode.");
+      return true;
     }
   } else {
     setenv("MOSH_KEY", secret, 1);
@@ -520,22 +537,6 @@ bool MoshClientInstance::Init(uint32_t argc, const char* argn[],
   if (!mosh_escape_key.empty()) {
     setenv("MOSH_ESCAPE_KEY", mosh_escape_key.c_str(), 1);
   }
-
-  // Setup communications. We keep pointers to |keyboard_| and
-  // |window_change_|, as we need to access their specialized methods. |posix_|
-  // owns them, but we own |posix_|, so it is all good so long as these "files"
-  // are not closed.
-  auto keyboard = make_unique<Keyboard>();
-  auto window_change = make_unique<WindowChange>();
-  keyboard_ = keyboard.get();
-  window_change_ = window_change.get();
-  posix_ = make_unique<PepperPOSIX::POSIX>(
-      this, move(keyboard), make_unique<Terminal>(*this),
-      make_unique<ErrorLog>(*this), move(window_change));
-  posix_->RegisterFile("/dev/urandom",
-                       []() { return make_unique<DevURandom>(); });
-  posix_->RegisterUnixSocketStream(
-      [this]() { return make_unique<UnixSocketStreamImpl>(this); });
 
   if (resolver_ == nullptr) {
     // Use default resolver.
