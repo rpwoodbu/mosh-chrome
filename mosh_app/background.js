@@ -23,9 +23,15 @@ window.state.updateAvailable = null;
 window.state.windows = {};
 
 function newSession() {
-  chrome.app.window.create('mosh_client.html', {
-    'id': 'mosh_client',
-  });
+  chrome.app.window.create(
+      'mosh_client.html', {
+        'id': 'mosh_client',
+      },
+      function(createdWindow) {
+        createdWindow.onClosed.addListener(function() {
+          maybeReloadApp();
+        });
+      });
 };
 
 chrome.app.runtime.onLaunched.addListener(newSession);

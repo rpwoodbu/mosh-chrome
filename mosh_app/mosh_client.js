@@ -255,8 +255,8 @@ function onConnectClick(e) {
           // is missing while the window is being destroyed. Using setTimeout()
           // on the background window ensures the callback is run in its
           // (persistent) context.
-          createdWindow.onClosed.addListener(function() {
-            bg.setTimeout(function() {
+          bg.setTimeout(function() {
+            createdWindow.onClosed.addListener(function() {
               bg.onSessionWindowClosed(id);
             }, 0)
           });
