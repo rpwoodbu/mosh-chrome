@@ -31,7 +31,9 @@ window.onload = function() {
   var saveButton = document.querySelector('#save');
   saveButton.onclick = onSaveClick;
   var form = document.querySelector('#key-form');
-  form.onsubmit = function() { return false; };
+  form.onsubmit = function() {
+    return false;
+  };
 };
 
 function onSaveClick(e) {

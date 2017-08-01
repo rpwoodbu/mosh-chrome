@@ -60,7 +60,9 @@ window.onload = function() {
   var prefsLink = document.querySelector('#prefs');
   prefsLink.onclick = onPrefsClick;
   var form = document.querySelector('#args');
-  form.onsubmit = function() { return false; };
+  form.onsubmit = function() {
+    return false;
+  };
 
   // Add drop-down menu for MOSH_ESCAPE_KEY, listing all ASCII characters from
   // 0x01 to 0x7F, as well an initial entry "default" to not pass
@@ -254,7 +256,9 @@ function onConnectClick(e) {
           // on the background window ensures the callback is run in its
           // (persistent) context.
           createdWindow.onClosed.addListener(function() {
-            bg.setTimeout(function() { bg.onSessionWindowClosed(id); }, 0)
+            bg.setTimeout(function() {
+              bg.onSessionWindowClosed(id);
+            }, 0)
           });
           chrome.app.window.current().close();
         });

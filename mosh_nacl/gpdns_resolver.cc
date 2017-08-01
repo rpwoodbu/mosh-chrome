@@ -102,8 +102,8 @@ void GPDNSResolver::Query::RunOnMainThread(__attribute__((unused))
     return;
   }
 
-  const string url = string(kGPDNSURL) + "?name=" + domain_name_ + "&type=" +
-                     TypeToRRtypeStr(type_);
+  const string url = string(kGPDNSURL) + "?name=" + domain_name_ +
+                     "&type=" + TypeToRRtypeStr(type_);
 
   request_.SetURL(url);
   request_.SetMethod("GET");

@@ -47,8 +47,9 @@ void PepperResolver::Resolve(string domain_name, Type type, Callback callback) {
 
   caller.Release();
   pp::Module::Get()->core()->CallOnMainThread(
-      0, cc_factory_.NewCallback(&PepperResolver::ResolveOnMainThread,
-                                 move(domain_name), hint, callback));
+      0,
+      cc_factory_.NewCallback(&PepperResolver::ResolveOnMainThread,
+                              move(domain_name), hint, callback));
 }
 
 void PepperResolver::ResolveOnMainThread(__attribute__((unused))

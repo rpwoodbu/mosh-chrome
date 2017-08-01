@@ -61,7 +61,9 @@ chrome.contextMenus.create({
   'contexts': ['launcher'],
 });
 
-chrome.contextMenus.onClicked.addListener(function() { newSession(); });
+chrome.contextMenus.onClicked.addListener(function() {
+  newSession();
+});
 
 function onSessionWindowClosed(id) {
   delete window.state.windows[id];

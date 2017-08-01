@@ -115,7 +115,7 @@ ssize_t POSIX::Read(int fd, void* buf, size_t count) {
   }
 
   if (reader->IsBlocking()) {
-    vector<Target *> read_targets, write_targets;
+    vector<Target*> read_targets, write_targets;
     read_targets.push_back(reader->target_.get());
     selector_.Select(read_targets, write_targets, nullptr);
   }
@@ -135,7 +135,7 @@ ssize_t POSIX::Write(int fd, const void* buf, size_t count) {
   }
 
   if (writer->IsBlocking()) {
-    vector<Target *> read_targets, write_targets;
+    vector<Target*> read_targets, write_targets;
     write_targets.push_back(writer->target_.get());
     selector_.Select(read_targets, write_targets, nullptr);
   }
@@ -210,7 +210,7 @@ int POSIX::PSelect(int nfds, fd_set* readfds, fd_set* writefds,
   FD_ZERO(&new_readfds);
   FD_ZERO(&new_writefds);
 
-  vector<Target *> read_targets, write_targets;
+  vector<Target*> read_targets, write_targets;
   for (int fd = 0; fd < nfds; ++fd) {
     if (readfds != nullptr && FD_ISSET(fd, readfds)) {
       read_targets.push_back(files_[fd]->target_.get());
@@ -349,7 +349,7 @@ ssize_t POSIX::Recv(int sockfd, void* buf, size_t len, int flags) {
   }
 
   if (tcp->IsBlocking() && !(flags & MSG_DONTWAIT)) {
-    vector<Target *> read_targets, write_targets;
+    vector<Target*> read_targets, write_targets;
     read_targets.push_back(tcp->target_.get());
     selector_.Select(read_targets, write_targets, nullptr);
   }
@@ -369,7 +369,7 @@ ssize_t POSIX::RecvMsg(int sockfd, struct msghdr* msg, int flags) {
   }
 
   if (udp->IsBlocking() && !(flags & MSG_DONTWAIT)) {
-    vector<Target *> read_targets, write_targets;
+    vector<Target*> read_targets, write_targets;
     read_targets.push_back(udp->target_.get());
     selector_.Select(read_targets, write_targets, nullptr);
   }
@@ -423,7 +423,7 @@ ssize_t POSIX::Send(int sockfd, const void* buf, size_t len, int flags) {
   }
 
   if (tcp->IsBlocking() && !(flags & MSG_DONTWAIT)) {
-    vector<Target *> read_targets, write_targets;
+    vector<Target*> read_targets, write_targets;
     write_targets.push_back(tcp->target_.get());
     selector_.Select(read_targets, write_targets, nullptr);
   }
@@ -443,7 +443,7 @@ ssize_t POSIX::SendTo(int sockfd, const void* buf, size_t len, int flags,
   }
 
   if (udp->IsBlocking() && !(flags & MSG_DONTWAIT)) {
-    vector<Target *> read_targets, write_targets;
+    vector<Target*> read_targets, write_targets;
     write_targets.push_back(udp->target_.get());
     selector_.Select(read_targets, write_targets, nullptr);
   }

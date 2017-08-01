@@ -40,7 +40,7 @@ nassh.msg = function(type, data) {
       // setup.
       let profile = document.getElementById('profile');
       profile.oninput();
-      return "mosh";
+      return 'mosh';
     default:
       return 'UNEXPECTED SITUATION';
   }
