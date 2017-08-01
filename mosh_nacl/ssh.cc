@@ -141,7 +141,7 @@ Key& Session::GetPublicKey() {
   // kNone.
   int result = ssh_userauth_none(s_, nullptr);
   if (result == SSH_AUTH_SUCCESS) {
-    auth_types.push_back(kNone);
+    auth_types.push_back(AuthenticationType::kNone);
     return auth_types;
   }
   if (result == SSH_AUTH_ERROR) {
@@ -152,16 +152,16 @@ Key& Session::GetPublicKey() {
 
   int auth_list = ssh_userauth_list(s_, nullptr);
   if (auth_list & SSH_AUTH_METHOD_PASSWORD) {
-    auth_types.push_back(kPassword);
+    auth_types.push_back(AuthenticationType::kPassword);
   }
   if (auth_list & SSH_AUTH_METHOD_PUBLICKEY) {
-    auth_types.push_back(kPublicKey);
+    auth_types.push_back(AuthenticationType::kPublicKey);
   }
   if (auth_list & SSH_AUTH_METHOD_HOSTBASED) {
-    auth_types.push_back(kHostBased);
+    auth_types.push_back(AuthenticationType::kHostBased);
   }
   if (auth_list & SSH_AUTH_METHOD_INTERACTIVE) {
-    auth_types.push_back(kInteractive);
+    auth_types.push_back(AuthenticationType::kInteractive);
   }
 
   return auth_types;
@@ -169,15 +169,15 @@ Key& Session::GetPublicKey() {
 
 string GetAuthenticationTypeName(AuthenticationType type) {
   switch (type) {
-    case ssh::kPassword:
+    case ssh::AuthenticationType::kPassword:
       return "Password";
-    case ssh::kPublicKey:
+    case ssh::AuthenticationType::kPublicKey:
       return "Public Key";
-    case ssh::kHostBased:
+    case ssh::AuthenticationType::kHostBased:
       return "Host Based";
-    case ssh::kInteractive:
+    case ssh::AuthenticationType::kInteractive:
       return "Keyboard Interactive";
-    case ssh::kNone:
+    case ssh::AuthenticationType::kNone:
       return "None";
   }
   // No default nor return; compiler will complain about missing enum.

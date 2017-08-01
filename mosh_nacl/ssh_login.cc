@@ -130,19 +130,19 @@ bool SSHLogin::Start() {
            ssh::GetAuthenticationTypeName(auth).c_str());
 
     switch (auth) {
-      case ssh::kPassword:
+      case ssh::AuthenticationType::kPassword:
         authenticated = DoPasswordAuth();
         break;
-      case ssh::kInteractive:
+      case ssh::AuthenticationType::kInteractive:
         authenticated = DoInteractiveAuth();
         break;
-      case ssh::kPublicKey:
+      case ssh::AuthenticationType::kPublicKey:
         authenticated = DoPublicKeyAuth();
         break;
-      case ssh::kNone:
+      case ssh::AuthenticationType::kNone:
         authenticated = true;
         break;
-      case ssh::kHostBased:
+      case ssh::AuthenticationType::kHostBased:
         // Not supported.
         break;
     }
@@ -370,10 +370,10 @@ unique_ptr<vector<ssh::AuthenticationType>> SSHLogin::GetAuthTypes() {
   // Place the list of supported authentications types here, in the order
   // they should be tried.
   vector<ssh::AuthenticationType> client_auths;
-  client_auths.push_back(ssh::kPublicKey);
-  client_auths.push_back(ssh::kInteractive);
-  client_auths.push_back(ssh::kPassword);
-  client_auths.push_back(ssh::kNone);
+  client_auths.push_back(ssh::AuthenticationType::kPublicKey);
+  client_auths.push_back(ssh::AuthenticationType::kInteractive);
+  client_auths.push_back(ssh::AuthenticationType::kPassword);
+  client_auths.push_back(ssh::AuthenticationType::kNone);
 
   printf("Authentication types supported by server:\r\n");
   vector<ssh::AuthenticationType> server_auths =

@@ -53,7 +53,7 @@ class ResultCode {
 };
 
 // Types of authentications. This maps to libssh's bitfield macros as noted.
-enum AuthenticationType {
+enum class AuthenticationType {
   kPassword = 0,  // SSH_AUTH_METHOD_PASSWORD
   kPublicKey,     // SSH_AUTH_METHOD_PUBLICKEY
   kHostBased,     // SSH_AUTH_METHOD_HOSTBASED
