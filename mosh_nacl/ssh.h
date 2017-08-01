@@ -58,6 +58,7 @@ enum AuthenticationType {
   kPublicKey,     // SSH_AUTH_METHOD_PUBLICKEY
   kHostBased,     // SSH_AUTH_METHOD_HOSTBASED
   kInteractive,   // SSH_AUTH_METHOD_INTERACTIVE
+  kNone,          // SSH_AUTH_METHOD_NONE
 };
 
 // Get a human-readable text representation of an authentication type.

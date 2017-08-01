@@ -136,10 +136,15 @@ Key& Session::GetPublicKey() {
 ::std::vector<AuthenticationType> Session::GetAuthenticationTypes() {
   ::std::vector<AuthenticationType> auth_types;
 
-  // First we have to try the "none" method to get the types. This could lead
-  // to confusion if it is actually sufficient to authenticate.
+  // First we have to try the "none" method to get the types. If it succeeds,
+  // then we're in, and there's no reason to list other auth types; just return
+  // kNone.
   int result = ssh_userauth_none(s_, nullptr);
-  if (result == SSH_AUTH_ERROR || result == SSH_AUTH_SUCCESS) {
+  if (result == SSH_AUTH_SUCCESS) {
+    auth_types.push_back(kNone);
+    return auth_types;
+  }
+  if (result == SSH_AUTH_ERROR) {
     ParseCode(result);
     // Returning an empty list.
     return auth_types;
@@ -172,8 +177,10 @@ string GetAuthenticationTypeName(AuthenticationType type) {
       return "Host Based";
     case ssh::kInteractive:
       return "Keyboard Interactive";
+    case ssh::kNone:
+      return "None";
   }
-  return "Unknown";
+  // No default nor return; compiler will complain about missing enum.
 }
 
 KeyboardInteractive& Session::AuthUsingKeyboardInteractive() {

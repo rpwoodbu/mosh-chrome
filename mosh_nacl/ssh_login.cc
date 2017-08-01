@@ -139,10 +139,14 @@ bool SSHLogin::Start() {
       case ssh::kPublicKey:
         authenticated = DoPublicKeyAuth();
         break;
-      default:
-        // Should not get here.
-        assert(false);
+      case ssh::kNone:
+        authenticated = true;
+        break;
+      case ssh::kHostBased:
+        // Not supported.
+        break;
     }
+    // No default; compiler will complain about missing enum.
 
     if (authenticated) {
       break;
@@ -369,6 +373,7 @@ unique_ptr<vector<ssh::AuthenticationType>> SSHLogin::GetAuthTypes() {
   client_auths.push_back(ssh::kPublicKey);
   client_auths.push_back(ssh::kInteractive);
   client_auths.push_back(ssh::kPassword);
+  client_auths.push_back(ssh::kNone);
 
   printf("Authentication types supported by server:\r\n");
   vector<ssh::AuthenticationType> server_auths =
