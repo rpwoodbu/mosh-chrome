@@ -108,7 +108,7 @@ mosh.CommandInstance.prototype.run = function() {
 
   // Output special text (e.g., ANSI escape sequences) if desired.
   chrome.storage.sync.get('term_init_string', function(o) {
-    if (o != null) {
+    if (o != null && 'term_init_string' in o) {
       window.mosh_client_.io.print(o['term_init_string']);
     }
   });
