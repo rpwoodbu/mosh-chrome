@@ -36,14 +36,14 @@ function execMosh() {
 
   // Don't exit fullscreen with ESC.
   terminal.document_.onkeyup = function(e) {
-    if (e.keyCode == 78 && e.ctrlKey && e.shiftKey){
+    if (e.keyCode == 78 && e.ctrlKey && e.shiftKey) {
       chrome.app.window.create(
         'mosh_client.html', {
           'id': 'mosh_client',
         });
 
 
-    }else if (e.keyCode == 27) {
+    } else if (e.keyCode == 27) {
       e.preventDefault();
     }
   };
