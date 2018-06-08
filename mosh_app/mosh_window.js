@@ -41,15 +41,6 @@ function execMosh() {
     }
   };
 
-  // Workaround to return focus to terminal on fullscreen.
-  // See https://code.google.com/p/chromium/issues/detail?id=402340
-  var appWindow = chrome.app.window.current();
-  appWindow.onFullscreened.addListener(function() {
-    appWindow.hide();
-    appWindow.show();
-    terminal.focus();
-  });
-
   document.title += ' - ' + window.args['addr'];
 
   // Useful for console debugging.
