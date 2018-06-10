@@ -1,5 +1,8 @@
 workspace(name = "mosh_chrome")
 
+# The manifest of NaCl SDK versions can be found here:
+# https://storage.googleapis.com/nativeclient-mirror/nacl/nacl_sdk/naclsdk_manifest2.json
+
 # There are hardlinks in the stock NaCl SDK archive, and Bazel can't handle
 # them. It just creates files of zero size. To work around this, I've hacked
 # together a custom repository rule that just shells out to "tar". This isn't
@@ -98,11 +101,20 @@ new_git_repository(
     build_file = "external_builds/BUILD.libapps",
 )
 
-# Bazel repo gives us access to useful things, e.g., //third_party.
 git_repository(
-    name = "io_bazel",
-    remote = "https://github.com/bazelbuild/bazel.git",
-    commit = "e671d2950fb56c499db2c99a3d6dad2d291ed873", # tag = "0.3.0"
+    name = "com_google_protobuf",
+    remote = "https://github.com/google/protobuf.git",
+    commit = "ce044817c7ba0aea27c3fd8e496635d94d20a755", # tag = "v3.6.0.1"
+)
+
+git_repository(
+    name = "com_google_googletest",
+    remote = "https://github.com/google/googletest.git",
+    # Nothing special about this commit; this project simply doesn't have a
+    # recent release which includes Bazel support. Chose the same commit as
+    # found here:
+    # https://github.com/bazelbuild/bazel/blob/d3d86440e90a8cef8483dec83f06c8a6f644603e/WORKSPACE#L163
+    commit = "dfa853b63d17c787914b663b50c2095a0c5b706e",
 )
 
 # Google Style Guide includes cpplint.

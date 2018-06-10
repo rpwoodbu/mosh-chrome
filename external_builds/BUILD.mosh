@@ -1,6 +1,6 @@
 package(default_visibility = ["//visibility:private"])
 
-load("@io_bazel//third_party/protobuf:protobuf.bzl", "cc_proto_library")
+load("@com_google_protobuf//:protobuf.bzl", "cc_proto_library")
 
 cc_library(
     name = "mosh_client_lib",
@@ -165,8 +165,8 @@ cc_proto_library(
         "src/protobufs/transportinstruction.proto",
         "src/protobufs/userinput.proto",
     ],
-    protoc = "@io_bazel//third_party/protobuf:protoc",
-    default_runtime = "@io_bazel//third_party/protobuf:protobuf_clib",
+    protoc = "@com_google_protobuf//:protoc",
+    default_runtime = "@com_google_protobuf//:protobuf",
 )
 
 # Newlib header files don't declare pselect. This rule allows us to force this

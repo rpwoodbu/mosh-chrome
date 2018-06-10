@@ -43,7 +43,14 @@ toolchain {
   linker_flag: "-lc++"
   linker_flag: "-Bexternal/nacl_sdk/toolchain/linux_pnacl/bin"
 
-  cxx_builtin_include_directory: "external/nacl_sdk/toolchain/linux_pnacl/lib"
+  # The compiler in the NaCl SDK doesn't support the flags necessary to do
+  # strict dependency enforcement (i.e., -no-canonical-prefixes and
+  # -fno-canonical-system-headers). So effectively disable the feature in this
+  # manner:
+  cxx_builtin_include_directory: "/"
+  # For reference, here's a path that we would ordinarily want to include:
+  #cxx_builtin_include_directory: "external/nacl_sdk/toolchain/linux_pnacl/lib"
+
   #tool_path { name: "gcov" path: "/usr/bin/gcov" }
   tool_path { name: "gcov" path: "/bin/false" }
 
@@ -59,7 +66,7 @@ toolchain {
   tool_path { name: "objdump" path: "/bin/false" }
   tool_path { name: "strip" path: "external/nacl_sdk/toolchain/linux_pnacl/bin/pnacl-strip" }
 
-  # Anticipated future default.
+  # Anticipated future default. (But NaCl SDK doesn't support them.)
   #unfiltered_cxx_flag: "-no-canonical-prefixes"
   #unfiltered_cxx_flag: "-fno-canonical-system-headers"
 
@@ -92,8 +99,8 @@ toolchain {
   compiler_flag: "-Wall"
   # All warnings are errors.
   compiler_flag: "-Werror"
-  # Enable a few more warnings that aren't part of -Wall.
-  compiler_flag: "-Wunused-parameter"
+  # Would be nice to enable this warning, but then protobufs won't build.
+  #compiler_flag: "-Wunused-parameter"
   # But disable some that are problematic.
   #compiler_flag: "-Wno-free-nonheap-object" # has false positives
 

@@ -185,7 +185,7 @@ cc_test(
     srcs = ["sshfp_record_test.cc"],
     deps = [
         ":sshfp_record_lib",
-        "@io_bazel//third_party:gtest",
+        "@com_google_googletest//:gtest_main",
     ],
     size = "small",
 )
