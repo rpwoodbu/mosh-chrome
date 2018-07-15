@@ -92,12 +92,10 @@ new_git_repository(
     build_file = "external_builds/BUILD.mosh",
 )
 
-# Using a GitHub mirror as a workaround for the fact that the libapps repo
-# causes "not authorized" from Bazel. I assume that's a Bazel bug?
 new_git_repository(
     name = "libapps",
-    remote = "https://github.com/rpwoodbu/libapps.git",
-    commit = "89e3d74ec7cf8627ba1650e7ab97c6ab0009c778", # tag = "hterm-1.61"
+    remote = "https://github.com/libapps/libapps-mirror.git",
+    commit = "2056832f0b287924110849cecbf1e5019c1a51c3", # tag = "hterm-1.80"
     build_file = "external_builds/BUILD.libapps",
 )
 
