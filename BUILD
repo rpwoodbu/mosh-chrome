@@ -35,7 +35,7 @@ nacl_manifest_js(
 )
 
 # Builds versions suitable for packaging for Windows.
-# TODO: Build seperate ones for x64 and ia32 to reduce the size.
+# TODO: Build separate ones for x64 and ia32 to reduce the size.
 genrule(
     name = "mosh_chrome_windows",
     srcs = base_package_srcs + [
