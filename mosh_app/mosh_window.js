@@ -76,7 +76,9 @@ mosh.CommandInstance = function(argv) {
 
   // App ID of an SSH agent.
   // TODO: Make this a user setting.
-  this.agentAppID_ = 'beknehfpfkghjoafdifaflglpjkojoco';
+  this.agentAppID_ = hterm.os == 'cros' ?
+      'beknehfpfkghjoafdifaflglpjkojoco' :  // Chrome app
+      'lkjlajklkdhaneeelolkfgbpikkgnkpk';   // Chrome extension
 };
 
 mosh.CommandInstance.prototype.run = function() {
