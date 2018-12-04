@@ -76,7 +76,8 @@ mosh.CommandInstance = function(argv) {
 
   // App ID of an SSH agent.
   // TODO: Make this a user setting.
-  this.agentAppID_ = 'beknehfpfkghjoafdifaflglpjkojoco';
+  this.agentAppID_ = null;
+  this.findGnubbyExtension();
 };
 
 mosh.CommandInstance.prototype.run = function() {
@@ -297,3 +298,50 @@ mosh.CommandInstance.prototype.sendToAgent_ = function(data) {
   var message = {'type': 'auth-agent@openssh.com', 'data': data};
   this.agentPort_.postMessage(message);
 }
+
+// Try and probe for a gnubby extension/app.
+mosh.CommandInstance.prototype.findGnubbyExtension = function() {
+  // The possible gnubby extensions.
+  const stableAppId = 'beknehfpfkghjoafdifaflglpjkojoco';
+  const stableExtId = 'lkjlajklkdhaneeelolkfgbpikkgnkpk';
+  // The order matches the gnubby team preferences: https://crbug.com/902588
+  // Prefer the extension over the app, and dev over stable.
+  const extensions = [
+    'klnjmillfildbbimkincljmfoepfhjjj',  // extension (dev)
+    stableExtId,                         // extension (stable)
+    'dlfcjilkjfhdnfiecknlnddkmmiofjbg',  // app (dev)
+    stableAppId,                         // app (stable)
+    'kmendfapggjehodndflmmgagdbamhnfd',  // component
+  ];
+
+  // Ping the extension to see if it's installed/enabled/alive.
+  const check = (id) => new Promise((resolve, reject) => {
+    chrome.runtime.sendMessage(id, {'type': 'HELLO'}, (result) => {
+      // If the remote side doesn't exist (which is normal), Chrome complains
+      // if we don't read the lastError.  Clear that here.
+      void chrome.runtime.lastError;
+
+      // If the probe worked, return the id, else return nothing so we can
+      // clear out all the pending promises.
+      if (result !== undefined && result['rc'] == 0)
+        resolve(id);
+      else
+        resolve();
+    });
+  });
+
+  // Guess a reasonable default based on the OS.
+  this.agentAppID_ = (hterm.os == 'cros' ? stableAppId : stableExtId);
+
+  // We don't set a timeout here as it doesn't block overall execution.
+  Promise.all(extensions.map((id) => check(id))).then((results) => {
+    console.log(`gnubby probe results: ${results}`);
+    for (let i = 0; i < extensions.length; ++i) {
+      const extId = extensions[i];
+      if (results.includes(extId)) {
+        nassh.GoogleRelay.defaultGnubbyExtension = extId;
+        break;
+      }
+    }
+  });
+};
