@@ -230,6 +230,8 @@ function onConnectClick(e) {
       break;
     }
   }
+  args['ssh-agent-id'] = form['ssh-agent-id'].value ||
+      form['ssh-agent-id'].placeholder;
 
   // Define an ID that should, usually, uniquely define a connection to a
   // server. This will preserve the window position across sessions. But still
