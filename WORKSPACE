@@ -105,7 +105,7 @@ new_git_repository(
 git_repository(
     name = "com_google_protobuf",
     remote = "https://github.com/google/protobuf.git",
-    commit = "ce044817c7ba0aea27c3fd8e496635d94d20a755", # tag = "v3.6.0.1"
+    commit = "6973c3a5041636c1d8dc5f7f6c8c1f3c15bc63d6", # tag = "v3.7.1"
 )
 
 git_repository(
