@@ -96,4 +96,4 @@ case "${MODE}" in
 esac
 
 shift
-bazelisk "${ACTION}" "${TARGET}" ${FLAGS} "$@"
+./bazelisk "${ACTION}" "${TARGET}" ${FLAGS} "$@"
