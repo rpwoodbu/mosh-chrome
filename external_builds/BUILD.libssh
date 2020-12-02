@@ -7,12 +7,88 @@ config_setting(
 
 cc_library(
     name = "libssh",
-    srcs = glob(
-        include = ["src/**/*.c"],
-        exclude = ["src/gssapi.c"],
-    ),
+    # Built from src/CMakeLists.txt.
+    srcs = [
+        # Main code.
+        "src/agent.c",
+        "src/auth.c",
+        "src/base64.c",
+        "src/bignum.c",
+        "src/buffer.c",
+        "src/callbacks.c",
+        "src/channels.c",
+        "src/client.c",
+        "src/config.c",
+        "src/connect.c",
+        "src/connector.c",
+        "src/curve25519.c",
+        "src/dh.c",
+        "src/ecdh.c",
+        "src/error.c",
+        "src/getpass.c",
+        "src/init.c",
+        "src/kdf.c",
+        "src/kex.c",
+        "src/known_hosts.c",
+        "src/knownhosts.c",
+        "src/legacy.c",
+        "src/log.c",
+        "src/match.c",
+        "src/messages.c",
+        "src/misc.c",
+        "src/options.c",
+        "src/packet.c",
+        "src/packet_cb.c",
+        "src/packet_crypt.c",
+        "src/pcap.c",
+        "src/pki.c",
+        "src/pki_container_openssh.c",
+        "src/poll.c",
+        "src/session.c",
+        "src/scp.c",
+        "src/socket.c",
+        "src/string.c",
+        "src/threads.c",
+        "src/wrapper.c",
+        "src/external/bcrypt_pbkdf.c",
+        "src/external/blowfish.c",
+        "src/external/chacha.c",
+        "src/external/poly1305.c",
+        "src/chachapoly.c",
+        "src/config_parser.c",
+        "src/token.c",
+        "src/pki_ed25519_common.c",
+
+        # Threads.
+        "src/threads/noop.c",
+        "src/threads/pthread.c",
+
+        # OpenSSL.
+        "src/threads/libcrypto.c",
+        "src/pki_crypto.c",
+        "src/ecdh_crypto.c",
+        "src/libcrypto.c",
+        "src/dh_crypto.c",
+        "src/libcrypto-compat.c",
+
+        # OpenSSL w/out ED25519.
+        "src/pki_ed25519.c",
+        "src/external/ed25519.c",
+        "src/external/fe25519.c",
+        "src/external/ge25519.c",
+        "src/external/sc25519.c",
+
+        "src/external/curve25519_ref.c",
+
+        # GEX.
+        "src/dh-gex.c",
+
+        # Zlib.
+        "src/gzip.c",
+    ],
     hdrs = glob([
         "include/libssh/*.h",
+        "src/*.h",
         "src/**/*.data",
     ]),
     includes = ["include"],
@@ -44,6 +120,7 @@ cc_library(
         "-DWITH_EXAMPLES=OFF",
         "-Wno-char-subscripts",
         "-Wno-implicit-function-declaration",
+        "-Wno-deprecated-declarations",
     ],
     visibility = ["//visibility:public"],
 )
@@ -54,7 +131,6 @@ genrule(
     cmd = """
         cat > $@ << EOF
 #define PACKAGE "libssh"
-#define VERSION "0.7.1"
 #define HAVE_ARPA_INET_H 1
 #define HAVE_SYS_TIME_H 1
 #define HAVE_TERMIOS_H 1
@@ -65,8 +141,14 @@ genrule(
 #define HAVE_OPENSSL_ECDH_H 1
 #define HAVE_OPENSSL_EC_H 1
 #define HAVE_OPENSSL_ECDSA_H 1
-#define HAVE_PTHREAD_H 1
 #define HAVE_OPENSSL_ECC 1
+#define HAVE_OPENSSL_EVP_AES_CTR 1
+#define HAVE_OPENSSL_EVP_AES_CBC 1
+#define HAVE_OPENSSL_EVP_AES_GCM 1
+#define HAVE_OPENSSL_CRYPTO_THREADID_SET_CALLBACK 1
+#define HAVE_OPENSSL_CRYPTO_CTR128_ENCRYPT 1
+#define HAVE_OPENSSL_EVP_CIPHER_CTX_NEW 1
+#define HAVE_PTHREAD_H 1
 #define HAVE_ECC 1
 #define HAVE_SNPRINTF 1
 #define HAVE_VSNPRINTF 1
@@ -83,17 +165,33 @@ genrule(
 #define HAVE_GCC_NARG_MACRO 1
 #define HAVE_COMPILER__FUNC__ 1
 #define HAVE_COMPILER__FUNCTION__ 1
-#define WITH_SFTP 1
-#define WITH_SERVER 1
+#define WITH_GEX 1
 #define WITH_PCAP 1
 #define DEBUG_CALLTRACE 1
+#define GLOBAL_CLIENT_CONFIG "/etc/ssh/ssh_config"
+#define GLOBAL_BIND_CONFIG "/etc/ssh/libssh_server_config"
 EOF
+    """,
+)
+
+genrule(
+    name = "version_file",
+    srcs = ["include/libssh/libssh_version.h.cmake"],
+    outs = ["include/libssh/libssh_version.h"],
+    cmd = """
+        sed -e 's|@libssh_VERSION_MAJOR@|0|' \
+            -e 's|@libssh_VERSION_MINOR@|9|' \
+            -e 's|@libssh_VERSION_PATCH@|5|' \
+            $(SRCS) > $(OUTS)
     """,
 )
 
 cc_library(
     name = "config_lib",
-    hdrs = [":config_file"],
+    hdrs = [
+        ":config_file",
+        ":version_file",
+    ],
 )
 
 cc_library(

@@ -83,20 +83,11 @@ bool KeyboardInteractive::Answer(const char* answer) {
 
 Session::Session(const string& host, int port, const string& user)
     : s_(ssh_new()), user_(user) {
+  ssh_init();
+
   SetOption(SSH_OPTIONS_HOST, host);
   SetOption(SSH_OPTIONS_PORT, port);
   SetOption(SSH_OPTIONS_USER, user);
-
-  // libssh 0.7.1 seems to be unable to verify ed25519 host keys, and causes
-  // the connection to hosts with such a key to fail. This works around the
-  // issue by removing ed25519 from the list of host keys libssh will prefer.
-  // This list is from libssh's HOSTKEYS (kex.c), with ssh-ed25519 removed.
-  //
-  // TODO(rpwoodbu): Eliminate this workaround once ed25519 host key
-  // verification is fixed.
-  SetOption(SSH_OPTIONS_HOSTKEYS,
-            "ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,"
-            "ssh-rsa,ssh-dss");
 }
 
 Session::~Session() {
@@ -128,7 +119,7 @@ void Session::Disconnect() {
 Key& Session::GetPublicKey() {
   if (connected_ && key_ == nullptr) {
     key_ = make_unique<Key>();
-    ssh_get_publickey(s_, &key_->key_);
+    ssh_get_server_publickey(s_, &key_->key_);
   }
   return *key_;
 }
@@ -223,26 +214,32 @@ KeyType::KeyType(KeyTypeEnum type) {
     case ED25519:
       type_ = SSH_KEYTYPE_ED25519;
       break;
-    case DSS_CERT00:
-      type_ = SSH_KEYTYPE_DSS_CERT00;
-      break;
-    case RSA_CERT00:
-      type_ = SSH_KEYTYPE_RSA_CERT00;
-      break;
     case DSS_CERT01:
       type_ = SSH_KEYTYPE_DSS_CERT01;
       break;
     case RSA_CERT01:
       type_ = SSH_KEYTYPE_RSA_CERT01;
       break;
-    case ECDSA_SHA2_NISTP256_CERT01:
-      type_ = SSH_KEYTYPE_ECDSA_SHA2_NISTP256_CERT01;
+    case ECDSA_P256:
+      type_ = SSH_KEYTYPE_ECDSA_P256;
       break;
-    case ECDSA_SHA2_NISTP384_CERT01:
-      type_ = SSH_KEYTYPE_ECDSA_SHA2_NISTP384_CERT01;
+    case ECDSA_P384:
+      type_ = SSH_KEYTYPE_ECDSA_P384;
       break;
-    case ECDSA_SHA2_NISTP521_CERT01:
-      type_ = SSH_KEYTYPE_ECDSA_SHA2_NISTP521_CERT01;
+    case ECDSA_P521:
+      type_ = SSH_KEYTYPE_ECDSA_P521;
+      break;
+    case ECDSA_P256_CERT01:
+      type_ = SSH_KEYTYPE_ECDSA_P256_CERT01;
+      break;
+    case ECDSA_P384_CERT01:
+      type_ = SSH_KEYTYPE_ECDSA_P384_CERT01;
+      break;
+    case ECDSA_P521_CERT01:
+      type_ = SSH_KEYTYPE_ECDSA_P521_CERT01;
+      break;
+    case ED25519_CERT01:
+      type_ = SSH_KEYTYPE_ED25519_CERT01;
       break;
 
     case UNKNOWN:  // Fallthrough.
@@ -264,20 +261,24 @@ KeyType::KeyTypeEnum KeyType::type() const {
       return ECDSA;
     case SSH_KEYTYPE_ED25519:
       return ED25519;
-    case SSH_KEYTYPE_DSS_CERT00:
-      return DSS_CERT00;
-    case SSH_KEYTYPE_RSA_CERT00:
-      return RSA_CERT00;
     case SSH_KEYTYPE_DSS_CERT01:
       return DSS_CERT01;
     case SSH_KEYTYPE_RSA_CERT01:
       return RSA_CERT01;
-    case SSH_KEYTYPE_ECDSA_SHA2_NISTP256_CERT01:
-      return ECDSA_SHA2_NISTP256_CERT01;
-    case SSH_KEYTYPE_ECDSA_SHA2_NISTP384_CERT01:
-      return ECDSA_SHA2_NISTP384_CERT01;
-    case SSH_KEYTYPE_ECDSA_SHA2_NISTP521_CERT01:
-      return ECDSA_SHA2_NISTP521_CERT01;
+    case SSH_KEYTYPE_ECDSA_P256:
+      return ECDSA_P256;
+    case SSH_KEYTYPE_ECDSA_P384:
+      return ECDSA_P384;
+    case SSH_KEYTYPE_ECDSA_P521:
+      return ECDSA_P521;
+    case SSH_KEYTYPE_ECDSA_P256_CERT01:
+      return ECDSA_P256_CERT01;
+    case SSH_KEYTYPE_ECDSA_P384_CERT01:
+      return ECDSA_P384_CERT01;
+    case SSH_KEYTYPE_ECDSA_P521_CERT01:
+      return ECDSA_P521_CERT01;
+    case SSH_KEYTYPE_ED25519_CERT01:
+      return ED25519_CERT01;
     case SSH_KEYTYPE_UNKNOWN:
       return UNKNOWN;
   }
