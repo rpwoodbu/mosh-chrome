@@ -231,13 +231,8 @@ mosh.CommandInstance.prototype.onMessage_ = function(e) {
 
 mosh.CommandInstance.prototype.sendKeyboard_ = function(string) {
   if (this.running_) {
-    // Convert this to an array of codepoints to avoid any Unicode shenanigans,
-    // which can interfere with terminal escape sequences.
-    var codePoints = [];
-    for (var i = 0; i < string.length; i++) {
-      codePoints.push(string.codePointAt(i));
-    }
-    this.moshNaCl_.postMessage({'keyboard': codePoints});
+    const te = new TextEncoder();
+    this.moshNaCl_.postMessage({'keyboard': Array.from(te.encode(string))});
   } else if (string == 'x') {
     window.close();
   }
