@@ -32,13 +32,14 @@ function execMosh() {
     terminal.setCursorPosition(0, 0);
     terminal.setCursorVisible(true);
     terminal.runCommandClass(mosh.CommandInstance, window.args);
-  };
 
-  // Don't exit fullscreen with ESC.
-  terminal.document_.onkeyup = function(e) {
-    if (e.keyCode == 27) {
-      e.preventDefault();
-    }
+    terminal.keyboard.bindings.addBinding('Ctrl-Shift-N', function() {
+      chrome.app.window.create(
+        'mosh_client.html', {
+          'id': 'mosh_client',
+        });
+    });
+
   };
 
   // Workaround to return focus to terminal on fullscreen.
