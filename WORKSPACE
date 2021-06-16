@@ -78,10 +78,11 @@ new_http_archive(
     build_file = "external_builds/BUILD.glibc_compat",
 )
 
-new_git_repository(
+new_http_archive(
     name = "libssh",
-    remote = "https://github.com/rpwoodbu/libssh.git",
-    commit = "cdd4f3e3efb8758a53ebf34ac7b34d74d217158d", # branch = "mosh-chrome-patches"
+    url = "https://www.libssh.org/files/0.9/libssh-0.9.5.tar.xz",
+    sha256 = "acffef2da98e761fc1fd9c4fddde0f3af60ab44c4f5af05cd1b2d60a3fa08718",
+    strip_prefix = "libssh-0.9.5",
     build_file = "external_builds/BUILD.libssh",
 )
 

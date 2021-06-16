@@ -148,13 +148,13 @@ class Session : public ResultCode {
   void Disconnect();
 
   // Determines if the connected server is known. Analog to
-  // ssh_is_server_known().
+  // ssh_session_is_known_server().
   bool ServerKnown() {
-    return ParseCode(ssh_is_server_known(s_), SSH_SERVER_KNOWN_OK);
+    return ParseCode(ssh_session_is_known_server(s_), SSH_SERVER_KNOWN_OK);
   }
 
   // Returns the public key as a Key. Ownership is retained, thus is valid only
-  // for the lifetime of Session. Analog to ssh_get_publickey().
+  // for the lifetime of Session. Analog to ssh_get_server_publickey().
   Key& GetPublicKey();
 
   // Get a list of authentication types available. On error, or if the server
@@ -228,9 +228,13 @@ class KeyType {
     RSA_CERT00,
     DSS_CERT01,
     RSA_CERT01,
-    ECDSA_SHA2_NISTP256_CERT01,
-    ECDSA_SHA2_NISTP384_CERT01,
-    ECDSA_SHA2_NISTP521_CERT01,
+    ECDSA_P256,
+    ECDSA_P384,
+    ECDSA_P521,
+    ECDSA_P256_CERT01,
+    ECDSA_P384_CERT01,
+    ECDSA_P521_CERT01,
+    ED25519_CERT01,
   };
 
   KeyType() = default;
