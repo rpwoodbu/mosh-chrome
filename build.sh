@@ -95,11 +95,5 @@ case "${MODE}" in
     exit 1
 esac
 
-if ! which bazel > /dev/null; then
-  echo "The Bazel build tool was not found in your path." 1>&2
-  echo "Go get it at: http://www.bazel.io/docs/install.html" 1>&2
-  exit 1
-fi
-
 shift
-bazel "${ACTION}" "${TARGET}" ${FLAGS} "$@"
+./bazelisk "${ACTION}" "${TARGET}" ${FLAGS} "$@"
