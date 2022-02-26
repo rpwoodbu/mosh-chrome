@@ -1,5 +1,5 @@
 # Use nacl-sdk toolchain, specifically pnacl.
-build:pnacl --crosstool_top=//:toolchain --cpu=pnacl --host_crosstool_top=@bazel_tools//tools/cpp:toolchain
+build:pnacl --crosstool_top=//:toolchain --cpu=pnacl --compiler=clang --host_crosstool_top=@bazel_tools//tools/cpp:toolchain
 
 # By default, built in opt mode. Fastbuild has no benefit here.
 build -c opt

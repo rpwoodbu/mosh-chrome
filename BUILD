@@ -103,7 +103,6 @@ cc_toolchain_suite(
     name = "toolchain",
     toolchains = {
         "pnacl|clang": ":cc-compiler-pnacl",
-        "pnacl": "cc-compiler-pnacl",
     },
 )
 
