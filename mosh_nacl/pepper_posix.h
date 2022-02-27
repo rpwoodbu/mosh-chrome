@@ -24,6 +24,7 @@
 #include "mosh_nacl/pepper_posix_selector.h"
 
 #include <poll.h>
+#include <signal.h>
 #include <stdarg.h>
 #include <sys/select.h>
 #include <sys/socket.h>

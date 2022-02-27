@@ -720,7 +720,7 @@ int sigaction(int signum, const struct sigaction* act,
   return 0;
 }
 
-int ioctl(int d, long unsigned int request, ...) {  // NOLINT(runtime/int)
+int ioctl(int d, int request, ...) {  // NOLINT(runtime/int)
   if (d != STDIN_FILENO || request != TIOCGWINSZ) {
     Log("ioctl(%d, %u, ...): Got unexpected call", d, request);
     errno = EPROTO;
