@@ -27,7 +27,6 @@ cc_toolchain(
     toolchain_config = ":pnacl_toolchain_config",
     all_files = ":all",
     compiler_files = ":all",
-    cpu = "pnacl",
     dwp_files = ":all",
     linker_files = ":all",
     objcopy_files = ":all",
