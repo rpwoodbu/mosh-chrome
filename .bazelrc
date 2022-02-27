@@ -7,3 +7,6 @@ build -c opt
 # Don't build things that aren't tests; failures will ensue due to targets that
 # only build with --config=pnacl.
 test --build_tests_only
+
+# Host builds should use Python 2 (for @nack_sdk//:create_nmf).
+build --host_force_python=PY2
