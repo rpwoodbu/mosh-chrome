@@ -99,6 +99,8 @@ toolchain {
   compiler_flag: "-Wall"
   # All warnings are errors.
   compiler_flag: "-Werror"
+  # Protobufs won't build with this warning:
+  compiler_flag: "-Wno-inconsistent-missing-override"
   # Would be nice to enable this warning, but then protobufs won't build.
   #compiler_flag: "-Wunused-parameter"
   # But disable some that are problematic.

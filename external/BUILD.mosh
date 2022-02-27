@@ -110,7 +110,7 @@ cc_library(
     deps = [
         ":crypto_lib",
         ":protos_lib",
-        "@zlib//:zlib",
+        "@pnacl_zlib//:zlib",
     ],
     includes = ["src/network"],
 )

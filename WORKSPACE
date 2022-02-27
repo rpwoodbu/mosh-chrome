@@ -64,11 +64,17 @@ http_archive(
 )
 
 http_archive(
-    name = "zlib",
+    name = "pnacl_zlib",
     url = "https://gsdview.appspot.com/webports/builds/pepper_49/trunk-785-g807a23e/packages/zlib_1.2.8_pnacl.tar.bz2",
     sha256 = "99203f49edad39570a3362e72373ea1d63a97b9b1828b75e45d3e856d2832033",
     strip_prefix = "payload",
     build_file = "BUILD.zlib",
+)
+
+# Needed by `com_google_protobuf`.
+bind(
+    name = "zlib",
+    actual = "@pnacl_zlib//:zlib",
 )
 
 http_archive(
@@ -105,7 +111,15 @@ new_git_repository(
 git_repository(
     name = "com_google_protobuf",
     remote = "https://github.com/google/protobuf.git",
-    commit = "ce044817c7ba0aea27c3fd8e496635d94d20a755", # tag = "v3.6.0.1"
+    commit = "582743bf40c5d3639a70f98f183914a2c0cd0680", # tag = "v3.7.0"
+)
+
+# Needed by `com_google_protobuf`.
+http_archive(
+    name = "bazel_skylib",
+    sha256 = "bbccf674aa441c266df9894182d80de104cabd19be98be002f6d478aaa31574d",
+    strip_prefix = "bazel-skylib-2169ae1c374aab4a09aa90e65efe1a3aad4e279b",
+    urls = ["https://github.com/bazelbuild/bazel-skylib/archive/2169ae1c374aab4a09aa90e65efe1a3aad4e279b.tar.gz"],
 )
 
 git_repository(

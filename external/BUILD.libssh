@@ -22,7 +22,7 @@ cc_library(
         ":pnacl_mode": [
             "@glibc_compat//:glibc_compat",
             "@openssl//:openssl",
-            "@zlib//:zlib",
+            "@pnacl_zlib//:zlib",
         ],
         "//conditions:default": [
             ":local_openssl",
