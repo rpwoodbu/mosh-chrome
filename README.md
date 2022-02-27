@@ -15,10 +15,10 @@ Building
 
     $ ./build.sh dev
 
-  The first time this is run, this will download and build all dependencies
-  (except Bazel, of course). This can take a while, so be patient. Don't expect
-  status updates for a minute or two at a time in some cases. Subsequent builds
-  will be extremely fast; Bazel excels at doing incremental builds.
+  The first time this is run, this will download and build most of the
+  dependencies, including Bazel, the build system. This can take a while, so be
+  patient. Subsequent builds will be extremely fast; Bazel excels at doing
+  incremental builds.
 
   Don't be alarmed if you see a few warnings. In particular, the linker may
   complain about duplicated symbols.
