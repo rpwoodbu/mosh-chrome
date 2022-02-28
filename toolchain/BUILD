@@ -9,28 +9,34 @@ cc_toolchain_suite(
 )
 
 filegroup(
-    name = "all",
+    name = "toolchain_files",
     srcs = [
+        "@nacl_sdk//:pnacl_includes",
+        "@nacl_sdk//:pnacl_toolchain",
+        "pnacl_ar.sh",
+        "pnacl_clang++.sh",
         "pnacl_clang.sh",
         "pnacl_ld.sh",
-        "pnacl_ar.sh",
-        "pnacl_cpp.sh",
-        "pnacl_nm.sh",
         "pnacl_strip.sh",
-        "@nacl_sdk//:pnacl_all_files",
     ],
 )
+
+filegroup(name = "empty")
 
 cc_toolchain(
     name = "pnacl_toolchain",
     toolchain_identifier = "pnacl-toolchain",
     toolchain_config = ":pnacl_toolchain_config",
-    all_files = ":all",
-    compiler_files = ":all",
-    dwp_files = ":all",
-    linker_files = ":all",
-    objcopy_files = ":all",
-    strip_files = ":all",
+    ar_files = ":toolchain_files",
+    compiler_files = ":toolchain_files",
+    linker_files = ":toolchain_files",
+    strip_files = ":toolchain_files",
+
+    # The following are no longer used, but still must exist.
+    all_files = ":empty",
+    dwp_files = ":empty",
+    objcopy_files = ":empty",
+
     supports_param_files = 0,
 )
 

@@ -22,7 +22,7 @@ def _impl(ctx):
         ),
         tool_path(
             name = "cpp",
-            path = "pnacl_cpp.sh",
+            path = "pnacl_clang++.sh",
         ),
         tool_path(
             name = "gcov",
