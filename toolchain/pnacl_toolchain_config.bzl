@@ -25,10 +25,6 @@ def _impl(ctx):
             path = "pnacl_clang++.sh",
         ),
         tool_path(
-            name = "gcov",
-            path = "/bin/false",
-        ),
-        tool_path(
             name = "nm",
             path = "pnacl_nm.sh",
         ),
