@@ -1,5 +1,5 @@
-# Use nacl-sdk toolchain, specifically pnacl.
-build:pnacl --crosstool_top=//toolchain:pnacl_clang --cpu=pnacl --host_crosstool_top=@bazel_tools//tools/cpp:toolchain
+# Use custom toolchain.
+build --crosstool_top=//toolchain:toolchain --cpu=pnacl --host_crosstool_top=@bazel_tools//tools/cpp:toolchain
 
 # By default, built in opt mode. Fastbuild has no benefit here.
 build -c opt
@@ -10,3 +10,6 @@ test --build_tests_only
 
 # Host builds should use Python 2 (for @nack_sdk//:create_nmf).
 build --host_force_python=PY2
+
+# Load Remote Build Execution flags.
+import toolchain/rbe_configs.bazelrc

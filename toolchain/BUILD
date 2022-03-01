@@ -2,9 +2,13 @@ package(default_visibility = ['//visibility:public'])
 load(":pnacl_toolchain_config.bzl", "cc_toolchain_config")
 
 cc_toolchain_suite(
-    name = "pnacl_clang",
+    name = "toolchain",
     toolchains = {
         "pnacl": ":pnacl_toolchain",
+        "k8|clang": "@rbe_default//cc:cc-compiler-k8",
+        "k8": "@rbe_default//cc:cc-compiler-k8",
+        "armeabi-v7a|compiler": "@rbe_default//cc:cc-compiler-armeabi-v7a",
+        "armeabi-v7a": "@rbe_default//cc:cc-compiler-armeabi-v7a",
     },
 )
 

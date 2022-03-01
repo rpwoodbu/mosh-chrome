@@ -1,5 +1,15 @@
 workspace(name = "mosh_chrome")
 
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
+    name = "rbe_default",
+    # Change the sha256 digest to the value of the `configs_tarball_digest` in the manifest you
+    # got when you ran the curl command above.
+    sha256 = "9f81180099ebc84da906c53cf56c1e9835d7dbc4bbc8ac5c7e075f050c450c3a",
+    urls = ["https://storage.googleapis.com/rbe-toolchain/bazel-configs/bazel_5.0.0/rbe-ubuntu1604/latest/rbe_default.tar"],
+)
+
 # The manifest of NaCl SDK versions can be found here:
 # https://storage.googleapis.com/nativeclient-mirror/nacl/nacl_sdk/naclsdk_manifest2.json
 
@@ -30,7 +40,6 @@ new_http_tar_archive_hardlinks(
     build_file = "//:external/BUILD.nacl_sdk",
 )
 
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 http_archive(
     name = "jsoncpp",
     url = "https://gsdview.appspot.com/webports/builds/pepper_49/trunk-785-g807a23e/packages/jsoncpp_1.6.1_pnacl.tar.bz2",

@@ -54,7 +54,7 @@ format() {
   find . -name '*.cc' -or -name '*.h' -or -name '*.js' | xargs "${CLANG_FORMAT}" -i
 }
 
-FLAGS="--config=pnacl"
+FLAGS=""
 ACTION="build"
 
 case "${MODE}" in
@@ -72,17 +72,16 @@ case "${MODE}" in
     ;;
   "debug")
     TARGET="//:mosh_chrome_dev"
-    FLAGS="-c dbg"
+    FLAGS="${FLAGS} -c dbg"
     ;;
   "test")
     ACTION="test"
     TARGET="..."
-    FLAGS=""
     ;;
   "lint")
     ACTION="run"
     TARGET="@styleguide//:cpp_lint"
-    FLAGS="-- $(find ${GIT_ROOT} -name '*.cc' -or -name '*.h')"
+    FLAGS="${FLAGS} -- $(find ${GIT_ROOT} -name '*.cc' -or -name '*.h')"
     ;;
   "format")
     format
@@ -96,4 +95,5 @@ case "${MODE}" in
 esac
 
 shift
+set -x
 ./bazelisk "${ACTION}" "${TARGET}" ${FLAGS} "$@"
