@@ -45,8 +45,16 @@ genrule(
     message = "Generating mosh_version.js",
 )
 
-# TODO: Dependency on /usr/bin/envsubst (from Debian package gettext-base) is
-# dubious.
+py_binary(
+    name = "subst",
+    srcs = ["subst.py"],
+)
+
+py_test(
+    name = "subst_test",
+    srcs = ["subst_test.py"],
+    deps = [":subst"],
+)
 
 genrule(
     name = "manifest",
@@ -56,14 +64,14 @@ genrule(
     ],
     outs = ["manifest.json"],
     cmd = """
-        export NAME="Mosh"
-        export DESCRIPTION="Mosh (mobile shell) for Chrome"
-        export VERSION="$$(cat $(location //:version.txt))"
-        export KEY=""
-        /usr/bin/envsubst \
-            '$$$$NAME $$$$DESCRIPTION $$$$VERSION $$$$KEY' \
+        $(location subst) \
+            NAME="Mosh" \
+            DESCRIPTION="Mosh (mobile shell) for Chrome" \
+            VERSION="$$(cat $(location //:version.txt))" \
+            KEY="" \
             < $(location :manifest.json.template) > $(OUTS)
     """,
+    tools = [":subst"],
     message = "Building Chrome App manifest",
 )
 
@@ -75,14 +83,14 @@ genrule(
     ],
     outs = ["dev/manifest.json"],
     cmd = """
-        export NAME="Mosh (dev)"
-        export DESCRIPTION="Mosh (mobile shell) for Chrome (dev track)"
-        export VERSION="$$(cat $(location //:version.txt))"
-        export KEY=""
-        /usr/bin/envsubst \
-            '$$$$NAME $$$$DESCRIPTION $$$$VERSION $$$$KEY' \
+        $(location subst) \
+            NAME="Mosh (dev)" \
+            DESCRIPTION="Mosh (mobile shell) for Chrome (dev track)" \
+            VERSION="$$(cat $(location //:version.txt))" \
+            KEY="" \
             < $(location :manifest.json.template) > $(OUTS)
     """,
+    tools = [":subst"],
     message = "Building dev Chrome App manifest",
 )
 
@@ -104,13 +112,13 @@ genrule(
     ],
     outs = ["windows/manifest.json"],
     cmd = """
-        export NAME="Mosh"
-        export DESCRIPTION="Mosh (mobile shell) for Windows"
-        export VERSION="$$(cat $(location //:version.txt))"
-        export KEY='"key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApx0tft2uFwdaR1KCwnkkFx/ac43SSJKbKALKaafwiOSDitY7jPkV46xbu4nq6LHOtLQK3ybMjjWHhUvDuyy0te2eum4GzHy2E10Feb1XBiQbdTyeUwF2nu1tBRrzi/F4AeizLuVNNMT+tXMKaQ7bNSYsPAsbyCrxoQDiaU9rdAmOp+TNM2IsZkPwsBg9oQfEOsXZ2C/c/dsyo4QkdAfGTR6xszd9RYyIoJOrQqjzDv0oFrQMSnK9ym3x4BOXZwb1G9PVC/GTvLQWBKUaHI5IPGQdmJQUgMmVWJeHrlS7ngR3GBmqcmiLVATY6PUKW42Smgc2rgj45KHm/cp1gF1OxQIDAQAB",'
-        /usr/bin/envsubst \
-            '$$$$NAME $$$$DESCRIPTION $$$$VERSION $$$$KEY' \
+        $(location subst) \
+            NAME="Mosh" \
+            DESCRIPTION="Mosh (mobile shell) for Windows" \
+            VERSION="$$(cat $(location //:version.txt))" \
+            KEY='"key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApx0tft2uFwdaR1KCwnkkFx/ac43SSJKbKALKaafwiOSDitY7jPkV46xbu4nq6LHOtLQK3ybMjjWHhUvDuyy0te2eum4GzHy2E10Feb1XBiQbdTyeUwF2nu1tBRrzi/F4AeizLuVNNMT+tXMKaQ7bNSYsPAsbyCrxoQDiaU9rdAmOp+TNM2IsZkPwsBg9oQfEOsXZ2C/c/dsyo4QkdAfGTR6xszd9RYyIoJOrQqjzDv0oFrQMSnK9ym3x4BOXZwb1G9PVC/GTvLQWBKUaHI5IPGQdmJQUgMmVWJeHrlS7ngR3GBmqcmiLVATY6PUKW42Smgc2rgj45KHm/cp1gF1OxQIDAQAB",' \
             < $(location :manifest.json.template) > $(OUTS)
     """,
+    tools = [":subst"],
     message = "Building Windows Chrome App manifest",
 )
