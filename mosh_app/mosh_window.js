@@ -75,8 +75,7 @@ mosh.CommandInstance = function(argv) {
   this.agentPort_ = null;
 
   // App ID of an SSH agent.
-  // TODO: Make this a user setting.
-  this.agentAppID_ = 'beknehfpfkghjoafdifaflglpjkojoco';
+  this.agentAppID_ = argv.args['ssh-agent-id'];
 };
 
 mosh.CommandInstance.prototype.run = function() {
