@@ -235,6 +235,8 @@ mosh.CommandInstance.prototype.sendKeyboard_ = function(string) {
     this.moshNaCl_.postMessage({'keyboard': Array.from(te.encode(string))});
   } else if (string == 'x') {
     window.close();
+  } else if (string == 'r') {
+    document.location.reload();
   }
 };
 
@@ -283,6 +285,7 @@ mosh.CommandInstance.prototype.onCrash_ =
     mosh.CommandInstance.prototype.exit_ = function(output) {
   this.io.print('\r\n' + output + '\r\n');
   console.log(output);
+  this.io.print('Press "r" to reconnect.\r\n');
   this.io.print('Press "x" to close the window.\r\n');
   this.running_ = false;
 };
